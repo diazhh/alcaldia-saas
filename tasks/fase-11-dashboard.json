@@ -1,0 +1,139 @@
+{
+  "id": "fase-11-dashboard",
+  "title": "FASE 11: MÓDULO DE INDICADORES Y DASHBOARD GERENCIAL",
+  "description": "Presenta la información crítica del municipio en tiempo real mediante gráficos y tableros visuales para la toma de decisiones.",
+  "details": [
+    "Crear un Dashboard Principal para el Alcalde con los indicadores más importantes de cada área (Finanzas, Proyectos, Servicios, etc.).",
+    "Desarrollar dashboards específicos para cada dirección con KPIs relevantes para su gestión.",
+    "Definir y calcular Indicadores Clave de Desempeño (KPIs) estratégicos para cada perspectiva del Cuadro de Mando Integral.",
+    "Configurar la generación y envío de reportes automáticos programados (diarios, semanales, mensuales).",
+    "Implementar análisis de tendencias y proyecciones simples basadas en datos históricos."
+  ],
+  "dependencies": [
+    "fase-1-proyectos",
+    "fase-2-finanzas",
+    "fase-3-rrhh",
+    "fase-4-tributario",
+    "fase-5-catastro",
+    "fase-6-participacion",
+    "fase-7-flota",
+    "fase-8-bienes",
+    "fase-9-documental",
+    "fase-10-servicios-publicos"
+  ],
+  "status": "pending",
+  "acceptance_criteria": [
+    "El alcalde puede ver el estado general del municipio en una sola pantalla con semáforos de alerta.",
+    "Cada director tiene un dashboard que le permite monitorear la operación de su área en tiempo real.",
+    "Los KPIs estratégicos se actualizan automáticamente y muestran la tendencia (mejorando/empeorando).",
+    "Los reportes gerenciales se envían por correo electrónico en las fechas programadas sin intervención manual.",
+    "El sistema genera alertas predictivas simples, como proyecciones de recaudación o agotamiento de inventario."
+  ],
+  "subtasks": [
+    {
+      "id": "f11-sub1",
+      "title": "Diseño del Sistema de Indicadores",
+      "description": "Definir KPIs estratégicos para cada módulo: financieros, operacionales, de recursos. Establecer metas, fórmulas de cálculo, responsables, frecuencia.",
+      "status": "pending",
+      "dependencies": []
+    },
+    {
+      "id": "f11-sub2",
+      "title": "Crear Schema de Configuración de KPIs",
+      "description": "Definir modelos para KPI, Target (meta), Measurement (medición), Alert (alerta), ScheduledReport (reporte programado).",
+      "status": "pending",
+      "dependencies": ["f11-sub1"]
+    },
+    {
+      "id": "f11-sub3",
+      "title": "Implementar Motor de Cálculo de KPIs",
+      "description": "Desarrollar servicios que calculen automáticamente los KPIs consultando datos de todos los módulos. Actualización en tiempo real o programada.",
+      "status": "pending",
+      "dependencies": ["f11-sub2"]
+    },
+    {
+      "id": "f11-sub4",
+      "title": "Crear API de Dashboards",
+      "description": "Implementar endpoints que retornen datos agregados y procesados para dashboards: ejecutivo, por dirección, por módulo. Incluir filtros por período.",
+      "status": "pending",
+      "dependencies": ["f11-sub3"]
+    },
+    {
+      "id": "f11-sub5",
+      "title": "Desarrollar Sistema de Alertas",
+      "description": "Implementar detección automática de situaciones críticas: KPIs fuera de rango, presupuesto sobre-ejecutado, proyectos atrasados, etc. Notificaciones a responsables.",
+      "status": "pending",
+      "dependencies": ["f11-sub3"]
+    },
+    {
+      "id": "f11-sub6",
+      "title": "Implementar Reportes Automáticos",
+      "description": "Desarrollar generación y envío programado de reportes: configuración de frecuencia, destinatarios, formato (PDF/Excel), contenido personalizable.",
+      "status": "pending",
+      "dependencies": ["f11-sub4"]
+    },
+    {
+      "id": "f11-sub7",
+      "title": "Crear Motor de Análisis Predictivo",
+      "description": "Implementar análisis de tendencias con algoritmos simples: promedio móvil, regresión lineal, detección de anomalías, proyecciones.",
+      "status": "pending",
+      "dependencies": ["f11-sub3"]
+    },
+    {
+      "id": "f11-sub8",
+      "title": "Escribir Tests del Backend de Dashboards",
+      "description": "Desarrollar tests unitarios y de integración para cálculos de KPIs y generación de reportes. Objetivo: >70% coverage.",
+      "status": "pending",
+      "dependencies": ["f11-sub7"]
+    },
+    {
+      "id": "f11-sub9",
+      "title": "Crear Dashboard Principal del Alcalde",
+      "description": "Desarrollar vista ejecutiva única con paneles: financiero, proyectos, servicios, recursos, tributario, alertas críticas. Diseño limpio y actualizado en tiempo real.",
+      "status": "pending",
+      "dependencies": []
+    },
+    {
+      "id": "f11-sub10",
+      "title": "Desarrollar Dashboards por Dirección",
+      "description": "Crear dashboards especializados para cada área: Finanzas, Obras, Hacienda, Servicios, RRHH, Participación. KPIs específicos con gráficos Recharts.",
+      "status": "pending",
+      "dependencies": ["f11-sub9"]
+    },
+    {
+      "id": "f11-sub11",
+      "title": "Implementar Cuadro de Mando Integral",
+      "description": "Crear vista de Balanced Scorecard con las cuatro perspectivas: ciudadana, procesos internos, aprendizaje, financiera. Integración de KPIs por perspectiva.",
+      "status": "pending",
+      "dependencies": ["f11-sub9"]
+    },
+    {
+      "id": "f11-sub12",
+      "title": "Crear Módulo de Comparativas",
+      "description": "Desarrollar visualizaciones de comparación: período actual vs anterior, entre parroquias, entre dependencias, benchmarking interno.",
+      "status": "pending",
+      "dependencies": ["f11-sub9"]
+    },
+    {
+      "id": "f11-sub13",
+      "title": "Implementar Centro de Reportes",
+      "description": "Crear interfaz para configurar y descargar reportes personalizados, programar envíos, consultar histórico de reportes generados.",
+      "status": "pending",
+      "dependencies": ["f11-sub9"]
+    },
+    {
+      "id": "f11-sub14",
+      "title": "Desarrollar Visualizaciones Predictivas",
+      "description": "Crear gráficos de tendencias y proyecciones: recaudación futura, consumo de inventario, demanda de servicios. Alertas predictivas.",
+      "status": "pending",
+      "dependencies": ["f11-sub9"]
+    },
+    {
+      "id": "f11-sub15",
+      "title": "Escribir Tests del Frontend de Dashboards",
+      "description": "Desarrollar tests de componentes de visualización, cálculos en cliente, interacciones con gráficos.",
+      "status": "pending",
+      "dependencies": ["f11-sub14"]
+    }
+  ]
+}

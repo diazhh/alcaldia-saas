@@ -1,0 +1,123 @@
+{
+  "id": "fase-6-participacion",
+  "title": "FASE 6: MÓDULO DE PARTICIPACIÓN CIUDADANA",
+  "description": "Crea un canal directo entre ciudadanos y gobierno para reportar problemas, hacer seguimiento, fomentar la transparencia y participar en decisiones.",
+  "details": [
+    "Implementar un sistema de reportes ciudadanos (tipo 311) para que los usuarios informen problemas (baches, fallas de luz, etc.) con geolocalización y fotos.",
+    "Desarrollar un panel de gestión interna para recibir, clasificar, asignar y dar seguimiento a los reportes ciudadanos.",
+    "Establecer un sistema de notificaciones automáticas para mantener al ciudadano informado sobre el estado de su ticket.",
+    "Crear un mapa de calor público que muestre las zonas con mayor concentración de reportes.",
+    "Implementar un módulo para el Presupuesto Participativo, permitiendo a las comunidades proponer y votar por proyectos.",
+    "Desarrollar un Portal de Transparencia para publicar información obligatoria (presupuesto, nómina, contrataciones)."
+  ],
+  "dependencies": ["fase-0-core"],
+  "status": "done",
+  "acceptance_criteria": [
+    "Un ciudadano puede crear un reporte con descripción, ubicación y fotos desde el portal o app.",
+    "El reporte es asignado automáticamente al departamento correcto y su estado se actualiza en tiempo real.",
+    "El ciudadano recibe notificaciones por correo electrónico en cada cambio de estado de su reporte.",
+    "El portal de presupuesto participativo permite a los ciudadanos votar por los proyectos de su comunidad.",
+    "El portal de transparencia muestra los documentos y datos requeridos por ley de forma accesible.",
+    "La API del módulo tiene un coverage de tests superior al 70%."
+  ],
+  "subtasks": [
+    {
+      "id": "f6-sub1",
+      "title": "Diseño del Schema de Base de Datos de Participación",
+      "description": "Definir modelos para CitizenReport (reporte 311), Comment (comentarios), Rating (calificaciones), ParticipativeBudget (presupuesto participativo), Proposal (propuestas), Vote (votos). Incluir geolocalización.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f6-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas de participación ciudadana.",
+      "status": "done",
+      "dependencies": ["f6-sub1"]
+    },
+    {
+      "id": "f6-sub3",
+      "title": "Implementar API de Reportes Ciudadanos (311)",
+      "description": "Desarrollar sistema completo: creación de reporte con tipo, descripción, geolocalización, fotos; asignación automática por departamento; actualización de estado; notificaciones; calificación del servicio.",
+      "status": "done",
+      "dependencies": ["f6-sub2"]
+    },
+    {
+      "id": "f6-sub4",
+      "title": "Crear API de Gestión Interna de Reportes",
+      "description": "Implementar mesa de control: recepción en tiempo real, clasificación, priorización, asignación a cuadrillas, seguimiento, resolución, cierre.",
+      "status": "done",
+      "dependencies": ["f6-sub3"]
+    },
+    {
+      "id": "f6-sub5",
+      "title": "Desarrollar Sistema de Notificaciones",
+      "description": "Implementar envío automático de notificaciones por email/SMS en cada cambio de estado del reporte.",
+      "status": "done",
+      "dependencies": ["f6-sub3"]
+    },
+    {
+      "id": "f6-sub6",
+      "title": "Implementar API de Presupuesto Participativo",
+      "description": "Desarrollar flujo completo: convocatoria, registro de propuestas comunitarias, evaluación técnica, votación ciudadana, publicación de resultados, seguimiento de proyectos ganadores.",
+      "status": "done",
+      "dependencies": ["f6-sub2"]
+    },
+    {
+      "id": "f6-sub7",
+      "title": "Crear API de Portal de Transparencia",
+      "description": "Implementar endpoints públicos para publicar información obligatoria: presupuesto, ejecución, nómina, contrataciones, ordenanzas, actas, bienes.",
+      "status": "done",
+      "dependencies": ["f6-sub2"]
+    },
+    {
+      "id": "f6-sub8",
+      "title": "Escribir Tests del Backend de Participación",
+      "description": "Desarrollar tests unitarios y de integración. Objetivo: >70% coverage.",
+      "status": "done",
+      "dependencies": ["f6-sub7"]
+    },
+    {
+      "id": "f6-sub9",
+      "title": "Crear Portal Ciudadano de Reportes",
+      "description": "Desarrollar interfaz pública para reportar problemas: selección de tipo, descripción, geolocalización automática/manual en mapa, subida de fotos, seguimiento con número de ticket.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f6-sub10",
+      "title": "Desarrollar Mesa de Control Municipal",
+      "description": "Crear dashboard para funcionarios: mapa de incidencias activas, gestión de reportes, asignación de cuadrillas, actualización de estados, estadísticas.",
+      "status": "done",
+      "dependencies": ["f6-sub9"]
+    },
+    {
+      "id": "f6-sub11",
+      "title": "Implementar Mapa de Calor Ciudadano",
+      "description": "Crear visualización geográfica de todos los reportes con filtros por tipo, fecha, estado. Identificar zonas con mayor concentración de problemas.",
+      "status": "done",
+      "dependencies": ["f6-sub9"]
+    },
+    {
+      "id": "f6-sub12",
+      "title": "Crear Portal de Presupuesto Participativo",
+      "description": "Desarrollar interfaz para proponer proyectos, votación ciudadana, visualización de resultados, seguimiento de proyectos aprobados.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f6-sub13",
+      "title": "Desarrollar Portal de Transparencia",
+      "description": "Crear portal público con información obligatoria, documentos descargables, búsqueda de información, visualizaciones de datos abiertos.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f6-sub14",
+      "title": "Escribir Tests del Frontend de Participación",
+      "description": "Desarrollar tests de componentes y flujos principales (crear reporte, votar por proyecto, consultar transparencia).",
+      "status": "done",
+      "dependencies": ["f6-sub13"]
+    }
+  ]
+}

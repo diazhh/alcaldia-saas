@@ -1,0 +1,26 @@
+# Frontend Dockerfile para desarrollo
+FROM node:18-alpine
+
+# Instalar dependencias necesarias
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+
+# Instalar todas las dependencias (incluyendo dev)
+RUN npm install
+
+# Copiar código fuente
+COPY . .
+
+# Exponer puerto
+EXPOSE 3000
+
+# Variables de entorno por defecto
+ENV NODE_ENV=development
+ENV PORT=3000
+
+# Comando para desarrollo con hot reload
+CMD ["npm", "run", "dev"]

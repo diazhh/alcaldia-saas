@@ -1,0 +1,130 @@
+{
+  "id": "fase-9-documental",
+  "title": "FASE 9: MÓDULO DE GESTIÓN DOCUMENTAL Y ARCHIVO",
+  "description": "Controla el flujo de documentos que entran y salen de la alcaldía, los archiva digitalmente y permite encontrarlos fácilmente.",
+  "details": [
+    "Gestionar la correspondencia de entrada y salida con número de ticket y seguimiento online.",
+    "Implementar un sistema de oficios internos y comunicaciones entre dependencias con workflow de aprobación.",
+    "Crear un repositorio digital de ordenanzas y actas del concejo municipal con búsqueda inteligente.",
+    "Desarrollar un archivo digital central para la digitalización y preservación de documentos históricos.",
+    "Gestionar expedientes digitales, agrupando todos los documentos relacionados con un asunto específico.",
+    "Integrar la firma electrónica/digital para dar validez legal a los documentos generados.",
+    "Configurar workflows de aprobación personalizables para diferentes tipos de documentos."
+  ],
+  "dependencies": ["fase-0-core"],
+  "status": "done",
+  "acceptance_criteria": [
+    "Todo documento que entra o sale de la alcaldía queda registrado y es rastreable.",
+    "Un documento puede ser firmado digitalmente por múltiples funcionarios en un orden preestablecido.",
+    "Se puede encontrar cualquier ordenanza municipal vigente buscando por palabra clave.",
+    "Los expedientes digitales contienen todos los documentos de un caso en orden cronológico.",
+    "La API del módulo tiene un coverage de tests superior al 70%."
+  ],
+  "subtasks": [
+    {
+      "id": "f9-sub1",
+      "title": "Diseño del Schema de Base de Datos Documental",
+      "description": "Definir modelos para Document (documento), Correspondence (correspondencia), Ordinance (ordenanza), Act (acta), File (expediente), Signature (firma electrónica), Workflow (flujo de aprobación). Incluir metadatos y versionamiento.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f9-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas de gestión documental.",
+      "status": "done",
+      "dependencies": ["f9-sub1"]
+    },
+    {
+      "id": "f9-sub3",
+      "title": "Implementar API de Correspondencia",
+      "description": "Desarrollar gestión completa de entrada y salida: registro, numeración automática, digitalización, distribución, acuses de recibo, seguimiento.",
+      "status": "done",
+      "dependencies": ["f9-sub2"]
+    },
+    {
+      "id": "f9-sub4",
+      "title": "Crear API de Oficios Internos",
+      "description": "Implementar comunicaciones entre dependencias: memorandos, oficios, circulares, providencias. Numeración automática por dependencia.",
+      "status": "done",
+      "dependencies": ["f9-sub2"]
+    },
+    {
+      "id": "f9-sub5",
+      "title": "Desarrollar Repositorio de Ordenanzas y Actas",
+      "description": "Implementar almacenamiento y consulta de ordenanzas municipales y actas del concejo: texto completo, metadatos, búsqueda inteligente, publicación web.",
+      "status": "done",
+      "dependencies": ["f9-sub2"]
+    },
+    {
+      "id": "f9-sub6",
+      "title": "Crear Sistema de Expedientes Digitales",
+      "description": "Implementar agrupación de documentos por asunto: apertura, adición de documentos, movimientos, trazabilidad, cierre.",
+      "status": "done",
+      "dependencies": ["f9-sub3"]
+    },
+    {
+      "id": "f9-sub7",
+      "title": "Implementar Firma Electrónica/Digital",
+      "description": "Desarrollar sistema de firma con validez legal: certificados digitales, timestamping, hash criptográfico, verificación online, múltiples firmantes.",
+      "status": "done",
+      "dependencies": ["f9-sub2"]
+    },
+    {
+      "id": "f9-sub8",
+      "title": "Crear Motor de Workflow de Aprobaciones",
+      "description": "Implementar configuración de flujos por tipo de documento: enrutamiento automático, notificaciones, aprobación/rechazo, delegación, trazabilidad, alertas de estancamiento.",
+      "status": "done",
+      "dependencies": ["f9-sub7"]
+    },
+    {
+      "id": "f9-sub9",
+      "title": "Desarrollar Motor de Búsqueda",
+      "description": "Implementar búsqueda de texto completo con OCR en PDFs, filtros múltiples, operadores booleanos, relevancia, previsualización.",
+      "status": "done",
+      "dependencies": ["f9-sub6"]
+    },
+    {
+      "id": "f9-sub10",
+      "title": "Implementar Control de Versiones",
+      "description": "Desarrollar versionamiento de documentos: historial de cambios, comparación entre versiones, restauración, autor de modificación.",
+      "status": "done",
+      "dependencies": ["f9-sub2"]
+    },
+    {
+      "id": "f9-sub11",
+      "title": "Escribir Tests del Backend Documental",
+      "description": "Desarrollar tests unitarios y de integración. Objetivo: >70% coverage.",
+      "status": "done",
+      "dependencies": ["f9-sub10"]
+    },
+    {
+      "id": "f9-sub12",
+      "title": "Crear Módulo de Mesa de Entrada",
+      "description": "Desarrollar interfaz para registrar correspondencia entrante, escanear documentos, asignar destino, generar comprobantes.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f9-sub13",
+      "title": "Desarrollar Módulo de Gestión Documental",
+      "description": "Crear interfaz para gestionar oficios, expedientes, firmar documentos, buscar archivos, consultar workflows.",
+      "status": "done",
+      "dependencies": ["f9-sub12"]
+    },
+    {
+      "id": "f9-sub14",
+      "title": "Implementar Portal de Consulta de Ordenanzas",
+      "description": "Crear portal público para consultar ordenanzas y actas del concejo con búsqueda avanzada y descarga de PDFs.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f9-sub15",
+      "title": "Escribir Tests del Frontend Documental",
+      "description": "Desarrollar tests de componentes y flujos principales (registrar correspondencia, firmar documento, buscar ordenanza).",
+      "status": "done",
+      "dependencies": ["f9-sub14"]
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "id": "fase-4-tributario",
+  "title": "FASE 4: MÓDULO DE GESTIÓN TRIBUTARIA",
+  "description": "Administra todos los impuestos, tasas y contribuciones que cobra la alcaldía, desde el registro del contribuyente hasta el cobro y control de la morosidad.",
+  "details": [
+    "Crear un registro único de contribuyentes (personas naturales y jurídicas).",
+    "Implementar la gestión del Impuesto sobre Actividades Económicas (Patente), incluyendo cálculo, licencias y fiscalización.",
+    "Desarrollar la gestión del Impuesto sobre Inmuebles Urbanos, integrado con el módulo de catastro.",
+    "Implementar la gestión del Impuesto sobre Vehículos.",
+    "Construir un portal de autopago para que los ciudadanos consulten deudas y realicen pagos en línea.",
+    "Desarrollar un sistema de gestión de cobranza para identificar y notificar a morosos.",
+    "Implementar la facturación de otras tasas y servicios municipales.",
+    "Generar solvencias y certificaciones en línea con validación por código QR."
+  ],
+  "dependencies": ["fase-0-core"],
+  "status": "done",
+  "acceptance_criteria": [
+    "Un contribuyente puede registrarse y consultar su estado de cuenta en el portal.",
+    "El sistema calcula correctamente los diferentes impuestos municipales según las ordenanzas.",
+    "El portal de autopago procesa pagos y emite recibos digitales.",
+    "El sistema de cobranza envía notificaciones automáticas a los deudores.",
+    "Se puede obtener una solvencia de manera automática si no existen deudas pendientes.",
+    "La API del módulo tributario tiene un coverage de tests superior al 70%.",
+    "El frontend es usable y claro tanto para ciudadanos como para funcionarios."
+  ],
+  "subtasks": [
+    {
+      "id": "f4-sub1",
+      "title": "Diseño del Schema de Base de Datos Tributario",
+      "description": "Definir en schema.prisma los modelos para Taxpayer (contribuyente), Business (establecimiento comercial), Property (inmueble), Vehicle (vehículo), TaxBill (factura), Payment (pago), Solvency (solvencia) y DebtCollection (cobranza). Incluir relaciones con catastro.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f4-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas tributarias en PostgreSQL.",
+      "status": "done",
+      "dependencies": ["f4-sub1"]
+    },
+    {
+      "id": "f4-sub3",
+      "title": "Implementar API de Registro de Contribuyentes",
+      "description": "Desarrollar CRUD para contribuyentes (personas naturales y jurídicas) con validación de RIF/CI, datos de contacto e historial tributario.",
+      "status": "done",
+      "dependencies": ["f4-sub2"]
+    },
+    {
+      "id": "f4-sub4",
+      "title": "Desarrollar API de Impuesto sobre Actividades Económicas",
+      "description": "Implementar gestión de patentes comerciales: registro de establecimientos, clasificación CIIU, cálculo automático según ordenanza, renovaciones, inspecciones fiscales.",
+      "status": "done",
+      "dependencies": ["f4-sub3"]
+    },
+    {
+      "id": "f4-sub5",
+      "title": "Implementar API de Impuesto sobre Inmuebles",
+      "description": "Desarrollar integración con catastro, cálculo de avalúo catastral, aplicación de alícuotas, gestión de exoneraciones y generación de facturas.",
+      "status": "done",
+      "dependencies": ["f4-sub3"]
+    },
+    {
+      "id": "f4-sub6",
+      "title": "Crear API de Impuesto sobre Vehículos",
+      "description": "Implementar registro de vehículos, cálculo según avalúo y año, generación de planillas y emisión de calcomanías/solvencias.",
+      "status": "done",
+      "dependencies": ["f4-sub3"]
+    },
+    {
+      "id": "f4-sub7",
+      "title": "Desarrollar Sistema de Facturación de Tasas",
+      "description": "Crear endpoints para facturar tasas municipales: aseo urbano, administrativas, uso de espacios, cementerio, espectáculos públicos.",
+      "status": "done",
+      "dependencies": ["f4-sub3"]
+    },
+    {
+      "id": "f4-sub8",
+      "title": "Implementar Portal de Autopago",
+      "description": "Desarrollar API pública para consulta de deudas, generación de planillas con código de referencia, registro de pagos desde diferentes métodos, emisión de recibos digitales.",
+      "status": "done",
+      "dependencies": ["f4-sub4", "f4-sub5", "f4-sub6", "f4-sub7"]
+    },
+    {
+      "id": "f4-sub9",
+      "title": "Crear Sistema de Gestión de Cobranza",
+      "description": "Implementar identificación automática de morosos, clasificación por antigüedad, emisión de notificaciones escalonadas, cálculo de intereses moratorios, convenios de pago.",
+      "status": "done",
+      "dependencies": ["f4-sub8"]
+    },
+    {
+      "id": "f4-sub10",
+      "title": "Desarrollar API de Solvencias",
+      "description": "Crear generación automática de solvencias si está al día, código QR para verificación, control de vigencia, restricción por deudas.",
+      "status": "done",
+      "dependencies": ["f4-sub8"]
+    },
+    {
+      "id": "f4-sub11",
+      "title": "Escribir Tests del Backend Tributario",
+      "description": "Desarrollar tests unitarios y de integración para todos los cálculos tributarios, validaciones y flujos del módulo. Objetivo: >70% coverage.",
+      "status": "done",
+      "dependencies": ["f4-sub10"]
+    },
+    {
+      "id": "f4-sub12",
+      "title": "Crear Portal Público de Autopago (Frontend)",
+      "description": "Desarrollar portal donde ciudadanos consulten deudas con RIF/CI, generen planillas, realicen pagos online y descarguen recibos. Interfaz intuitiva y responsive.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f4-sub13",
+      "title": "Desarrollar Módulo Administrativo Tributario",
+      "description": "Crear interfaz para funcionarios: gestionar contribuyentes, registrar patentes, procesar pagos presenciales, emitir solvencias, gestionar cobranza.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f4-sub14",
+      "title": "Implementar Dashboard Tributario",
+      "description": "Crear dashboard con indicadores de recaudación, morosidad, ranking de contribuyentes, metas vs ejecutado, proyecciones.",
+      "status": "done",
+      "dependencies": ["f4-sub13"]
+    },
+    {
+      "id": "f4-sub15",
+      "title": "Desarrollar Módulo de Reportes Tributarios",
+      "description": "Crear generación de reportes: recaudación por período, cartera de morosos, eficiencia tributaria, solvencias emitidas. Exportación a Excel/PDF.",
+      "status": "done",
+      "dependencies": ["f4-sub13"]
+    },
+    {
+      "id": "f4-sub16",
+      "title": "Escribir Tests del Frontend Tributario",
+      "description": "Desarrollar tests de componentes y flujos principales (consulta de deuda, pago online, emisión de solvencia).",
+      "status": "done",
+      "dependencies": ["f4-sub15"]
+    }
+  ]
+}

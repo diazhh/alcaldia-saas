@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:14-alpine
+    container_name: municipal-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: municipal_user
+      POSTGRES_PASSWORD: municipal_password
+      POSTGRES_DB: municipal_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - municipal-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U municipal_user -d municipal_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+# Volúmenes persistentes
+volumes:
+  postgres_data:
+    driver: local
+    name: municipal_postgres_data
+
+# Red personalizada
+networks:
+  municipal-network:
+    driver: bridge
+    name: municipal-network

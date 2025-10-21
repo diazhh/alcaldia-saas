@@ -1,0 +1,121 @@
+{
+  "id": "fase-0-core",
+  "title": "FASE 0: CORE - Configuración y Núcleo del Sistema",
+  "description": "Esta fase establece las bases fundamentales del proyecto, incluyendo la configuración del entorno de desarrollo, la estructura del proyecto, la autenticación de usuarios y el layout principal de la aplicación.",
+  "details": [
+    "Setup completo del proyecto monorepo (backend y frontend).",
+    "Configuración de Docker y Docker Compose para el entorno de desarrollo local (PostgreSQL, backend, frontend).",
+    "Inicialización y configuración de Prisma ORM para la conexión con la base de datos PostgreSQL.",
+    "Configuración de herramientas de calidad de código: ESLint y Prettier para backend y frontend.",
+    "Implementación del sistema de autenticación completo usando JWT (login, registro, validación de token).",
+    "Implementación de un sistema básico de Control de Acceso Basado en Roles (RBAC) con middlewares para proteger rutas.",
+    "Creación del layout base del dashboard en el frontend, incluyendo Sidebar y Navbar.",
+    "Instalación y configuración de los componentes base de UI con shadcn/ui.",
+    "Desarrollo de tests unitarios y de integración para el módulo de autenticación."
+  ],
+  "dependencies": [],
+  "status": "done",
+  "acceptance_criteria": [
+    "El entorno de desarrollo se puede levantar con 'docker-compose up'.",
+    "Las migraciones de Prisma para el modelo 'User' y 'Role' se ejecutan correctamente.",
+    "Un usuario puede registrarse y hacer login, recibiendo un JWT válido.",
+    "Las rutas protegidas devuelven un error 401 sin un token válido.",
+    "Las rutas con restricción de rol devuelven un error 403 para usuarios no autorizados.",
+    "El layout principal del dashboard es visible después de iniciar sesión.",
+    "Los tests de autenticación pasan con un coverage superior al 70%.",
+    "El código cumple con las reglas de ESLint y Prettier."
+  ],
+  "subtasks": [
+    {
+      "id": "f0-sub1",
+      "title": "Configuración del Entorno y Estructura del Proyecto",
+      "description": "Crear la estructura de directorios base para el monorepo, inicializar el control de versiones con Git y configurar los archivos iniciales como .gitignore y README.md.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f0-sub2",
+      "title": "Configuración de Docker",
+      "description": "Crear los Dockerfiles para los servicios de backend y frontend, y el archivo docker-compose.yml para orquestar la base de datos PostgreSQL y los contenedores de la aplicación.",
+      "status": "done",
+      "dependencies": ["f0-sub1"]
+    },
+    {
+      "id": "f0-sub3",
+      "title": "Inicialización del Backend",
+      "description": "Inicializar el proyecto Node.js en la carpeta 'backend', instalar dependencias (Express, Prisma, etc.), y configurar ESLint, Prettier y variables de entorno.",
+      "status": "done",
+      "dependencies": ["f0-sub1"]
+    },
+    {
+      "id": "f0-sub4",
+      "title": "Configuración de la Base de Datos con Prisma",
+      "description": "Definir los modelos 'User' y 'Role' en schema.prisma, ejecutar la primera migración para crear las tablas y crear un archivo 'seed' para poblar datos iniciales (ej. un super-admin).",
+      "status": "done",
+      "dependencies": ["f0-sub3"]
+    },
+    {
+      "id": "f0-sub5",
+      "title": "Desarrollo del Módulo de Autenticación (Backend)",
+      "description": "Implementar los servicios, controladores y rutas para el registro y login de usuarios, incluyendo hashing de contraseñas con bcrypt y generación de JSON Web Tokens (JWT).",
+      "status": "done",
+      "dependencies": ["f0-sub4"]
+    },
+    {
+      "id": "f0-sub6",
+      "title": "Implementación de Sistema de Seguridad y Control de Acceso (Backend)",
+      "description": "Crear sistema completo de seguridad: middleware authenticate (verificar JWT), middleware authorize (validar roles), sistema de permisos granulares por módulo y acción (permissions.js), decoradores para proteger rutas específicas, logging de intentos de acceso denegados. IMPORTANTE: No cualquier usuario puede acceder a todos los módulos - cada módulo/ruta debe estar protegido según rol y permisos específicos.",
+      "status": "done",
+      "dependencies": ["f0-sub5"]
+    },
+    {
+      "id": "f0-sub6.5",
+      "title": "Configurar Políticas de Acceso por Módulo",
+      "description": "Definir y documentar matriz de permisos: qué roles pueden acceder a qué módulos y qué acciones pueden realizar (crear, leer, actualizar, eliminar, aprobar). Ejemplo: SUPER_ADMIN accede a todo, DIRECTOR solo a su área, USER solo consulta. Implementar constantes PERMISSIONS y función hasPermission() para validar.",
+      "status": "done",
+      "dependencies": ["f0-sub6"]
+    },
+    {
+      "id": "f0-sub7",
+      "title": "Inicialización del Frontend",
+      "description": "Inicializar el proyecto Next.js en la carpeta 'frontend', instalar dependencias (Axios, Zustand, etc.) y configurar TailwindCSS con la paleta de colores definida en el PRD.",
+      "status": "done",
+      "dependencies": ["f0-sub1"]
+    },
+    {
+      "id": "f0-sub8",
+      "title": "Configuración de shadcn/ui y Componentes Base",
+      "description": "Instalar y configurar los componentes base de shadcn/ui que se utilizarán en todo el proyecto, como Button, Card, Input, Table, etc.",
+      "status": "done",
+      "dependencies": ["f0-sub7"]
+    },
+    {
+      "id": "f0-sub9",
+      "title": "Desarrollo del Layout Principal (Frontend)",
+      "description": "Crear los componentes reutilizables para el layout del dashboard, incluyendo una barra lateral de navegación (Sidebar) y una barra superior (Navbar).",
+      "status": "done",
+      "dependencies": ["f0-sub8"]
+    },
+    {
+      "id": "f0-sub10",
+      "title": "Gestión de Estado de Autenticación (Frontend)",
+      "description": "Implementar un store de Zustand para gestionar globalmente el estado de autenticación (usuario, token). Configurar un interceptor de Axios para adjuntar el token a las peticiones API.",
+      "status": "done",
+      "dependencies": ["f0-sub7"]
+    },
+    {
+      "id": "f0-sub11",
+      "title": "Creación de Páginas de Autenticación (Frontend)",
+      "description": "Desarrollar los formularios de Login y Registro usando React Hook Form y Zod para la validación de datos del lado del cliente, conectándolos con el backend.",
+      "status": "done",
+      "dependencies": ["f0-sub9", "f0-sub10"]
+    },
+    {
+      "id": "f0-sub12",
+      "title": "Implementación de Pruebas (Backend y Frontend)",
+      "description": "Configurar Jest, Supertest y React Testing Library. Escribir tests unitarios y de integración para el flujo de autenticación completo para asegurar su correcto funcionamiento.",
+      "status": "done",
+      "dependencies": ["f0-sub6", "f0-sub11"]
+    }
+  ]
+}

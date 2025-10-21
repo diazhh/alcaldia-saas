@@ -1,0 +1,169 @@
+{
+  "id": "fase-2-finanzas",
+  "title": "FASE 2: MÓDULO DE FINANZAS",
+  "description": "Construcción del módulo para la gestión financiera y presupuestaria del municipio, cumpliendo con la normativa venezolana.",
+  "details": [
+    "Diseñar y aplicar el schema de BD para presupuesto, transacciones, cuentas contables y bancarias.",
+    "Implementar la API para la elaboración y gestión del presupuesto anual (asignaciones, modificaciones).",
+    "Desarrollar la API para el registro de transacciones contables y la ejecución del gasto (Compromiso, Causado, Pagado).",
+    "Crear endpoints para la gestión de tesorería y cuentas bancarias.",
+    "Escribir tests unitarios y de integración para la API del módulo financiero.",
+    "Desarrollar las páginas del frontend para la gestión presupuestaria, contable y de tesorería.",
+    "Crear un dashboard financiero con indicadores clave y proyecciones.",
+    "Implementar la generación de reportes financieros básicos y los formatos exigidos por la ONAPRE.",
+    "Escribir tests para los componentes y flujos del frontend financiero."
+  ],
+  "dependencies": ["fase-0-core"],
+  "status": "pending",
+  "acceptance_criteria": [
+    "El sistema impide ejecutar un gasto si no hay disponibilidad presupuestaria.",
+    "Cada operación de gasto sigue el ciclo de compromiso, causado y pagado.",
+    "Se pueden generar los estados financieros básicos (Balance General, Estado de Resultados).",
+    "La API del módulo de finanzas tiene un coverage de tests superior al 70%.",
+    "El dashboard financiero refleja el estado de la ejecución presupuestaria en tiempo real.",
+    "Se pueden exportar los reportes requeridos por la ONAPRE en formato PDF o Excel.",
+    "Todos los tests del frontend para este módulo pasan correctamente."
+  ],
+  "subtasks": [
+    {
+      "id": "f2-sub1",
+      "title": "Diseño del Schema de Base de Datos Financiero",
+      "description": "Definir en schema.prisma los modelos para Budget (presupuesto), BudgetItem (partidas), Transaction (transacciones contables), BankAccount (cuentas bancarias), Payment (pagos) y AccountingEntry (asientos contables). Incluir enums para tipos de transacción, estados del gasto (COMPROMISO, CAUSADO, PAGADO).",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f2-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas financieras en PostgreSQL y actualizar el cliente de Prisma.",
+      "status": "done",
+      "dependencies": ["f2-sub1"]
+    },
+    {
+      "id": "f2-sub3",
+      "title": "Crear Estructura del Módulo de Finanzas (Backend)",
+      "description": "Crear estructura backend/src/modules/finance/ con subcarpetas para controllers, services, routes.js y validations.js.",
+      "status": "done",
+      "dependencies": ["f2-sub2"]
+    },
+    {
+      "id": "f2-sub4",
+      "title": "Implementar API de Presupuesto",
+      "description": "Desarrollar servicios y controladores para crear el presupuesto anual, distribuir por partidas según clasificador ONAPRE, y realizar modificaciones presupuestarias (créditos adicionales, traspasos). Rutas: POST /budget, GET /budget/:year, PUT /budget/:id.",
+      "status": "done",
+      "dependencies": ["f2-sub3"]
+    },
+    {
+      "id": "f2-sub5",
+      "title": "Implementar Control de Disponibilidad Presupuestaria",
+      "description": "Crear servicio que valide en tiempo real si existe disponibilidad presupuestaria antes de comprometer un gasto. Debe impedir operaciones que excedan el presupuesto aprobado.",
+      "status": "done",
+      "dependencies": ["f2-sub4"]
+    },
+    {
+      "id": "f2-sub6",
+      "title": "Desarrollar API de Ejecución del Gasto",
+      "description": "Implementar el flujo completo de ejecución del gasto con tres etapas: 1) Compromiso (reserva presupuesto), 2) Causado (genera cuenta por pagar), 3) Pagado (descarga de tesorería). Crear endpoints para cada etapa y validaciones de transición de estado.",
+      "status": "done",
+      "dependencies": ["f2-sub5"]
+    },
+    {
+      "id": "f2-sub7",
+      "title": "Implementar API de Tesorería",
+      "description": "Desarrollar servicios para gestionar cuentas bancarias, registrar ingresos (situado, tributos), programar pagos, generar órdenes de pago y realizar conciliaciones bancarias.",
+      "status": "done",
+      "dependencies": ["f2-sub3"]
+    },
+    {
+      "id": "f2-sub8",
+      "title": "Desarrollar Sistema Contable Básico",
+      "description": "Implementar el registro de asientos contables automáticos para cada operación siguiendo el Plan de Cuentas Nacional. Generar libro diario y mayor.",
+      "status": "done",
+      "dependencies": ["f2-sub6", "f2-sub7"]
+    },
+    {
+      "id": "f2-sub9",
+      "title": "Implementar Generación de Estados Financieros",
+      "description": "Crear servicios para generar Balance General, Estado de Resultados y Balance de Comprobación a partir de los asientos contables registrados.",
+      "status": "done",
+      "dependencies": ["f2-sub8"]
+    },
+    {
+      "id": "f2-sub10",
+      "title": "Desarrollar Reportes ONAPRE",
+      "description": "Implementar la generación automática de los formatos exigidos por ONAPRE: Form 1013 (Ejecución financiera), Form 2345 (Balance general), Form 3001 (Ejecución física). Exportación en Excel y PDF.",
+      "status": "done",
+      "dependencies": ["f2-sub9"]
+    },
+    {
+      "id": "f2-sub11",
+      "title": "Escribir Tests del Backend Financiero",
+      "description": "Desarrollar tests unitarios y de integración para todos los servicios y endpoints del módulo financiero. Verificar validaciones de disponibilidad presupuestaria y ciclo del gasto. Objetivo: >70% coverage.",
+      "status": "pending",
+      "dependencies": ["f2-sub10"]
+    },
+    {
+      "id": "f2-sub12",
+      "title": "Crear Estructura del Módulo de Finanzas (Frontend)",
+      "description": "Crear estructura en frontend: pages en app/(dashboard)/finanzas/ y componentes en components/modules/finance/.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f2-sub13",
+      "title": "Desarrollar Hook Personalizado useBudget",
+      "description": "Crear custom hook usando React Query para manejar fetching y mutaciones de datos presupuestarios y financieros.",
+      "status": "done",
+      "dependencies": ["f2-sub12"]
+    },
+    {
+      "id": "f2-sub14",
+      "title": "Crear Página de Gestión Presupuestaria",
+      "description": "Desarrollar interfaz para crear y modificar el presupuesto anual, visualizar distribución por partidas con gráficos de torta y barras. Incluir formulario para modificaciones presupuestarias.",
+      "status": "done",
+      "dependencies": ["f2-sub13"]
+    },
+    {
+      "id": "f2-sub15",
+      "title": "Crear Página de Ejecución del Gasto",
+      "description": "Desarrollar interfaz para registrar compromisos, causados y pagos. Mostrar el estado de cada operación y el flujo de aprobación. Incluir validación visual de disponibilidad presupuestaria.",
+      "status": "done",
+      "dependencies": ["f2-sub13"]
+    },
+    {
+      "id": "f2-sub16",
+      "title": "Desarrollar Dashboard Financiero",
+      "description": "Crear dashboard con indicadores clave: presupuesto ejecutado vs aprobado, flujo de caja proyectado, cuentas por pagar pendientes, ingresos vs egresos. Usar gráficos de Recharts para visualizaciones.",
+      "status": "done",
+      "dependencies": ["f2-sub13"]
+    },
+    {
+      "id": "f2-sub17",
+      "title": "Crear Página de Tesorería",
+      "description": "Desarrollar interfaz para gestionar cuentas bancarias, registrar ingresos, programar y ejecutar pagos. Incluir módulo de conciliación bancaria.",
+      "status": "done",
+      "dependencies": ["f2-sub13"]
+    },
+    {
+      "id": "f2-sub18",
+      "title": "Implementar Visualización de Estados Financieros",
+      "description": "Crear páginas para mostrar Balance General, Estado de Resultados y Balance de Comprobación con formato contable estándar. Permitir filtrado por período y exportación a PDF.",
+      "status": "done",
+      "dependencies": ["f2-sub13"]
+    },
+    {
+      "id": "f2-sub19",
+      "title": "Desarrollar Módulo de Reportes",
+      "description": "Crear interfaz para generar y descargar reportes ONAPRE y otros reportes financieros personalizados. Incluir preview antes de descargar.",
+      "status": "done",
+      "dependencies": ["f2-sub13"]
+    },
+    {
+      "id": "f2-sub20",
+      "title": "Escribir Tests del Frontend Financiero",
+      "description": "Desarrollar tests de componentes y de integración para los flujos principales del módulo financiero (crear presupuesto, ejecutar gasto, generar reportes).",
+      "status": "pending",
+      "dependencies": ["f2-sub19"]
+    }
+  ]
+}

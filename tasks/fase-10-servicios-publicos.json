@@ -1,0 +1,131 @@
+{
+  "id": "fase-10-servicios-publicos",
+  "title": "FASE 10: MÓDULO DE SERVICIOS PÚBLICOS MUNICIPALES",
+  "description": "Planifica, programa y controla la prestación de todos los servicios públicos que ofrece directamente la alcaldía.",
+  "details": [
+    "Gestionar las rutas y la operación diaria del aseo urbano y recolección de desechos.",
+    "Mantener un inventario georreferenciado del alumbrado público y gestionar la atención de fallas.",
+    "Controlar el mantenimiento de parques, plazas y áreas verdes, incluyendo su equipamiento.",
+    "Administrar los cementerios municipales, incluyendo inhumaciones, exhumaciones y mantenimiento.",
+    "Gestionar los puestos y el funcionamiento de los mercados municipales.",
+    "Registrar y atender emergencias de Protección Civil y gestionar el mapa de riesgos del municipio.",
+    "Administrar la gestión de multas de tránsito y el patrullaje de la policía municipal.",
+    "Controlar las campañas de fumigación y control de plagas."
+  ],
+  "dependencies": ["fase-0-core", "fase-6-participacion"],
+  "status": "pending",
+  "acceptance_criteria": [
+    "Se pueden visualizar las rutas de recolección de basura en un mapa y registrar su cumplimiento.",
+    "Un reporte de una luminaria dañada genera una orden de trabajo para la cuadrilla correspondiente.",
+    "Cada parque y plaza tiene un plan de mantenimiento programado.",
+    "El sistema gestiona la disponibilidad y asignación de nichos en los cementerios.",
+    "La API del módulo tiene un coverage de tests superior al 70%."
+  ],
+  "subtasks": [
+    {
+      "id": "f10-sub1",
+      "title": "Diseño del Schema de Base de Datos de Servicios",
+      "description": "Definir modelos para CollectionRoute (ruta de recolección), Streetlight (luminaria), Park (parque), Cemetery (cementerio), Market (mercado), Emergency (emergencia). Incluir geolocalización.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f10-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas de servicios públicos.",
+      "status": "done",
+      "dependencies": ["f10-sub1"]
+    },
+    {
+      "id": "f10-sub3",
+      "title": "Implementar API de Aseo Urbano",
+      "description": "Desarrollar gestión de rutas de recolección, programación semanal, asignación de camiones y cuadrillas, control operativo diario, registro de toneladas recolectadas.",
+      "status": "done",
+      "dependencies": ["f10-sub2"]
+    },
+    {
+      "id": "f10-sub4",
+      "title": "Crear API de Alumbrado Público",
+      "description": "Implementar inventario de luminarias con geolocalización, reporte y atención de fallas, mantenimiento preventivo, expansión.",
+      "status": "pending",
+      "dependencies": ["f10-sub2"]
+    },
+    {
+      "id": "f10-sub5",
+      "title": "Desarrollar API de Parques y Áreas Verdes",
+      "description": "Implementar inventario de espacios, programación de mantenimiento (corte de grama, poda, riego), reparación de infraestructura, eventos.",
+      "status": "pending",
+      "dependencies": ["f10-sub2"]
+    },
+    {
+      "id": "f10-sub6",
+      "title": "Crear API de Cementerios",
+      "description": "Implementar registro de infraestructura, gestión de inhumaciones/exhumaciones, control de mantenimiento, cobros, vencimientos.",
+      "status": "pending",
+      "dependencies": ["f10-sub2"]
+    },
+    {
+      "id": "f10-sub7",
+      "title": "Implementar API de Mercados Municipales",
+      "description": "Desarrollar registro de puestos, control de pagos de alquiler, inspecciones sanitarias, mantenimiento, asignaciones.",
+      "status": "pending",
+      "dependencies": ["f10-sub2"]
+    },
+    {
+      "id": "f10-sub8",
+      "title": "Crear API de Protección Civil",
+      "description": "Implementar registro de emergencias, recursos disponibles, mapa de riesgos, alertas tempranas, programas de prevención.",
+      "status": "pending",
+      "dependencies": ["f10-sub2"]
+    },
+    {
+      "id": "f10-sub9",
+      "title": "Desarrollar API de Policía Municipal",
+      "description": "Implementar gestión de multas de tránsito, registro de accidentes, control de estacionamientos, patrullaje, estadísticas.",
+      "status": "pending",
+      "dependencies": ["f10-sub2"]
+    },
+    {
+      "id": "f10-sub10",
+      "title": "Crear API de Control de Plagas",
+      "description": "Implementar programación de fumigaciones, rutas, productos utilizados, campañas preventivas, atención de reportes.",
+      "status": "pending",
+      "dependencies": ["f10-sub2"]
+    },
+    {
+      "id": "f10-sub11",
+      "title": "Escribir Tests del Backend de Servicios",
+      "description": "Desarrollar tests unitarios y de integración. Objetivo: >70% coverage.",
+      "status": "pending",
+      "dependencies": ["f10-sub10"]
+    },
+    {
+      "id": "f10-sub12",
+      "title": "Crear Módulo de Aseo Urbano",
+      "description": "Desarrollar interfaz para gestionar rutas, programar recolección, asignar recursos, registrar cumplimiento, visualizar en mapa.",
+      "status": "pending",
+      "dependencies": []
+    },
+    {
+      "id": "f10-sub13",
+      "title": "Desarrollar Módulo de Alumbrado",
+      "description": "Crear interfaz para gestionar inventario de luminarias, atender reportes, programar mantenimiento, visualizar en mapa.",
+      "status": "pending",
+      "dependencies": ["f10-sub12"]
+    },
+    {
+      "id": "f10-sub14",
+      "title": "Implementar Dashboards de Servicios",
+      "description": "Crear dashboards para cada servicio público con indicadores de cobertura, cumplimiento, eficiencia, reportes ciudadanos.",
+      "status": "pending",
+      "dependencies": ["f10-sub12"]
+    },
+    {
+      "id": "f10-sub15",
+      "title": "Escribir Tests del Frontend de Servicios",
+      "description": "Desarrollar tests de componentes y flujos principales (programar ruta, reportar luminaria, registrar emergencia).",
+      "status": "pending",
+      "dependencies": ["f10-sub14"]
+    }
+  ]
+}

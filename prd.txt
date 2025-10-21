@@ -1,0 +1,5484 @@
+Desarrollar un Sistema Integral de Gestión Municipal siguiendo las especificaciones del PRD proporcionado. Este prompt define el stack tecnológico, arquitectura y metodología de desarrollo.
+
+## 🏗️ **STACK TECNOLÓGICO**
+
+### **Backend:**
+- **Node.js 18+** con **Express.js**
+- **JavaScript ES6+** (sintaxis moderna con async/await)
+- **Prisma ORM** para PostgreSQL
+- **JWT** (jsonwebtoken) para autenticación
+- **bcrypt** para hash de contraseñas
+- **Zod** para validación de schemas
+- **Multer** para upload de archivos
+- **cors** y **helmet** para seguridad
+- Testing: **Jest** + **Supertest**
+- **ESLint** + **Prettier** para code quality
+- **dotenv** para variables de entorno
+
+### **Frontend:**
+- **Next.js 14+** (App Router)
+- **React 18+**
+- **JavaScript** (sin TypeScript)
+- **TailwindCSS** para estilos
+- **shadcn/ui** para componentes base UI
+- **Zustand** para estado global
+- **React Hook Form** para formularios
+- **Zod** para validación de formularios
+- **Tanstack Query (React Query)** para data fetching y cache
+- **Axios** para peticiones HTTP
+- **Recharts** para gráficos y visualizaciones
+- **Lucide React** para iconos
+- **date-fns** para manejo de fechas
+- **React Leaflet** o **Google Maps React** para mapas
+- **prop-types** para validación de props
+- Testing: **Jest** + **React Testing Library**
+- **ESLint** + **Prettier**
+
+### **Base de Datos:**
+- **PostgreSQL 14+**
+- **Prisma** como ORM
+- Migraciones versionadas con Prisma Migrate
+- Seeds para datos de prueba
+
+### **DevOps & Tools:**
+- **Docker** + **Docker Compose** para desarrollo local
+- **Git** con conventional commits
+- **GitHub** o **GitLab** para repositorio
+- **Postman** o **Thunder Client** para testing de APIs
+- Variables de entorno separadas por ambiente (.env.local, .env.production)
+
+## 📐 **ARQUITECTURA DEL PROYECTO**
+
+```
+municipal-system/
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── database.js
+│   │   │   ├── jwt.js
+│   │   │   └── multer.js
+│   │   ├── modules/
+│   │   │   ├── auth/
+│   │   │   │   ├── controllers/
+│   │   │   │   ├── services/
+│   │   │   │   ├── routes.js
+│   │   │   │   └── validations.js
+│   │   │   ├── projects/
+│   │   │   │   ├── controllers/
+│   │   │   │   ├── services/
+│   │   │   │   ├── routes.js
+│   │   │   │   └── validations.js
+│   │   │   ├── finance/
+│   │   │   ├── hr/
+│   │   │   └── ...
+│   │   ├── shared/
+│   │   │   ├── middlewares/
+│   │   │   │   ├── auth.middleware.js
+│   │   │   │   ├── error.middleware.js
+│   │   │   │   └── validation.middleware.js
+│   │   │   ├── utils/
+│   │   │   │   ├── response.js
+│   │   │   │   ├── errors.js
+│   │   │   │   └── helpers.js
+│   │   │   └── constants/
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma
+│   │   │   ├── migrations/
+│   │   │   └── seed.js
+│   │   └── server.js
+│   ├── tests/
+│   │   ├── unit/
+│   │   └── integration/
+│   ├── .env.example
+│   ├── .eslintrc.js
+│   ├── .prettierrc
+│   ├── package.json
+│   └── jest.config.js
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── (auth)/
+│   │   │   │   ├── login/
+│   │   │   │   └── registro/
+│   │   │   ├── (dashboard)/
+│   │   │   │   ├── layout.js
+│   │   │   │   ├── page.js
+│   │   │   │   ├── proyectos/
+│   │   │   │   ├── finanzas/
+│   │   │   │   ├── rrhh/
+│   │   │   │   └── ...
+│   │   │   ├── layout.js
+│   │   │   └── globals.css
+│   │   ├── components/
+│   │   │   ├── ui/              # shadcn/ui components
+│   │   │   ├── shared/
+│   │   │   │   ├── Sidebar.jsx
+│   │   │   │   ├── Navbar.jsx
+│   │   │   │   ├── DataTable.jsx
+│   │   │   │   └── ...
+│   │   │   └── modules/
+│   │   │       ├── projects/
+│   │   │       ├── finance/
+│   │   │       └── ...
+│   │   ├── lib/
+│   │   │   ├── api.js           # Axios config
+│   │   │   ├── queryClient.js   # React Query config
+│   │   │   └── utils.js
+│   │   ├── hooks/
+│   │   │   ├── useAuth.js
+│   │   │   ├── useProjects.js
+│   │   │   └── ...
+│   │   ├── store/
+│   │   │   └── authStore.js     # Zustand stores
+│   │   └── constants/
+│   │       └── index.js
+│   ├── public/
+│   │   └── uploads/
+│   ├── tests/
+│   ├── .env.local.example
+│   ├── .eslintrc.js
+│   ├── .prettierrc
+│   ├── tailwind.config.js
+│   ├── next.config.js
+│   ├── package.json
+│   └── jest.config.js
+│
+├── docker-compose.yml
+├── .gitignore
+└── README.md
+```
+
+## 🎨 **GUÍA DE DISEÑO Y UX**
+
+### **Paleta de Colores:**
+```javascript
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          900: '#1e3a8a',
+        },
+        secondary: {
+          500: '#64748b',
+          600: '#475569',
+        },
+        success: '#10b981',
+        warning: '#f59e0b',
+        danger: '#ef4444',
+      }
+    }
+  }
+}
+```
+
+### **Principios de Diseño:**
+- **Estilo moderno y limpio** (inspirado en Linear, Vercel, Notion)
+- **Componentes consistentes** usando shadcn/ui como base
+- **Espaciado generoso** (clase de Tailwind: space-y-4, gap-6, etc.)
+- **Tipografía clara:** Inter o system fonts
+- **Responsive:** Mobile-first
+- **Feedback visual:**
+  - Skeleton loaders durante carga
+  - Toast notifications para acciones
+  - Estados de loading en botones
+  - Animaciones sutiles con Tailwind transitions
+- **Manejo de estados:**
+  - Empty states con ilustraciones o mensajes claros
+  - Error states con mensajes accionables
+  - Loading states consistentes
+
+### **Componentes shadcn/ui a Usar:**
+```bash
+npx shadcn-ui@latest add button
+npx shadcn-ui@latest add card
+npx shadcn-ui@latest add input
+npx shadcn-ui@latest add label
+npx shadcn-ui@latest add select
+npx shadcn-ui@latest add table
+npx shadcn-ui@latest add dialog
+npx shadcn-ui@latest add dropdown-menu
+npx shadcn-ui@latest add toast
+npx shadcn-ui@latest add tabs
+npx shadcn-ui@latest add badge
+npx shadcn-ui@latest add alert
+npx shadcn-ui@latest add skeleton
+npx shadcn-ui@latest add avatar
+```
+
+## 🔐 **PATRONES DE SEGURIDAD**
+
+### **Backend:**
+```javascript
+// Middleware de autenticación
+export const authenticate = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) throw new Error('Token no proporcionado');
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    
+    if (!req.user) throw new Error('Usuario no encontrado');
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+};
+
+// Middleware de autorización por roles
+export const authorize = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'No tienes permisos' });
+    }
+    next();
+  };
+};
+
+// Validación con Zod
+import { z } from 'zod';
+
+export const validate = (schema) => {
+  return (req, res, next) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      return res.status(400).json({ errors: error.errors });
+    }
+  };
+};
+```
+
+### **Frontend:**
+```javascript
+// Hook de autenticación
+import { create } from 'zustand';
+
+export const useAuthStore = create((set) => ({
+  user: null,
+  token: null,
+  isAuthenticated: false,
+  login: (user, token) => {
+    localStorage.setItem('token', token);
+    set({ user, token, isAuthenticated: true });
+  },
+  logout: () => {
+    localStorage.removeItem('token');
+    set({ user: null, token: null, isAuthenticated: false });
+  },
+}));
+
+// Axios interceptor
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
+```
+
+## 📊 **ESTRUCTURA DE DATOS (Prisma Schema)**
+
+### **Modelos Base:**
+```prisma
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Autenticación
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  projects  Project[] @relation("ProjectManager")
+  
+  @@map("users")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  DIRECTOR
+  MANAGER
+  USER
+}
+
+// Proyectos
+model Project {
+  id            String        @id @default(uuid())
+  code          String        @unique
+  name          String
+  description   String?       @db.Text
+  budget        Decimal       @db.Decimal(15,2)
+  status        ProjectStatus @default(PLANNING)
+  priority      Priority      @default(MEDIUM)
+  startDate     DateTime
+  endDate       DateTime
+  location      String
+  latitude      Float?
+  longitude     Float?
+  sector        String
+  beneficiaries Int?
+  category      String
+  
+  managerId     String
+  manager       User          @relation("ProjectManager", fields: [managerId], references: [id])
+  
+  milestones    Milestone[]
+  expenses      ProjectExpense[]
+  photos        ProjectPhoto[]
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  @@index([status])
+  @@index([sector])
+  @@map("projects")
+}
+
+model Milestone {
+  id          String          @id @default(uuid())
+  projectId   String
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String?         @db.Text
+  dueDate     DateTime
+  completedAt DateTime?
+  progress    Int             @default(0)
+  status      MilestoneStatus @default(PENDING)
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  @@map("milestones")
+}
+
+model ProjectExpense {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  concept   String
+  amount    Decimal  @db.Decimal(15,2)
+  date      DateTime
+  category  String
+  invoice   String?
+  
+  createdAt DateTime @default(now())
+  
+  @@map("project_expenses")
+}
+
+model ProjectPhoto {
+  id        String    @id @default(uuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  type      PhotoType
+  takenAt   DateTime
+  
+  createdAt DateTime  @default(now())
+  
+  @@map("project_photos")
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+}
+
+enum PhotoType {
+  BEFORE
+  DURING
+  AFTER
+}
+```
+
+## 🔄 **METODOLOGÍA DE DESARROLLO ÁGIL**
+
+### **Principios:**
+1. **Desarrollo por módulo completo** (Backend + Frontend + Tests)
+2. **Cada módulo debe ser funcional y desplegable**
+3. **Commits pequeños y frecuentes** con mensajes descriptivos
+4. **Tests antes de merge** (mínimo 70% coverage)
+5. **Code review** antes de merge a main
+6. **Documentación inline** con JSDoc
+
+### **Flujo de Desarrollo:**
+```
+Para cada módulo/feature:
+
+1. 📋 Planificación
+   - Revisar PRD
+   - Definir alcance del módulo
+   - Diseñar schema de base de datos
+   
+2. 🗄️ Base de Datos
+   - Actualizar schema.prisma
+   - Crear migración: npx prisma migrate dev --name add_projects
+   - Crear seed si es necesario
+   
+3. ⚙️ Backend API
+   - Crear estructura de carpetas del módulo
+   - Implementar servicios (lógica de negocio)
+   - Implementar controllers (handlers HTTP)
+   - Crear validaciones con Zod
+   - Definir rutas
+   - Integrar en server.js
+   
+4. 🧪 Tests Backend
+   - Tests unitarios de servicios
+   - Tests de integración de endpoints
+   - Ejecutar: npm test
+   
+5. 🎨 Frontend
+   - Crear páginas en app router
+   - Desarrollar componentes UI
+   - Implementar hooks personalizados
+   - Integrar con React Query
+   - Conectar con API
+   
+6. 🧪 Tests Frontend
+   - Tests de componentes
+   - Tests de integración
+   - Ejecutar: npm test
+   
+7. 📝 Documentación
+   - README del módulo
+   - Comentarios JSDoc en funciones complejas
+   - Actualizar API docs
+   
+8. 🚀 Deploy
+   - Merge a staging
+   - Probar en ambiente staging
+   - Deploy a producción si todo OK
+   
+9. ♻️ Iterar
+   - Recoger feedback
+   - Hacer mejoras
+   - Siguiente módulo
+```
+
+### **Convenciones de Código:**
+
+**Commits:**
+```bash
+feat(projects): add project creation endpoint
+fix(auth): resolve token expiration issue
+docs(readme): update installation steps
+test(projects): add unit tests for project service
+refactor(finance): improve budget calculation logic
+```
+
+**Nombres de archivos:**
+- Backend: camelCase para archivos JS (`projectService.js`)
+- Frontend: PascalCase para componentes (`ProjectCard.jsx`)
+- Rutas: kebab-case (`project-routes.js`)
+
+**Estructura de funciones:**
+```javascript
+/**
+ * Crea un nuevo proyecto en el sistema
+ * @param {Object} projectData - Datos del proyecto
+ * @param {string} projectData.name - Nombre del proyecto
+ * @param {number} projectData.budget - Presupuesto total
+ * @param {string} userId - ID del usuario creador
+ * @returns {Promise<Object>} Proyecto creado
+ * @throws {Error} Si faltan datos requeridos
+ */
+export const createProject = async (projectData, userId) => {
+  // Validación
+  if (!projectData.name || !projectData.budget) {
+    throw new Error('Faltan datos requeridos');
+  }
+  
+  // Lógica
+  const project = await prisma.project.create({
+    data: {
+      ...projectData,
+      managerId: userId,
+      code: generateProjectCode(),
+    },
+  });
+  
+  return project;
+};
+```
+
+## 🧪 **ESTRATEGIA DE TESTING**
+
+### **Backend (Jest + Supertest):**
+```javascript
+// tests/unit/projectService.test.js
+import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { createProject, getProjects } from '../../src/modules/projects/services/projectService.js';
+
+describe('Project Service', () => {
+  test('should create a project successfully', async () => {
+    const projectData = {
+      name: 'Test Project',
+      budget: 10000,
+      startDate: new Date(),
+      endDate: new Date(),
+      sector: 'Centro',
+      category: 'Vialidad',
+    };
+    
+    const project = await createProject(projectData, 'user-id');
+    
+    expect(project).toHaveProperty('id');
+    expect(project.name).toBe('Test Project');
+    expect(project.code).toMatch(/^PRO-\d{4}-\d+$/);
+  });
+  
+  test('should throw error if required fields are missing', async () => {
+    await expect(createProject({}, 'user-id')).rejects.toThrow();
+  });
+});
+
+// tests/integration/projectRoutes.test.js
+import request from 'supertest';
+import app from '../../src/server.js';
+
+describe('POST /api/projects', () => {
+  let authToken;
+  
+  beforeAll(async () => {
+    // Login para obtener token
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'test@test.com', password: 'password' });
+    authToken = res.body.token;
+  });
+  
+  test('should create project with valid data', async () => {
+    const res = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        name: 'Nuevo Proyecto',
+        budget: 50000,
+        startDate: '2025-01-01',
+        endDate: '2025-12-31',
+        sector: 'Norte',
+        category: 'Educación',
+      });
+    
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('id');
+  });
+  
+  test('should return 401 without token', async () => {
+    const res = await request(app)
+      .post('/api/projects')
+      .send({ name: 'Test' });
+    
+    expect(res.status).toBe(401);
+  });
+});
+```
+
+### **Frontend (React Testing Library):**
+```javascript
+// tests/components/ProjectCard.test.js
+import { render, screen } from '@testing-library/react';
+import ProjectCard from '@/components/modules/projects/ProjectCard';
+
+describe('ProjectCard', () => {
+  const mockProject = {
+    id: '1',
+    code: 'PRO-2025-001',
+    name: 'Reparación de Calle',
+    budget: 100000,
+    status: 'IN_PROGRESS',
+    sector: 'Centro',
+  };
+  
+  test('renders project information correctly', () => {
+    render(<ProjectCard project={mockProject} />);
+    
+    expect(screen.getByText('PRO-2025-001')).toBeInTheDocument();
+    expect(screen.getByText('Reparación de Calle')).toBeInTheDocument();
+    expect(screen.getByText('Centro')).toBeInTheDocument();
+  });
+  
+  test('displays correct status badge', () => {
+    render(<ProjectCard project={mockProject} />);
+    
+    const statusBadge = screen.getByText(/en proceso/i);
+    expect(statusBadge).toBeInTheDocument();
+    expect(statusBadge).toHaveClass('bg-blue-100');
+  });
+});
+```
+
+## 🚀 **ORDEN DE IMPLEMENTACIÓN PRIORIZADO**
+
+### **FASE 0: CORE (Semana 1-2)**
+```
+✅ Setup del proyecto
+✅ Docker compose (PostgreSQL, backend, frontend)
+✅ Configuración de Prisma
+✅ Setup de ESLint + Prettier
+✅ Autenticación completa (JWT)
+✅ RBAC básico (roles y permisos)
+✅ Layout base del dashboard
+✅ Componentes UI base (shadcn/ui)
+✅ Tests de autenticación
+```
+
+### **FASE 1: MÓDULO DE PROYECTOS (Semana 3-4)**
+```
+✅ Schema de BD para proyectos
+✅ API completa de proyectos (CRUD)
+✅ API de hitos y gastos
+✅ Upload de fotos
+✅ Tests backend
+✅ Páginas frontend: lista, detalle, crear/editar
+✅ Dashboard de proyectos con gráficos
+✅ Mapa de proyectos
+✅ Tests frontend
+```
+
+### **FASE 2: MÓDULO DE FINANZAS (Semana 5-6)**
+```
+✅ Schema de BD (presupuesto, transacciones, cuentas)
+✅ API de presupuesto
+✅ API de transacciones
+✅ API de cuentas bancarias
+✅ Tests backend
+✅ Páginas frontend de finanzas
+✅ Dashboard financiero
+✅ Reportes y gráficos
+✅ Tests frontend
+```
+
+### **FASE 3: MÓDULO DE RECURSOS HUMANOS (Semana 7-8)**
+```
+✅ Schema de BD (empleados, nómina, asistencia)
+✅ API de gestión de personal
+✅ API de nómina
+✅ API de vacaciones y permisos
+✅ Tests backend
+✅ Páginas frontend de RRHH
+✅ Gestión de expedientes
+✅ Control de asistencia
+✅ Tests frontend
+```
+
+### **Fases Siguientes:**
+- FASE 4: Módulo Tributario
+- FASE 5: Módulo de Catastro
+- FASE 6: Módulo de Participación Ciudadana
+- FASE 7: Módulo de Servicios Públicos
+- FASE 8: Portal Público
+- FASE 9: App Móvil
+
+## 🐳 **CONFIGURACIÓN DOCKER**
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: municipal_db
+    environment:
+      POSTGRES_USER: municipal
+      POSTGRES_PASSWORD: municipal123
+      POSTGRES_DB: municipal_system
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - municipal_network
+
+  backend:
+    build: ./backend
+    container_name: municipal_backend
+    environment:
+      DATABASE_URL: postgresql://municipal:municipal123@postgres:5432/municipal_system
+      JWT_SECRET: your-secret-key-change-in-production
+      NODE_ENV: development
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - municipal_network
+    command: npm run dev
+
+  frontend:
+    build: ./frontend
+    container_name: municipal_frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - municipal_network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+networks:
+  municipal_network:
+    driver: bridge
+```
+
+## 📦 **SCRIPTS NPM**
+
+### **Backend package.json:**
+```json
+{
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "prisma:seed": "node prisma/seed.js",
+    "prisma:studio": "prisma studio",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix"
+  }
+}
+```
+
+### **Frontend package.json:**
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix"
+  }
+}
+```
+
+## 📝 **DOCUMENTACIÓN REQUERIDA**
+
+Para cada módulo completado:
+1. **README.md** del módulo con:
+   - Descripción general
+   - Endpoints disponibles
+   - Ejemplos de uso
+   - Modelos de datos
+2. **Comentarios JSDoc** en funciones complejas
+3. **Variables de entorno** documentadas en .env.example
+4. **Decisiones técnicas** importantes en comentarios
+
+## 🎯 **CRITERIOS DE CALIDAD**
+
+Antes de considerar un módulo completo:
+- ✅ Todos los tests pasan (backend y frontend)
+- ✅ Coverage de tests > 70%
+- ✅ Sin errores de ESLint
+- ✅ API documentada
+- ✅ Frontend responsive (mobile, tablet, desktop)
+- ✅ Manejo de errores implementado
+- ✅ Loading states en todas las operaciones async
+- ✅ Validaciones en frontend y backend
+- ✅ Funciona en Docker
+
+## 🚦 **PRÓXIMOS PASOS**
+
+1. Revisar el PRD completo del sistema
+2. Configurar el entorno de desarrollo local
+3. Comenzar con FASE 0 (Core)
+4. Implementar autenticación
+5. Crear layout base del dashboard
+6. Continuar con módulo de proyectos
+7. Desplegar versión inicial a staging
+8. Iterar y mejorar
+
+---
+
+**NOTA IMPORTANTE:** Este sistema se construirá de forma incremental. Cada módulo debe ser funcional antes de pasar al siguiente. La prioridad es tener módulos productivos rápidamente, no perfección desde el inicio. Itera y mejora continuamente basándote en feedback.
+# Desarrollo Detallado por Módulo - Sistema de Gestión Municipal
+
+## 🏛️ **1. MÓDULO DE GESTIÓN FINANCIERA Y PRESUPUESTARIA**
+
+### **¿Qué hace este módulo?**
+Controla todo el dinero del municipio desde que se planifica hasta que se gasta, cumpliendo con las leyes venezolanas de administración financiera pública.
+
+### **Funcionalidades Detalladas:**
+
+**A) Elaboración del Presupuesto Anual:**
+- Permite crear el anteproyecto de presupuesto para el año fiscal
+- Distribuye los ingresos estimados (situado, tributos propios, transferencias)
+- Asigna recursos por partidas presupuestarias según clasificador ONAPRE
+- Distribuye por: secretarías, proyectos, programas
+- Genera documentos oficiales para presentar al Concejo Municipal
+- Permite modificaciones presupuestarias (créditos adicionales, traspasos, rectificaciones)
+
+**B) Registro Contable:**
+- Lleva la contabilidad siguiendo el Plan de Cuentas Nacional
+- Registra cada operación con asiento contable automático
+- Genera: libro diario, mayor, balance de comprobación
+- Estados financieros: balance general, estado de resultados, flujo de efectivo
+- Conciliaciones bancarias mensuales
+- Cierre contable mensual y anual
+
+**C) Proceso de Ejecución del Gasto:**
+```
+1. Compromiso → Se reserva presupuesto (cuando se firma un contrato o PO)
+2. Causado → Se recibe el bien/servicio (genera cuenta por pagar)
+3. Pagado → Se efectúa el pago (se descarga de tesorería)
+```
+- Control de disponibilidad presupuestaria en tiempo real
+- No permite gastar más de lo aprobado
+- Genera órdenes de pago y comprobantes
+
+**D) Tesorería:**
+- Control de todas las cuentas bancarias del municipio
+- Registro de ingresos: situado constitucional, tributos, multas
+- Programación de pagos según prioridades y disponibilidad
+- Emisión de cheques o transferencias electrónicas
+- Conciliación con estados de cuenta bancarios
+- Proyección de flujo de caja (cuánto dinero habrá disponible)
+- Control de fondos: rotatorios, anticipos, cajas chicas
+
+**E) Reportes ONAPRE:**
+- Genera automáticamente los formatos exigidos:
+  - Form 1013 (Ejecución financiera del presupuesto)
+  - Form 2345 (Balance general)
+  - Form 3001 (Ejecución física)
+- Exportación en formato Excel/PDF
+- Cumplimiento de plazos de entrega
+
+**F) Análisis Financiero:**
+- Comparativo presupuestado vs ejecutado
+- Indicadores: nivel de ejecución, eficiencia del gasto
+- Alertas de sobreejección o subejecución
+- Reportes para toma de decisiones del alcalde
+
+---
+
+## 💰 **2. MÓDULO DE GESTIÓN TRIBUTARIA**
+
+### **¿Qué hace este módulo?**
+Administra todos los impuestos, tasas y contribuciones que cobra la alcaldía, desde el registro del contribuyente hasta el cobro y control de la morosidad.
+
+### **Funcionalidades Detalladas:**
+
+**A) Registro de Contribuyentes:**
+- Base de datos de todos los ciudadanos y empresas del municipio
+- Datos: nombre, RIF/CI, dirección, teléfono, email
+- Clasificación: persona natural/jurídica, tipo de actividad
+- Historial tributario completo
+- Actualización de datos en línea por el contribuyente
+
+**B) Impuesto sobre Actividades Económicas (Patente):**
+- Registro de establecimientos comerciales e industriales
+- Clasificación según actividad económica (código CIIU)
+- Cálculo automático según ordenanza municipal
+- Variables: ingresos brutos, categoría, tasa aplicable
+- Control de licencias: nueva, renovación, traspaso, cese
+- Inspecciones fiscales: programación y registro
+- Generación de planilla de pago
+- Control de solvencias vigentes
+
+**C) Impuesto sobre Inmuebles Urbanos:**
+- Integración con catastro municipal
+- Registro de cada inmueble: ubicación, área, uso, propietario
+- Cálculo del avalúo catastral (valor del terreno + construcción)
+- Aplicación de alícuota según zona y uso
+- Actualización anual de valores
+- Exoneraciones: adultos mayores, discapacitados, según ordenanza
+- Generación de factura anual o trimestral
+- Notificación automática a propietarios
+
+**D) Impuesto sobre Vehículos:**
+- Registro de vehículos del municipio
+- Datos: placa, marca, modelo, año, propietario
+- Cálculo según avalúo y año del vehículo
+- Generación de planilla anual
+- Control de pago y emisión de calcomanía/solvencia
+
+**E) Portal de Autopago:**
+- Ciudadano ingresa con RIF/CI
+- Consulta sus deudas pendientes
+- Genera planilla de pago con código de referencia
+- Opciones de pago:
+  - Pago móvil (C2P con bancos)
+  - Transferencia bancaria
+  - Punto de venta en taquillas municipales
+  - Bancos y corresponsales autorizados
+- Descarga recibo digital inmediatamente
+- Solicita solvencia municipal en línea
+
+**F) Gestión de Cobranza:**
+- Identificación automática de morosos
+- Clasificación por antigüedad de deuda
+- Emisión de notificaciones escalonadas:
+  1. Recordatorio amigable (antes del vencimiento)
+  2. Aviso de mora (después del vencimiento)
+  3. Intimación formal
+  4. Pre-aviso de medidas coactivas
+- Cálculo automático de intereses moratorios
+- Convenios de pago: plan de cuotas personalizables
+- Registro de gestión telefónica y presencial
+- Reportes de recuperación de cartera
+
+**G) Facturación de Tasas:**
+- Tasa de aseo urbano (domiciliario y comercial)
+- Tasas administrativas: copias certificadas, planos, permisos
+- Uso de espacios: kioscos, mercados, ferias
+- Servicios de cementerio
+- Impuestos por espectáculos públicos
+- Ocupación de vía pública
+
+**H) Solvencias y Certificaciones:**
+- Generación automática si está solvente
+- Código QR para verificación en línea
+- Vigencia temporal configurable
+- Restricción si hay deudas pendientes
+- Historial de solvencias emitidas
+
+---
+
+## 📋 **3. MÓDULO DE CATASTRO Y ORDENAMIENTO TERRITORIAL**
+
+### **¿Qué hace este módulo?**
+Mantiene un registro actualizado de todos los inmuebles del municipio y controla que las construcciones cumplan con las normas urbanísticas.
+
+### **Funcionalidades Detalladas:**
+
+**A) Catastro de Inmuebles:**
+- Ficha catastral completa de cada inmueble:
+  - Ubicación exacta (dirección, coordenadas GPS)
+  - Linderos y medidas
+  - Área de terreno y construcción
+  - Número de plantas, ambientes
+  - Uso actual: residencial, comercial, industrial, baldío
+  - Servicios: agua, electricidad, cloacas, gas
+  - Estado de conservación
+  - Año de construcción
+- Fotografía fachada y vistas
+- Registro de propietarios histórico
+- Documento de propiedad (protocolización)
+- Vinculación con registro inmobiliario
+
+**B) Sistema de Información Geográfica (SIG):**
+- Mapa digital del municipio completo
+- Visualización de cada parcela
+- Capas de información:
+  - Zonificación (zonas residenciales, comerciales, industriales)
+  - Áreas protegidas
+  - Vialidad
+  - Servicios públicos (escuelas, ambulatorios, plazas)
+  - Redes de servicios (agua, cloacas, electricidad)
+- Herramientas de medición: distancias, áreas, perímetros
+- Ubicación de problemas ciudadanos en mapa
+- Exportación de mapas y planos
+
+**C) Variables Urbanas:**
+- Registro de normas por zona:
+  - Retiros (frontal, lateral, posterior)
+  - Altura máxima permitida
+  - Densidad de construcción
+  - Porcentaje de construcción
+  - Uso permitido del suelo
+  - Estacionamientos requeridos
+- Consulta fácil por dirección o parcela
+- Aplicación automática en evaluación de proyectos
+
+**D) Permisos de Construcción:**
+
+**Flujo completo:**
+```
+1. Solicitud:
+   - Ciudadano/empresa presenta proyecto
+   - Sube documentos: planos arquitectónicos, ingenierías, documento de propiedad
+   - Paga tasa de revisión
+
+2. Revisión Técnica:
+   - Ingeniero municipal revisa cumplimiento de variables urbanas
+   - Verifica cálculos estructurales
+   - Chequea normas de bomberos, sanitarias
+   - Puede solicitar correcciones
+
+3. Aprobación:
+   - Si cumple, se emite permiso de construcción
+   - Se asigna número de expediente
+   - Se cobra tasa según m² a construir
+
+4. Control de Obra:
+   - Inspecciones programadas durante construcción
+   - Registro fotográfico
+   - Verificación de lo construido vs aprobado
+   - Paralizaciones si hay incumplimientos
+
+5. Conformidad Final:
+   - Inspección de obra terminada
+   - Emisión de conformidad de construcción
+   - Actualización del catastro
+```
+
+**E) Consultas Públicas:**
+- Portal web donde cualquiera puede:
+  - Ver el plano de zonificación
+  - Consultar variables de su parcela
+  - Conocer estado de su trámite de construcción
+  - Descargar formularios
+
+**F) Control Urbano:**
+- Registro de denuncias: construcciones ilegales, invasiones
+- Programación de inspecciones de oficio
+- Notificaciones y sanciones
+- Seguimiento de demoliciones o regularizaciones
+
+---
+
+## 🏗️ **4. MÓDULO DE GESTIÓN DE PROYECTOS**
+
+### **¿Qué hace este módulo?**
+Planifica, ejecuta y controla todas las obras y proyectos de la alcaldía, desde arreglar una calle hasta construir un ambulatorio.
+
+### **Funcionalidades Detalladas:**
+
+**A) Banco de Proyectos:**
+- Portafolio completo de iniciativas municipales
+- Estados: idea, formulado, aprobado, en ejecución, culminado, paralizado
+- Clasificación: obra civil, social, tecnológico, institucional
+- Área: vialidad, salud, educación, deportes, seguridad, etc.
+- Origen: plan de gobierno, presupuesto participativo, emergencia
+
+**B) Formulación de Proyectos:**
+
+**Ficha Técnica completa:**
+- Nombre del proyecto
+- Justificación: ¿Por qué es necesario?
+- Objetivos: General y específicos
+- Metas cuantificables
+- Beneficiarios: Número de personas/familias/sectores
+- Ubicación geográfica (con mapa)
+- Descripción técnica detallada
+- Especificaciones técnicas
+- Planos y diseños (carga de archivos)
+
+**Presupuesto detallado:**
+- Desagregado por partidas
+- Materiales con cantidades y costos unitarios
+- Mano de obra
+- Equipos y maquinarias
+- Costos indirectos
+- Fuente de financiamiento: presupuesto ordinario, FUS, Fontur, endeudamiento, etc.
+- Análisis de precios unitarios (APU)
+
+**C) Cronograma de Ejecución:**
+- Diagrama de Gantt visual
+- Actividades con fechas inicio/fin
+- Dependencias entre tareas
+- Ruta crítica
+- Hitos importantes
+- Asignación de responsables por actividad
+- Porcentaje de avance planificado vs real
+
+**D) Contratación:**
+- Proceso de licitación o contratación directa
+- Registro de empresas invitadas/participantes
+- Evaluación de ofertas
+- Adjudicación
+- Contrato digital con anexos
+- Órdenes de inicio
+- Pólizas y garantías
+
+**E) Seguimiento y Control:**
+
+**Avance Físico:**
+- Registro semanal o quincenal de actividades ejecutadas
+- Porcentaje de avance por partida
+- Fotografías del progreso (antes/durante/después)
+- Comparación planificado vs ejecutado
+- Alertas de retrasos
+
+**Avance Financiero:**
+- Valuaciones de obra
+- Certificación de trabajos ejecutados
+- Pagos realizados al contratista
+- Control del monto comprometido vs pagado
+- Anticipos y retenciones
+- Cierre financiero
+
+**F) Control de Calidad:**
+- Inspecciones técnicas
+- Ensayos de laboratorio (concreto, asfalto, suelos)
+- Registro de no conformidades
+- Acciones correctivas
+- Actas de recepción provisional y definitiva
+
+**G) Gestión de Cambios:**
+- Órdenes de cambio (modificaciones al proyecto original)
+- Impacto en costo y tiempo
+- Aprobaciones requeridas
+- Trazabilidad de modificaciones
+
+**H) Reportes Gerenciales:**
+- Dashboard de todos los proyectos activos
+- Semáforos: verde (dentro de plazo), amarillo (riesgo), rojo (atrasado)
+- Inversión ejecutada del municipio
+- Proyectos por culminar en el período
+- Indicadores de eficiencia
+
+**I) Cierre de Proyecto:**
+- Recepción definitiva de obra
+- Acta de finiquito
+- Evaluación de desempeño del contratista
+- Lecciones aprendidas
+- Entrega a comunidad
+- Registro en inventario de bienes (si aplica)
+
+---
+
+## 👥 **5. MÓDULO DE PARTICIPACIÓN CIUDADANA**
+
+### **¿Qué hace este módulo?**
+Crea un canal directo entre ciudadanos y gobierno municipal para reportar problemas, hacer seguimiento y fomentar la transparencia.
+
+### **Funcionalidades Detalladas:**
+
+**A) Sistema de Reportes Ciudadanos (tipo "311"):**
+
+**Proceso del Ciudadano:**
+```
+1. Ingresa al portal/app móvil
+2. Selecciona tipo de problema:
+   - Baches en calles
+   - Alumbrado público dañado
+   - Acumulación de basura
+   - Fugas de agua
+   - Árboles caídos o peligrosos
+   - Semáforos dañados
+   - Alcantarillas tapadas
+   - Plagas (ratas, moscas, zancudos)
+   - Ruido excesivo
+   - Animales muertos en vía pública
+   - Señalización vial dañada
+   - Otros
+
+3. Describe el problema (texto libre)
+
+4. Geolocalización automática o manual en mapa
+
+5. Sube hasta 5 fotos del problema
+
+6. Datos de contacto (opcional para seguimiento)
+
+7. Recibe número de ticket único: RP-2025-00123
+
+8. Confirmación por email/SMS
+```
+
+**B) Gestión Interna Municipal:**
+
+**Mesa de Control Central:**
+- Recibe todos los reportes en tiempo real
+- Dashboard con mapa de incidencias activas
+- Clasificación automática por área responsable:
+  - Servicios Públicos
+  - Obras
+  - Ambiente
+  - Ingeniería Municipal
+  - Protección Civil
+- Priorización:
+  - Crítica: Peligro inminente (48h máximo)
+  - Alta: Afecta servicios esenciales (7 días)
+  - Media: Afecta calidad de vida (15 días)
+  - Baja: Mejoras menores (30 días)
+
+**Asignación y Trabajo:**
+- Se asigna automáticamente al departamento correspondiente
+- Notificación al supervisor responsable
+- Supervisor asigna cuadrilla o personal específico
+- Personal de campo recibe tarea en app móvil
+- Van al sitio, verifican el problema
+- Registran acciones tomadas
+- Toman foto "después" de la solución
+- Marcan como "Resuelto"
+
+**C) Estados del Ticket:**
+```
+Recibido → En Revisión → Asignado → En Proceso → Resuelto → Cerrado → Reabierto (si aplica)
+```
+
+**D) Comunicación con el Ciudadano:**
+- Notificación automática en cada cambio de estado
+- Tiempo transcurrido visible
+- Puede comentar o agregar información adicional
+- Recibe notificación cuando se resuelve
+- Se le pide calificar el servicio (1-5 estrellas)
+- Puede reabre si no quedó satisfecho
+
+**E) Mapa de Calor Ciudadano:**
+- Visualización geográfica de todos los reportes
+- Concentración por zonas
+- Filtros: por tipo, por fecha, por estado
+- Identifica sectores con más problemas
+- Ayuda a planificar mantenimiento preventivo
+
+**F) Estadísticas y Métricas:**
+- Total de reportes por período
+- Tiempo promedio de respuesta
+- Porcentaje de resolución
+- Satisfacción ciudadana promedio
+- Ranking de problemas más frecuentes
+- Comparativa entre parroquias
+- Evolución histórica
+
+**G) Presupuesto Participativo:**
+
+**Proceso anual:**
+```
+1. Convocatoria: La alcaldía destina % del presupuesto
+
+2. Asambleas Comunitarias:
+   - Se reúnen por sectores
+   - Proponen proyectos para su comunidad
+   - Priorizan necesidades
+
+3. Registro de Propuestas:
+   - Comunidades suben proyectos al sistema
+   - Descripción, costo estimado, beneficiarios
+   - Pueden subir videos o presentaciones
+
+4. Evaluación Técnica:
+   - Alcaldía evalúa viabilidad
+   - Costea cada proyecto con precisión
+   - Descarta los no viables (explica por qué)
+
+5. Votación Ciudadana:
+   - Portal de votación abierto (con cédula)
+   - Cada ciudadano vota por sus proyectos favoritos
+   - Transparencia total del proceso
+
+6. Resultados:
+   - Se aprueban proyectos más votados hasta agotar presupuesto
+   - Publicación de ganadores
+   - Compromisos de ejecución
+
+7. Seguimiento:
+   - Cada proyecto se ejecuta con seguimiento público
+   - La comunidad ve el avance
+   - Rendición de cuentas
+```
+
+**H) Portal de Transparencia:**
+
+**Información publicada obligatoriamente:**
+- Presupuesto municipal completo
+- Ejecución presupuestaria mensual
+- Nómina de funcionarios (sin datos sensibles)
+- Contrataciones y licitaciones
+- Órdenes de compra
+- Ordenanzas municipales vigentes
+- Actas del Concejo Municipal
+- Bienes del municipio
+- Plan Operativo Anual
+- Estados financieros auditados
+- Declaraciones juradas de funcionarios
+
+**I) Consultas Públicas y Encuestas:**
+- Alcaldía puede lanzar consultas sobre temas importantes
+- Encuestas de satisfacción de servicios
+- Foros de discusión moderados
+- Buzón de sugerencias
+
+**J) Rendición de Cuentas:**
+- Informes trimestrales del alcalde
+- Eventos de rendición pública (transmisión online)
+- Respuestas a preguntas frecuentes
+- Compromisos vs cumplimiento
+
+---
+
+## 🚗 **6. MÓDULO DE GESTIÓN DE FLOTA**
+
+### **¿Qué hace este módulo?**
+Controla todos los vehículos municipales para que estén operativos, se les dé mantenimiento oportuno y se optimice su uso.
+
+### **Funcionalidades Detalladas:**
+
+**A) Inventario Maestro de Vehículos:**
+
+**Datos de cada vehículo:**
+- Tipo: camión recolector, ambulancia, patrulla, camioneta, automóvil, volqueta, autobús, motocicleta, maquinaria pesada
+- Marca y modelo
+- Año de fabricación
+- Placa
+- Número de serial de carrocería y motor
+- Color
+- Capacidad (pasajeros o carga)
+- Tipo de combustible: gasolina, diésel, gas, eléctrico
+- Cilindraje
+- Foto del vehículo
+- Estado: operativo, en reparación, fuera de servicio, siniestrado
+- Dependencia asignada: Aseo Urbano, Salud, Seguridad, Alcaldía, etc.
+- Valor de adquisición
+- Valor actual (depreciación)
+
+**Documentación:**
+- Certificado de registro
+- Póliza de seguro (fecha vencimiento, cobertura)
+- Título de propiedad
+- Permisos especiales (si aplica)
+- Revisiones técnicas obligatorias
+
+**B) Asignación de Vehículos:**
+- Asignación permanente: vehículo asignado a un funcionario o dependencia específica
+- Asignación temporal: pool de vehículos disponibles para solicitud
+- Control de conductores autorizados (con licencia al día)
+- Histórico de asignaciones
+
+**C) Bitácora de Viaje:**
+
+**Cada vez que se usa un vehículo se registra:**
+- Fecha y hora de salida
+- Conductor responsable
+- Kilometraje inicial
+- Destino y motivo del viaje
+- Hora de retorno
+- Kilometraje final
+- Kilómetros recorridos (automático)
+- Observaciones: estado del vehículo, incidencias
+- Firma digital del conductor
+
+**Beneficios:**
+- Control de uso real vs reportado
+- Detecta uso personal indebido
+- Calcula rendimiento de combustible real
+- Identifica patrones de uso
+
+**D) Control de Combustible:**
+
+**Sistema de vales:**
+- Emisión de vales de combustible
+- Datos del vale: vehículo, litros autorizados, estación de servicio, fecha
+- Control de cupo mensual por vehículo
+- Registro de carga efectiva:
+  - Fecha y hora real de llenado
+  - Litros cargados
+  - Costo (si es pagado)
+  - Kilometraje al momento de carga
+
+**Análisis:**
+- Rendimiento km/litro por vehículo
+- Comparación con rendimiento esperado del fabricante
+- Alertas de bajo rendimiento (posible fuga, mal estado)
+- Consumo mensual por vehículo y por flota total
+- Proyección de gasto en combustible
+- Estadísticas por tipo de vehículo
+
+**E) Mantenimiento Preventivo:**
+
+**Sistema automatizado:**
+- Se programa mantenimiento según:
+  - Kilometraje (cada 5,000 km, 10,000 km, etc.)
+  - Tiempo (cada 3 meses, 6 meses, 1 año)
+  - Lo que ocurra primero
+
+**Alertas automáticas:**
+- 1,000 km antes: alerta amarilla
+- En el momento: alerta roja
+- Vencido: vehículo bloqueado hasta realizar mantenimiento
+
+**Checklist de mantenimiento:**
+- Cambio de aceite motor
+- Cambio de filtros (aire, aceite, combustible)
+- Rotación de neumáticos
+- Alineación y balanceo
+- Revisión de frenos (pastillas, discos, líquido)
+- Revisión de suspensión
+- Cambio de bujías
+- Revisión de sistema eléctrico
+- Revisión de luces
+- Cambio de correas
+- Limpieza de inyectores
+- Revisión de aire acondicionado
+
+**Registro de servicio:**
+- Fecha de mantenimiento
+- Taller (interno o externo)
+- Trabajos realizados
+- Repuestos utilizados
+- Costo total
+- Mecánico responsable
+- Próximo mantenimiento programado automático
+
+**F) Mantenimiento Correctivo (Reparaciones):**
+
+**Cuando hay una falla:**
+```
+1. Reporte de falla:
+   - Conductor o responsable reporta problema
+   - Describe síntoma
+   - Vehículo pasa a estado "en reparación"
+
+2. Diagnóstico:
+   - Mecánico evalúa
+   - Identifica causa
+   - Elabora presupuesto
+
+3. Aprobación:
+   - Si costo < umbral: autoriza supervisor
+   - Si costo > umbral: requiere dirección
+   - Si muy costoso: evaluar dar de baja
+
+4. Reparación:
+   - Se ejecuta trabajo
+   - Se registran repuestos usados
+   - Pruebas de funcionamiento
+
+5. Entrega:
+   - Se devuelve operativo
+   - Actualiza estado del vehículo
+   - Registra costo total
+```
+
+**Historial de reparaciones:**
+- Todas las fallas que ha tenido el vehículo
+- Identifica vehículos "problema" (alto costo de mantenimiento)
+- Decisión de dar de baja por ineficiencia
+
+**G) Gestión de Neumáticos:**
+- Inventario de neumáticos instalados en cada vehículo
+- Control de posición (delantero izq/der, trasero izq/der)
+- Marca, medida, fecha de instalación
+- Programa de rotación
+- Control de presión de aire
+- Registro de cambios
+- Vida útil esperada vs real
+- Almacén de neumáticos de repuesto
+
+**H) Control de Repuestos:**
+- Inventario de repuestos en almacén
+- Repuestos críticos con stock mínimo
+- Solicitudes de compra automáticas
+- Asociación de repuesto usado a vehículo específico
+- Control de garantías de repuestos
+- Proveedores habituales
+
+**I) Seguros:**
+- Póliza de cada vehículo
+- Cobertura contratada
+- Prima pagada
+- Fecha de vencimiento (alertas automáticas)
+- Registro de siniestros/accidentes:
+  - Fecha, hora, lugar
+  - Descripción del incidente
+  - Conductor involucrado
+  - Daños materiales/personales
+  - Proceso con seguradora
+  - Costos cubiertos/no cubiertos
+- Historial de siniestralidad
+
+**J) Costos Operativos:**
+
+**Indicadores por vehículo:**
+- Costo de combustible mensual/anual
+- Costo de mantenimiento preventivo acumulado
+- Costo de reparaciones acumuladas
+- Costo de seguro anual
+- Costo de impuestos municipales
+- Depreciación
+- **Costo total de propiedad (TCO)**
+- Costo por kilómetro recorrido
+
+**Análisis de Flota:**
+- Ranking de vehículos más costosos
+- Comparación entre unidades similares
+- Punto óptimo de reemplazo (cuando comprar nuevo es más barato que reparar)
+- Presupuesto anual requerido para la flota
+
+**K) GPS y Telemetría (opcional pero recomendado):**
+- Rastreo en tiempo real de vehículos
+- Histórico de rutas
+- Geocercas (alertas si sale de zona autorizada)
+- Detección de ralentí excesivo
+- Velocidad en tiempo real
+- Alertas de exceso de velocidad
+- Comportamiento del conductor (frenadas bruscas, aceleraciones)
+- Optimización de rutas
+
+**L) Reportes Gerenciales:**
+- Estado general de la flota
+- Vehículos operativos vs no operativos
+- Mantenimientos vencidos
+- Seguros por vencer
+- Consumo de combustible
+- Vehículos con mayor costo operativo
+- Necesidades de renovación de flota
+
+---
+
+## 📦 **7. MÓDULO DE INVENTARIO Y BIENES MUNICIPALES**
+
+### **¿Qué hace este módulo?**
+Registra y controla todos los bienes que son propiedad del municipio, desde edificios hasta computadoras, para evitar pérdidas y optimizar su uso.
+
+### **Funcionalidades Detalladas:**
+
+**A) Clasificación de Bienes:**
+
+**1. Bienes Inmuebles:**
+- Edificios: sedes administrativas, ambulatorios, escuelas municipales, bibliotecas
+- Terrenos: lotes, parcelas
+- Infraestructura: plazas, parques, mercados municipales, polideportivos
+- Datos: ubicación, área, linderos, documento de propiedad, avalúo, uso actual
+
+**2. Bienes Muebles:**
+- Mobiliario: escritorios, sillas, archivadores, estantes
+- Equipos de oficina: computadoras, impresoras, fotocopiadoras, teléfonos, proyectores
+- Aires acondicionados
+- Electrodomésticos: neveras, microondas (para comedores)
+- Herramientas: taladros, soldadoras, compresores
+- Instrumental médico: tensiómetros, camillas, estetoscopios
+- Equipos deportivos
+- Instrumentos musicales
+- Obras de arte, cuadros históricos
+- Otros
+
+**3. Maquinaria y Equipos Especiales:**
+- Retroexcavadoras, cargadores, motoniveladoras
+- Plantas eléctricas
+- Bombas de agua
+- Equipos de sonido profesionales
+- Equipos de fumigación
+
+**4. Bienes Intangibles:**
+- Software con licencias
+- Dominios web
+- Patentes o marcas del municipio
+
+**B) Registro Detallado de Cada Bien:**
+
+**Información básica:**
+- Código único del bien (etiqueta, código de barras, QR)
+- Descripción completa
+- Marca y modelo (si aplica)
+- Número de serial
+- Año de adquisición
+- Valor de compra original
+- Valor actual (con depreciación)
+- Estado: excelente, bueno, regular, malo, obsoleto, inservible
+- Proveedor original
+
+**Ubicación y custodia:**
+- Dependencia/oficina asignada
+- Ubicación física específica (edificio, piso, oficina)
+- Custodio responsable (funcionario asignado)
+- Fecha de asignación
+- Histórico de movimientos
+
+**Documentación:**
+- Factura de compra (digitalizada)
+- Garantía (si está vigente)
+- Manuales de usuario
+- Certificados (si aplica)
+- Póliza de seguro (si aplica)
+
+**Fotografías:**
+- Foto del bien
+- Foto de la placa o serial
+- Foto del estado actual
+
+**C) Control de Depreciación:**
+- Método de depreciación según normativa (línea recta generalmente)
+- Vida útil estimada por tipo de bien
+- Cálculo automático de depreciación mensual/anual
+- Valor en libros actualizado
+- Reportes contables para balance general
+
+**D) Movimientos de Bienes:**
+
+**Tipos de movimientos:**
+
+**1. Asignación inicial:**
+- Se entrega bien nuevo al custodio
+- Acta de entrega firmada digitalmente
+- Custodio acepta responsabilidad
+
+**2. Traspaso interno:**
+- Bien se mueve de una dependencia a otra
+- Acta de entrega-recepción
+- Custodio anterior descarga responsabilidad
+- Nuevo custodio acepta
+
+**3. Préstamo temporal:**
+- Para eventos, actividades especiales
+- Fecha de salida y retorno planificado
+- Responsable temporal
+- Verificación al retorno
+
+**4. Reparación/Mantenimiento:**
+- Salida a taller externo
+- Registro de taller
+- Costo de reparación
+- Fecha de retorno
+
+**5. Baja o desincorporación:**
+- Bienes inservibles, obsoletos o perdidos
+- Razón de baja: obsolescencia, hurto, extravío, deterioro irreparable
+- Requiere autorización jerárquica
+- Proceso según LOAFSP
+- Acta de baja
+- Salida del inventario
+
+**6. Donación o remate:**
+- Bienes en buen estado pero no necesarios
+- Donación a instituciones educativas, comunales
+- Remate público de bienes depreciados
+- Acta de transferencia
+
+**E) Inventario de Almacén (Bienes Fungibles):**
+
+**Materiales y suministros:**
+- Útiles de oficina: resmas de papel, carpetas, grapadoras, bolígrafos, toner
+- Materiales de limpieza: cloro, desinfectantes, escobas, bolsas de basura
+- Materiales de construcción: cemento, arena, bloques, pintura, electricidad, plomería
+- Medicamentos (para ambulatorios municipales)
+- Alimentos no perecederos (para programas sociales)
+- Uniformes
+- Repuestos varios
+
+**Control de inventario:**
+- Cantidad en stock actual
+- Unidad de medida
+- Ubicación en almacén (estante, pasillo)
+- Stock mínimo (punto de reorden)
+- Stock máximo
+- Costo unitario promedio
+- Valor total del inventario
+- Proveedor habitual
+
+**Entradas:**
+- Recepción de compras
+- Verificación contra orden de compra
+- Conteo físico
+- Registro en sistema
+- Actualización de stock
+
+**Salidas:**
+- Solicitud de dependencias (requisiciones)
+- Autorización de almacén
+- Entrega con comprobante firmado
+- Descuento de inventario
+- Registro de uso por departamento
+
+**Reportes de consumo:**
+- Consumo mensual por artículo
+- Consumo por dependencia
+- Proyección de necesidades
+- Rotación de inventario
+- Artículos de lento movimiento
+
+**F) Solicitudes de Compra:**
+
+**Proceso:**
+```
+1. Dependencia identifica necesidad
+2. Elabora solicitud en el sistema:
+   - Artículos requeridos
+   - Cantidad
+   - Justificación
+   - Urgencia
+3. Supervisor de área aprueba
+4. Pasa a Dirección de Administración
+5. Verifica disponibilidad presupuestaria
+6. Almacén verifica si hay en stock
+   - Si hay: se entrega de inmediato
+   - Si no hay: pasa a compras
+7. Compras cotiza con proveedores
+8. Autorización final según monto
+9. Emisión de orden de compra
+10. Recepción y entrega a solicitante
+```
+
+**G) Inventario Físico Periódico:**
+
+**Levantamiento anual o bianual:**
+- Se conforma comisión de inventario
+- Planificación por dependencias
+- Visitas físicas a cada oficina
+- Verificación de existencia de bienes registrados
+- Conteo de cantidades (almacén)
+- Verificación de estado
+- Levantamiento de nuevos bienes no registrados (compras no cargadas)
+- Identificación de faltantes
+
+**Conciliación:**
+- Comparación inventario físico vs sistema
+- Investigación de diferencias
+- Ajustes contables
+- Responsabilidades por pérdidas
+- Actualización del sistema
+
+**H) Sistema de Etiquetado:**
+- Cada bien tiene código único: ALM-2025-001234
+- Etiqueta física adhesiva con código de barras o QR
+- Escáner para inventarios rápidos
+- App móvil para escanear y verificar
+- Vinculación automática del código al bien en el sistema
+
+**I) Mantenimiento de Bienes:**
+- Programa de mantenimiento preventivo:
+  - Aires acondicionados: limpieza trimestral
+  - Computadoras: mantenimiento semestral
+  - Equipos médicos: calibración anual
+  - Mobiliario: revisión y reparaciones menores
+- Registro de servicios
+- Garantías vigentes
+- Costos de mantenimiento acumulados
+
+**J) Seguros de Bienes:**
+- Póliza de seguros contra incendio, robo, desastres
+- Cobertura por tipo de bien
+- Valor asegurado vs valor real
+- Renovación de pólizas
+- Registro de siniestros y reclamos
+
+**K) Reportes y Consultas:**
+- Inventario completo o por dependencia
+- Bienes asignados a un funcionario específico
+- Bienes por custodio
+- Valor total del patrimonio municipal
+- Bienes depreciados pendientes de baja
+- Movimientos en un período
+- Bienes en reparación
+- Nivel de stock de almacén
+- Necesidades de reposición
+
+**L) Control de Garantías:**
+- Alertas de vencimiento de garantías
+- Activación de garantía cuando hay falla
+- Seguimiento de reparaciones en garantía
+- Histórico de uso de garantías
+
+---
+
+## 👷 **8. MÓDULO DE RECURSOS HUMANOS**
+
+### **¿Qué hace este módulo?**
+Administra todo lo relacionado con los empleados municipales: desde su contratación hasta el pago de nómina, vacaciones, evaluaciones y retiro.
+
+### **Funcionalidades Detalladas:**
+
+**A) Expediente Digital del Funcionario:**
+
+**Datos Personales:**
+- Nombre completo
+- Cédula de identidad
+- RIF
+- Fecha y lugar de nacimiento
+- Edad actual
+- Sexo
+- Estado civil
+- Dirección completa
+- Teléfonos (personal, emergencia)
+- Correo electrónico personal y corporativo
+- Grupo sanguíneo
+- Contacto de emergencia
+- Foto tipo carnet
+
+**Datos Académicos:**
+- Nivel educativo: primaria, bachiller, TSU, universitario, postgrado, doctorado
+- Título obtenido
+- Institución educativa
+- Año de graduación
+- Documentos: copias de títulos digitalizados
+- Cursos y certificaciones adicionales
+
+**Datos Laborales:**
+- Número de empleado
+- Fecha de ingreso al municipio
+- Cargo actual
+- Dependencia/dirección asignada
+- Tipo de personal: empleado, obrero, contratado, alto nivel
+- Tipo de contrato: fijo, contratado, pasante, eventual
+- Salario base actual
+- Clasificación según tabulador
+- Jefe inmediato
+- Histórico de cargos en el municipio
+
+**Documentación Legal:**
+- Copia de cédula
+- RIF
+- Certificado de antecedentes penales
+- Examen médico pre-empleo
+- Carta de postulación
+- Curriculum vitae
+- Constancias de trabajo anteriores
+- Referencias personales y laborales
+- Contrato firmado (digitalizado)
+- Actas de amonestaciones (si aplica)
+- Cartas de felicitación/reconocimientos
+
+**B) Gestión de Nómina:**
+
+**Conceptos del recibo de pago:**
+
+**Asignaciones (ingresos):**
+- Sueldo base
+- Prima por antigüedad (según años de servicio)
+- Prima por profesionalización
+- Prima por hijos
+- Bono de alimentación (Cesta Ticket)
+- Bonos especiales (Aguinaldos, bonificaciones)
+- Horas extras (si aplica)
+- Guardias nocturnas/fines de semana (si aplica)
+- Suplencias
+- Retroactivos (si aplica)
+- Otros bonos según convención colectiva
+
+**Deducciones:**
+- IVSS (Seguro Social): porcentaje legal
+- Ley de Política Habitacional (FAOV): 1%
+- Paro Forzoso: 0.5%
+- Impuesto Sobre la Renta (ISLR): si aplica
+- Caja de Ahorro: aportes voluntarios
+- Préstamos: cuotas de préstamos otorgados
+- Embargos judiciales (si aplica)
+- Anticipo de quincena
+- Otras deducciones autorizadas
+
+**Aportes Patronales (carga del municipio):**
+- IVSS patronal
+- FAOV patronal
+- Paro Forzoso patronal
+- INCES (si aplica)
+- Bono de Alimentación
+
+**Proceso de nómina:**
+```
+1. Cierre de novedades:
+   - Ingresos de nuevos empleados
+   - Egresos (renuncias, despidos, jubilaciones)
+   - Cambios de sueldo (aumentos, ascensos)
+   - Suspensiones o reposos médicos
+   - Vacaciones
+   - Permisos no remunerados
+
+2. Carga de asistencias:
+   - Integración con sistema biométrico
+   - Verificación de faltas injustificadas
+   - Registro de retardos
+   - Horas extras aprobadas
+
+3. Cálculo automático:
+   - Sistema procesa asignaciones y deducciones
+   - Cálculo de aportes y retenciones
+   - Generación de conceptos especiales
+
+4. Revisión y ajustes:
+   - Supervisor RH revisa casos especiales
+   - Correcciones de errores
+
+5. Aprobación:
+   - Director de RH aprueba nómina
+   - Director de Finanzas verifica disponibilidad
+
+6. Generación de archivos:
+   - Archivo TXT para bancos (dispersión bancaria)
+   - Relación de pagos por dependencia
+   - Recibos de pago individuales
+
+7. Pago:
+   - Transferencia a cuentas bancarias (día de pago)
+   - Disponibilidad inmediata para funcionarios
+
+8. Reportes post-pago:
+   - Resumen de nómina procesada
+   - Provisiones de prestaciones sociales
+   - Aportes IVSS a declarar
+```
+
+**Recibo de pago digital:**
+- Descargable por el empleado desde portal interno
+- PDF firmado digitalmente
+- Histórico de todos los recibos
+- Certificaciones de ingresos para trámites
+
+**C) Control de Asistencia:**
+
+**Sistema Biométrico Integrado:**
+- Relojes checadores con huella dactilar o facial
+- Ubicados en edificios municipales
+- Registro de entrada y salida real
+
+**Marcaciones:**
+- Hora de entrada
+- Salida a almuerzo (si aplica)
+- Regreso de almuerzo
+- Hora de salida
+- Registro de fecha y hora exacta
+
+**Control de horarios:**
+- Horario asignado por cargo
+- Ejemplos: 7:00am-3:00pm, 8:00am-4:00pm, turnos rotativos
+- Cálculo automático de retardos (tolerancia de 5-10 min configurable)
+- Faltas injustificadas
+- Salidas tempranas no autorizadas
+
+**Justificaciones:**
+- Empleado puede subir justificativos (reposos médicos, permisos)
+- Supervisor aprueba o rechaza
+- Se actualiza estado de asistencia
+
+**Reportes de asistencia:**
+- Por empleado: días trabajados, faltas, retardos
+- Por dependencia: consolidado de asistencia
+- Exportable para cálculo de descuentos en nómina
+- Histórico mensual y anual
+
+**D) Gestión de Vacaciones:**
+
+**Derecho a vacaciones:**
+- Días acumulados según antigüedad (Ley del Trabajo):
+  - 1 año: 15 días hábiles
+  - 2 años: 16 días
+  - Incremento progresivo hasta 25 días
+- Bonificación por vacaciones (bono vacacional)
+- Cálculo de días disponibles, disfrutados y pendientes
+
+**Solicitud de vacaciones:**
+```
+1. Empleado:
+   - Ingresa al portal
+   - Ve sus días disponibles
+   - Selecciona fechas deseadas (inicio y fin)
+   - Envía solicitud
+
+2. Supervisor:
+   - Recibe notificación
+   - Evalúa disponibilidad operativa
+   - Aprueba o rechaza (con justificación)
+   - Puede sugerir fechas alternativas
+
+3. Recursos Humanos:
+   - Registra oficialmente las vacaciones
+   - Descuenta del saldo del empleado
+   - Programa el pago del bono vacacional
+
+4. Sistema:
+   - Marca esos días como "vacaciones" en asistencia
+   - No cuenta como falta
+   - Genera calendario de ausencias
+```
+
+**Plan de vacaciones:**
+- Programación anual anticipada
+- Evita que toda un área se vaya al mismo tiempo
+- Balance operativo
+
+**E) Permisos y Licencias:**
+
+**Tipos de permisos:**
+- Permiso remunerado (con goce de sueldo):
+  - Médico (citas, consultas)
+  - Por matrimonio (días según ley)
+  - Nacimiento de hijo
+  - Fallecimiento de familiar
+  - Trámites personales (con límite mensual)
+  - Estudio (si aplica)
+
+- Permiso no remunerado:
+  - Asuntos personales sin justificación médica/legal
+  - Días sin goce de sueldo
+
+**Reposos médicos:**
+- Reposo IVSS (pagado por seguro social)
+- Reposo privado (los primeros días pagados por alcaldía)
+- Carga de constancia médica digitalizada
+- Verificación por médico ocupacional (casos prolongados)
+- Integración con nómina para descuentos/pagos
+
+**Licencias especiales:**
+- Maternidad: pre y post natal (semanas según ley)
+- Paternidad: días por nacimiento
+- Licencia por estudio: postgrados, maestrías
+- Comisión de servicio: representación oficial del municipio
+
+**F) Evaluación de Desempeño:**
+
+**Proceso anual o semestral:**
+```
+1. Planificación:
+   - Se definen objetivos individuales al inicio del período
+   - Alineados con objetivos de la dependencia
+   - Indicadores medibles (SMART)
+
+2. Seguimiento:
+   - Reuniones intermedias supervisor-empleado
+   - Ajustes de objetivos si es necesario
+
+3. Evaluación:
+   - Supervisor evalúa al empleado
+   - Dimensiones:
+     * Cumplimiento de objetivos (50%)
+     * Competencias (conocimientos, habilidades)
+     * Actitud y valores (compromiso, trabajo en equipo, ética)
+     * Disciplina y asistencia
+   - Escala: Deficiente (1), Regular (2), Bueno (3), Muy Bueno (4), Excelente (5)
+
+4. Retroalimentación:
+   - Reunión cara a cara
+   - Supervisor comunica resultados
+   - Empleado puede hacer comentarios
+   - Plan de mejora si es necesario
+
+5. Consolidación:
+   - Calificación final promedio
+   - Ranking de empleados
+   - Decisiones:
+     * Reconocimientos para mejores
+     * Plan de desarrollo para mejorables
+     * Acciones correctivas para deficientes
+```
+
+**Consecuencias:**
+- Ascensos y promociones
+- Aumentos de sueldo por mérito
+- Bonificaciones especiales
+- Capacitaciones específicas
+- Amonestaciones (casos negativos recurrentes)
+
+**G) Capacitación y Desarrollo:**
+
+**Plan anual de capacitación:**
+- Detección de necesidades (según evaluación de desempeño)
+- Cursos internos: facilitador municipal o invitado
+- Cursos externos: instituciones especializadas
+- Temas: técnicos, gerenciales, software, atención al público, etc.
+
+**Registro de capacitaciones:**
+- Nombre del curso/taller
+- Institución
+- Duración (horas)
+- Fecha de realización
+- Certificado digitalizado
+- Evaluación del curso por participante
+- Aplicabilidad al cargo
+
+**Banco de conocimientos:**
+- Matriz de competencias por empleado
+- Identifica expertos internos
+- Sucesión de cargos críticos
+
+**H) Prestaciones Sociales:**
+
+**Cálculo según ley venezolana:**
+- Antigüedad: 5 días de salario por mes trabajado (año 1), luego 2 días/mes adicionales
+- Intereses sobre prestaciones: tasa según ley (capitalizable)
+- Aprovisionamiento mensual automático
+- Anticipos de prestaciones (hasta 75% acumulado):
+  - Para vivienda
+  - Para situaciones especiales
+- Liquidación total al egreso (renuncia, despido, jubilación)
+
+**Fideicomiso o provisión:**
+- Cuenta individual por empleado
+- Actualización mensual
+- Certificación anual de saldo para el empleado
+
+**I) Caja de Ahorro (Si aplica):**
+- Aportes mensuales del empleado (% voluntario)
+- Aporte patronal de contraparte
+- Préstamos a empleados con interés preferencial:
+  - Personales
+  - Por emergencia
+  - Para vehículo o vivienda
+- Reparto de excedentes anual
+- Gestión integral desde el sistema
+
+**J) Beneficios Adicionales:**
+- Seguro de HCM (Hospitalización, Cirugía, Maternidad)
+- Póliza de vida
+- Seguro funerario
+- Bono de cumpleaños
+- Útiles escolares para hijos
+- Juguetes en navidad
+- Cesta navideña
+- Actividades recreacionales (día de la familia, aniversario del municipio)
+
+**K) Procesos de Ingreso y Egreso:**
+
+**Ingreso (reclutamiento):**
+```
+1. Solicitud de personal:
+   - Dependencia solicita cubrir vacante
+   - Justificación y perfil requerido
+
+2. Reclutamiento:
+   - Publicación de vacante (web, redes sociales)
+   - Recepción de CV
+   - Base de datos de postulantes
+
+3. Selección:
+   - Revisión de CV
+   - Entrevistas
+   - Pruebas técnicas/psicométricas
+   - Verificación de referencias
+
+4. Contratación:
+   - Oferta formal
+   - Recepción de documentos
+   - Examen médico pre-empleo
+   - Firma de contrato
+
+5. Inducción:
+   - Bienvenida formal
+   - Recorrido por instalaciones
+   - Entrega de equipos (computadora, teléfono, carnet)
+   - Capacitación en procesos y sistemas
+   - Asignación en sistema
+
+6. Alta en nómina:
+   - Carga en sistema
+   - Apertura cuenta bancaria (si no tiene)
+   - Inscripción IVSS
+```
+
+**Egreso:**
+```
+1. Notificación:
+   - Renuncia voluntaria (con preaviso)
+   - Despido justificado
+   - Jubilación
+   - Fallecimiento
+
+2. Proceso administrativo:
+   - Paz y salvo de bienes asignados
+   - Entrega de equipos y documentos
+   - Cierre de accesos (sistemas, edificios)
+   - Finiquito laboral
+
+3. Liquidación:
+   - Cálculo de prestaciones sociales
+   - Vacaciones no disfrutadas
+   - Otros conceptos pendientes
+   - Descuentos si aplica
+   - Pago de liquidación
+
+4. Baja en sistema:
+   - Inactivación de usuario
+   - Archivado de expediente
+   - Certificados laborales si los solicita
+```
+
+**L) Carrera Administrativa:**
+- Según Ley del Estatuto de la Función Pública
+- Ingreso por concurso
+- Escalafón con niveles y grados
+- Ascensos por antigüedad y mérito
+- Estabilidad laboral
+- Derechos y deberes
+- Régimen disciplinario
+
+**M) Disciplina y Sanciones:**
+- Amonestaciones verbales
+- Amonestaciones escritas
+- Suspensiones sin goce de sueldo
+- Destitución (casos graves)
+- Debido proceso: notificación, descargos, decisión
+- Registro en expediente
+
+**N) Nóminas Especiales:**
+- Nómina regular (empleados y obreros fijos)
+- Nómina de contratados (eventuales)
+- Nómina de jubilados y pensionados
+- Honorarios profesionales (servicios independientes)
+
+**O) Organigramas Dinámicos:**
+- Estructura organizacional visual
+- Por dependencias y sub-dependencias
+- Con foto y datos del responsable
+- Líneas de mando y reportes
+- Actualización automática
+
+**P) Reportes Clave:**
+- Listado de personal activo
+- Nómina por dependencia
+- Cumpleaños del mes
+- Antigüedad de empleados
+- Rotación de personal
+- Ausentismo
+- Costo de personal (presupuesto vs ejecutado)
+- Proyección de jubilaciones
+- Planilla IVSS mensual
+- Certificados de trabajo automáticos
+- Constancias de ingresos
+
+## 📜 **9. MÓDULO DE GESTIÓN DOCUMENTAL Y ARCHIVO**
+
+### **¿Qué hace este módulo?**
+Controla todo el flujo de documentos que entran y salen de la alcaldía, los archiva digitalmente y permite encontrarlos fácilmente, eliminando el papel y agilizando los procesos.
+
+### **Funcionalidades Detalladas:**
+
+**A) Correspondencia y Mesa de Entrada:**
+
+**Documentos que ingresan:**
+```
+1. Recepción física/digital:
+   - Ciudadano entrega documento en ventanilla o envía por email
+   - Funcionario de mesa de entrada recibe
+   - Digitaliza si es físico (escanea)
+   - Fotografía del sobre si viene en sobre cerrado
+
+2. Registro en sistema:
+   - Número de entrada único: ME-2025-001234
+   - Fecha y hora de recepción
+   - Remitente: nombre, cédula, teléfono, email
+   - Tipo de documento: solicitud, denuncia, recurso, petición, reclamo
+   - Asunto: resumen breve
+   - Dependencia destino (a quién va dirigido)
+   - Número de folios
+   - Anexos (si tiene)
+   - Urgencia: normal, urgente, muy urgente
+
+3. Entrega de comprobante:
+   - Ciudadano recibe ticket con número de entrada
+   - Código QR para rastreo online
+   - Puede consultar estado desde web
+
+4. Distribución:
+   - Sistema notifica automáticamente a la dependencia
+   - Se genera ruta de entrega interna
+   - Se entrega físicamente o digitalmente
+   - Acuse de recibo digital del destinatario
+```
+
+**Correspondencia que sale:**
+```
+1. Elaboración:
+   - Dependencia redacta oficio/carta/comunicación
+   - En plantilla institucional
+   - Con membrete oficial
+
+2. Revisión y firma:
+   - Jefe de dependencia revisa
+   - Director firma digitalmente
+   - Alcalde firma (si requiere firma máxima)
+
+3. Registro de salida:
+   - Número correlativo: MS-2025-000456
+   - Destinatario externo
+   - Fecha de salida
+   - Medio de envío: entrega personal, correo certificado, email, courier
+   - Referencia al documento que responde (si aplica)
+   - Digitalización del documento firmado
+
+4. Despacho:
+   - Se entrega o envía
+   - Guía de envío (si es courier)
+   - Acuse de recibo (si aplica)
+   - Registro de entrega efectiva
+```
+
+**B) Gestión de Oficios Internos:**
+
+**Comunicaciones entre dependencias:**
+- Memorandos
+- Oficios internos
+- Circulares (comunicación masiva)
+- Providencias administrativas
+
+**Numeración automática:**
+- Por dependencia origen
+- Formato: DIR-FINANZAS-2025-045
+- Consecutivo anual
+
+**Workflow de aprobación:**
+- Borrador → Revisión → Aprobación → Firma → Distribución
+- Notificaciones automáticas en cada etapa
+
+**C) Ordenanzas Municipales:**
+
+**Repositorio legislativo completo:**
+- Texto íntegro de cada ordenanza
+- Número y fecha de publicación
+- Tema/materia que regula
+- Gaceta municipal donde se publicó
+- Estado: vigente, derogada, reformada
+- Histórico de reformas
+- Concordancias con otras ordenanzas
+- Reglamentos derivados
+
+**Búsqueda inteligente:**
+- Por número de ordenanza
+- Por palabra clave en el texto
+- Por materia (urbanismo, tributos, ambiente, etc.)
+- Por fecha de aprobación
+- Por Concejo que la aprobó
+
+**Publicación:**
+- Disponible en portal web público
+- Descarga en PDF
+- Consulta gratuita
+
+**D) Actas del Concejo Municipal:**
+
+**Registro de sesiones:**
+- Acta de cada sesión ordinaria y extraordinaria
+- Fecha y hora
+- Concejales presentes y ausentes
+- Orden del día
+- Puntos tratados
+- Mociones presentadas
+- Votaciones: a favor, en contra, abstenciones
+- Acuerdos y resoluciones tomadas
+- Transcripción de intervenciones importantes
+- Digitalización del acta firmada
+
+**Consulta pública:**
+- Transparencia total
+- Acceso web con buscador
+- Histórico desde años anteriores
+
+**E) Archivo Digital Central:**
+
+**Digitalización masiva:**
+- Escaneado de documentos históricos en papel
+- Organización por año, dependencia, tipo
+- Metadatos: fecha, autor, tema, código
+- OCR (reconocimiento de texto) para búsqueda
+- Preservación digital a largo plazo
+
+**Estructura de archivo:**
+```
+Archivo Municipal/
+├── Correspondencia/
+│   ├── Entrada/
+│   │   ├── 2023/
+│   │   ├── 2024/
+│   │   └── 2025/
+│   └── Salida/
+├── Contratos/
+│   ├── Obras Públicas/
+│   ├── Servicios/
+│   └── Adquisiciones/
+├── Actas/
+│   ├── Concejo Municipal/
+│   ├── Cámara Municipal/
+│   └── Comisiones/
+├── Ordenanzas/
+├── Resoluciones/
+├── Expedientes Administrativos/
+├── Recursos Humanos/
+│   ├── Expedientes de Personal/
+│   └── Nóminas Históricas/
+└── Otros/
+```
+
+**F) Gestión de Expedientes:**
+
+**Expediente = conjunto de documentos sobre un asunto:**
+- Número de expediente único
+- Carátula con datos básicos
+- Fecha de apertura
+- Interesado/solicitante
+- Asunto
+- Dependencia responsable
+- Estado: en trámite, paralizado, resuelto, archivado
+- Índice de documentos que contiene
+- Documentos digitalizados en orden cronológico
+- Anotaciones del tramitador
+- Fecha de cierre
+
+**Tipos de expedientes:**
+- Permisos de construcción
+- Licitaciones
+- Reclamos administrativos
+- Expropiaciones
+- Solicitudes de servicios
+- Investigaciones administrativas
+- Recursos jerárquicos
+
+**Trazabilidad completa:**
+- Histórico de movimientos del expediente
+- Por dónde ha pasado
+- Quién lo ha tenido
+- Cuánto tiempo en cada estación
+- Acciones realizadas
+- Próximo paso requerido
+
+**G) Firma Electrónica/Digital:**
+
+**Cumplimiento Ley de Mensajes de Datos:**
+- Certificados digitales para funcionarios autorizados
+- Firma con validez legal
+- Integridad del documento (no modificable después de firmado)
+- No repudio (no se puede negar la firma)
+- Timestamping (fecha y hora certificada)
+
+**Proceso de firma:**
+- Documento listo para firma
+- Notificación al firmante
+- Firmante revisa en sistema
+- Firma con certificado digital o token
+- Documento queda firmado y sellado
+- Se genera hash criptográfico
+- Verificación disponible online
+
+**Múltiples firmas:**
+- Circuito de firmas secuenciales
+- Firma conjunta (varios al mismo tiempo)
+- Orden jerárquico automático
+
+**H) Workflow de Aprobaciones:**
+
+**Configuración de procesos:**
+- Se define flujo por tipo de documento
+- Ejemplo: Orden de Pago
+  ```
+  Solicitante → Supervisor Área → Director Administrativo → 
+  Director Finanzas → Alcalde (si >umbral) → Tesorería
+  ```
+
+**Funcionamiento:**
+```
+1. Iniciador crea documento/solicitud
+2. Sistema enruta automáticamente al siguiente en el flujo
+3. Cada aprobador recibe notificación
+4. Puede: Aprobar, Rechazar (con motivo), Solicitar correcciones, Delegar
+5. Si aprueba, pasa al siguiente automáticamente
+6. Si rechaza, vuelve al iniciador
+7. Registro de toda la trazabilidad
+8. Tiempo transcurrido en cada estación
+9. Alertas de documentos estancados
+```
+
+**Beneficios:**
+- Elimina perseguir firmas físicas
+- Transparencia del proceso
+- Velocidad de aprobación
+- Métricas de eficiencia
+
+**I) Búsqueda y Consultas:**
+
+**Motor de búsqueda robusto:**
+- Búsqueda por texto completo (dentro del contenido de documentos PDF)
+- Por número de documento
+- Por remitente/destinatario
+- Por fecha o rango de fechas
+- Por tipo de documento
+- Por dependencia
+- Por estado
+- Por palabras clave
+- Búsqueda avanzada con operadores booleanos (AND, OR, NOT)
+
+**Resultados:**
+- Listado ordenado por relevancia
+- Vista previa del documento
+- Descarga directa
+- Compartir enlace
+- Histórico de consultas
+
+**J) Control de Versiones:**
+- Documentos que se modifican mantienen versiones anteriores
+- Versión 1, Versión 2, etc.
+- Comparación entre versiones
+- Restauración de versión anterior si es necesario
+- Histórico de quién modificó y cuándo
+
+**K) Gestión de Plantillas:**
+
+**Documentos tipo:**
+- Oficios estándar
+- Contratos modelo
+- Resoluciones tipo
+- Certificaciones
+- Constancias
+- Notificaciones
+
+**Uso:**
+- Selecciona plantilla
+- Llena campos variables automáticamente desde base de datos
+- Genera documento final listo para firma
+- Ahorra tiempo de redacción
+
+**L) Calendario de Vencimientos:**
+- Documentos con fechas críticas
+- Contratos próximos a vencer
+- Plazos legales para respuestas
+- Permisos que expiran
+- Alertas anticipadas (30, 15, 7 días antes)
+- Notificaciones a responsables
+
+**M) Estadísticas del Área:**
+- Documentos ingresados por período
+- Documentos despachados
+- Tiempo promedio de respuesta
+- Documentos pendientes
+- Rezago documental
+- Productividad por funcionario
+- Tipos de solicitudes más frecuentes
+
+**N) Seguridad y Accesos:**
+- No todos pueden ver todos los documentos
+- Permisos por rol
+- Documentos confidenciales (restricción especial)
+- Pista de auditoría: quién consultó qué y cuándo
+- Protección contra eliminación accidental
+- Respaldo automático diario
+
+**O) Integración con Otros Módulos:**
+- Documentos de proyectos vinculados al módulo de proyectos
+- Contratos vinculados a compras y presupuesto
+- Resoluciones de personal vinculadas a RH
+- Permisos de construcción vinculados a catastro
+
+---
+
+## 🏢 **10. MÓDULO DE SERVICIOS PÚBLICOS MUNICIPALES**
+
+### **¿Qué hace este módulo?**
+Planifica, programa y controla la prestación de todos los servicios públicos que ofrece directamente la alcaldía a la comunidad.
+
+### **Funcionalidades Detalladas:**
+
+**A) Aseo Urbano y Gestión de Desechos:**
+
+**1. Rutas de Recolección:**
+- Mapa del municipio dividido en sectores de recolección
+- Rutas definidas con calles específicas
+- Tipo de recolección por ruta:
+  - Domiciliaria (casas, edificios)
+  - Comercial (negocios, industrias)
+  - Hospitalaria (centros de salud)
+  - Especial (escombros, podas)
+
+**Programación semanal:**
+```
+Sector A:
+- Lunes, Miércoles, Viernes: Recolección domiciliaria
+- Martes, Jueves: Comercial
+- Sábado: Especial
+
+Sector B:
+- Martes, Jueves, Sábado: Recolección domiciliaria
+...
+```
+
+**2. Control Operativo Diario:**
+- Asignación de camiones por ruta
+- Asignación de cuadrilla (chofer + obreros)
+- Hora de salida del depósito
+- Checklist pre-operacional del vehículo
+- GPS para seguimiento en tiempo real (opcional)
+- Registro de cumplimiento de ruta
+- Incidencias: calles bloqueadas, averías, etc.
+- Hora de llegada a relleno sanitario/disposición final
+- Toneladas recolectadas (báscula)
+- Hora de retorno
+
+**3. Puntos de Recolección Especial:**
+- Contenedores en puntos estratégicos
+- Mercados municipales (recolección especial)
+- Ferias y eventos especiales
+- Control de llenado
+- Frecuencia de vaciado
+
+**4. Mantenimiento de Equipos:**
+- Camiones compactadores
+- Contenedores
+- Equipos de protección personal de obreros
+- Herramientas
+
+**5. Reportes Ciudadanos Integrados:**
+- Basura no recogida
+- Horarios no cumplidos
+- Contenedores dañados
+- Puntos críticos de acumulación
+- Seguimiento hasta resolución
+
+**6. Campañas de Limpieza:**
+- Jornadas especiales por sectores
+- Limpieza de quebradas y canales
+- Registro de participantes (voluntarios)
+- Material recolectado
+- Antes/después con fotos
+
+**B) Alumbrado Público:**
+
+**1. Inventario de Luminarias:**
+- Ubicación exacta (calle, número, coordenadas GPS)
+- Tipo: LED, sodio, mercurio, fluorescente
+- Potencia (watts)
+- Altura del poste
+- Tipo de poste: concreto, metal, madera
+- Estado: funcionando, dañado, faltante
+- Propietario: municipal, CORPOELEC (si es compartido)
+- Código único por luminaria
+- Foto
+
+**2. Reporte y Atención de Fallas:**
+```
+Ciudadano reporta:
+→ "Lámpara apagada en calle X con Y"
+→ Sistema geolocaliza
+→ Crea orden de trabajo
+→ Asigna a cuadrilla eléctrica
+→ Técnico va, diagnostica:
+   - Bombillo fundido → cambio inmediato
+   - Balasto dañado → reparación
+   - Cableado cortado → reparación mayor
+   - Vandalismo → reposición y denuncia
+→ Registra reparación
+→ Actualiza inventario
+→ Cierra ticket
+→ Notifica al ciudadano
+```
+
+**3. Mantenimiento Preventivo:**
+- Programa de limpieza de luminarias (2 veces al año)
+- Inspección de conexiones
+- Reemplazo preventivo de componentes
+- Poda de árboles que obstruyen la luz
+
+**4. Expansión de Alumbrado:**
+- Solicitudes de comunidades para nuevos puntos
+- Estudios técnicos de viabilidad
+- Proyectos de instalación
+- Presupuesto requerido
+
+**5. Control de Consumo:**
+- Medición del consumo eléctrico (si hay medidores centrales)
+- Costos mensuales
+- Optimización con LEDs (ahorro energético)
+- Comparativas de consumo
+
+**C) Parques, Plazas y Áreas Verdes:**
+
+**1. Inventario de Espacios:**
+- Nombre del parque/plaza
+- Ubicación
+- Área (m²)
+- Tipo: parque recreativo, plaza seca, plazoleta, cancha deportiva, parque infantil
+- Equipamiento:
+  - Juegos infantiles (toboganes, columpios, sube y baja)
+  - Máquinas de ejercicio
+  - Canchas (básquet, fútbol, multi-uso)
+  - Kioscos/pérgolas
+  - Bancas
+  - Papeleras
+  - Bebederos
+  - Iluminación
+- Estado: excelente, bueno, regular, malo
+- Foto actual
+
+**2. Mantenimiento de Áreas Verdes:**
+- Programa de corte de grama (frecuencia según época)
+- Rutas de cuadrillas de jardinería
+- Riego (en época seca)
+- Poda de árboles y arbustos
+- Control de plagas en vegetación
+- Sembrado de plantas ornamentales
+- Registro de trabajos realizados por parque
+
+**3. Mantenimiento de Infraestructura:**
+- Reparación de juegos infantiles dañados
+- Pintura de equipos
+- Reparación de bancas
+- Limpieza de graffiti
+- Bacheo de caminerías
+- Reparación de iluminación interna
+
+**4. Programación de Eventos:**
+- Calendario de uso de espacios
+- Permisos para eventos privados/comunales
+- Control de horarios
+- Requisitos de seguridad y limpieza post-evento
+
+**5. Arborización Urbana:**
+- Inventario de árboles del municipio
+- Ubicación, especie, altura, estado de salud
+- Programa de siembra de nuevos árboles
+- Permisos de tala (casos excepcionales justificados)
+- Control de árboles que representan riesgo (sobre casas, cables)
+
+**D) Cementerios Municipales:**
+
+**1. Registro de Infraestructura:**
+- Capacidad total: número de nichos, bóvedas, criptas, fosas
+- Disponibilidad actual
+- Sectores del cementerio
+- Mapa/plano con ubicaciones
+
+**2. Gestión de Servicios:**
+
+**Inhumaciones:**
+- Registro del difunto: nombre, cédula, fecha nacimiento, fecha fallecimiento
+- Familiar responsable: datos, contacto
+- Certificado de defunción (digitalizado)
+- Asignación de nicho/fosa
+- Costo del servicio (según tarifa municipal)
+- Recibo de pago
+- Autorización de inhumación
+- Fecha y hora del sepelio
+- Funcionario que atendió
+
+**Exhumaciones:**
+- Solicitud del familiar
+- Motivos
+- Autorización judicial (si aplica)
+- Programación
+- Registro
+
+**Mantenimiento de espacios:**
+- Cobro de mantenimiento anual por nicho
+- Control de solvencia
+- Servicios: limpieza general, jardinería, vigilancia
+
+**3. Control de Vencimientos:**
+- Nichos temporales (5-10 años)
+- Notificación a familiares para renovación o exhumación
+- Nichos perpetuos
+
+**4. Otros servicios:**
+- Venta de nichos anticipada
+- Reservas
+- Cesiones y traspasos
+- Constancias
+
+**E) Mercados Municipales:**
+
+**1. Registro de Puestos:**
+- Número de puesto
+- Ubicación dentro del mercado
+- Tipo: carnicería, pescadería, verduras, granos, abastos, comidas, otros
+- Área (m²)
+- Comerciante asignado: nombre, cédula, contacto
+- Contrato o permiso
+- Costo mensual de alquiler
+- Estado de pago
+
+**2. Control de Pagos:**
+- Facturación mensual de alquiler
+- Control de morosidad
+- Notificaciones
+- Sanciones (cierre temporal) por falta de pago
+- Histórico de pagos
+
+**3. Inspecciones Sanitarias:**
+- Programación de inspecciones
+- Verificación de condiciones higiénico-sanitarias
+- Manejo de alimentos
+- Control de plagas
+- Actas de inspección
+- Sanciones y clausuras (casos graves)
+- Seguimiento de mejoras
+
+**4. Mantenimiento del Mercado:**
+- Limpieza general diaria
+- Recolección de desechos sólidos especial
+- Mantenimiento de infraestructura
+- Baños públicos
+- Estacionamiento
+- Iluminación
+- Seguridad
+
+**5. Asignación de Nuevos Puestos:**
+- Disponibilidad
+- Solicitudes en lista de espera
+- Proceso de selección
+- Contratos
+
+**F) Protección Civil y Gestión de Riesgos:**
+
+**1. Registro de Emergencias:**
+- Tipo: incendio, inundación, deslizamiento, accidente, colapso estructural, rescate
+- Fecha y hora
+- Ubicación exacta
+- Descripción del evento
+- Personas afectadas/lesionadas
+- Daños materiales
+- Unidades despachadas
+- Tiempo de respuesta
+- Acciones realizadas
+- Resolución
+- Fotos/videos
+
+**2. Recursos y Equipos:**
+- Unidades de rescate (ambulancias, carros bomba)
+- Equipos: escaleras, mangueras, extintores, camillas, radios
+- Personal: bomberos, paramédicos, rescatistas
+- Disponibilidad por turno
+- Ubicación de estaciones
+
+**3. Programa de Prevención:**
+- Inspecciones de seguridad en edificaciones
+- Permisos para eventos masivos (verificación de seguridad)
+- Charlas educativas en comunidades y escuelas
+- Simulacros de emergencia
+- Calendario de actividades
+
+**4. Mapa de Riesgos:**
+- Zonas vulnerables a inundaciones
+- Áreas de deslizamiento
+- Construcciones en riesgo
+- Ríos y quebradas peligrosas
+- Planes de evacuación por zona
+- Refugios temporales disponibles
+
+**5. Sistema de Alerta Temprana:**
+- Monitoreo de lluvias
+- Nivel de ríos
+- Alertas meteorológicas
+- Difusión de alertas a la población (SMS, redes, radio)
+
+**G) Policía Municipal (Tránsito y Seguridad):**
+
+**1. Gestión de Multas de Tránsito:**
+- Registro de infracciones
+- Placas de vehículos
+- Tipo de falta
+- Monto de la multa
+- Oficial que levantó
+- Foto de la infracción (si aplica)
+- Estado: pendiente, pagada, impugnada
+- Pago en línea de multas
+
+**2. Accidentes de Tránsito:**
+- Registro de accidentes atendidos
+- Ubicación
+- Vehículos involucrados
+- Lesionados
+- Levantamiento de croquis
+- Acta del accidente
+
+**3. Control de Estacionamientos:**
+- Zonas de estacionamiento regulado
+- Parquímetros (si existen)
+- Multas por mal estacionamiento
+- Grúas para remoción de vehículos
+
+**4. Patrullaje:**
+- Rutas de patrullaje
+- Registro de novedades por turno
+- Sectores cubiertos
+- Incidentes atendidos
+
+**5. Estadísticas de Seguridad:**
+- Incidentes por tipo
+- Zonas más conflictivas
+- Tendencias temporales
+- Reportes para planificación
+
+**H) Control de Plagas:**
+
+**1. Fumigaciones:**
+- Sectores programados mensualmente
+- Tipo de plaga: mosquitos, roedores, cucarachas
+- Productos utilizados
+- Cuadrillas asignadas
+- Rutas recorridas
+- Registro fotográfico
+
+**2. Campañas Preventivas:**
+- Abatización (control de mosquitos)
+- Educación sobre criaderos
+- Jornadas especiales en época de lluvia
+- Distribución de larvicidas
+
+**3. Atención de Reportes:**
+- Denuncias de plagas específicas
+- Visitas de verificación
+- Tratamiento focalizado
+- Seguimiento
+
+---
+
+## 📊 **11. MÓDULO DE INDICADORES Y DASHBOARD GERENCIAL**
+
+### **¿Qué hace este módulo?**
+Presenta la información crítica del municipio en tiempo real mediante gráficos y tableros visuales para toma de decisiones rápidas y basadas en datos.
+
+### **Funcionalidades Detalladas:**
+
+**A) Dashboard Principal del Alcalde:**
+
+**Vista ejecutiva única con:**
+
+**Panel Financiero:**
+- Presupuesto total del año
+- Ejecutado a la fecha (monto y %)
+- Disponible
+- Gráfico: ejecutado vs tiempo transcurrido (si va adelante o atrasado)
+- Top 5 gastos del mes
+- Ingresos del mes vs proyectados
+- Situado constitucional recibido vs esperado
+
+**Panel de Proyectos:**
+- Total de proyectos en ejecución
+- Proyectos en riesgo (semáforo rojo)
+- Inversión ejecutada
+- Proyectos a culminar este mes
+- Proyectos culminados en el año
+- Mapa con ubicación de proyectos activos
+
+**Panel de Servicios:**
+- Reportes ciudadanos pendientes
+- Tiempo promedio de respuesta últimos 30 días
+- Satisfacción ciudadana promedio (estrellas)
+- Sectores con más reportes
+- Problemas más frecuentes
+
+**Panel de Recursos:**
+- Empleados activos totales
+- Ausentismo del mes (%)
+- Vehículos operativos / total
+- Nivel de inventario crítico (items bajo mínimo)
+
+**Panel Tributario:**
+- Recaudación del mes vs meta
+- Morosidad total (monto)
+- Contribuyentes al día (%)
+- Solvencias emitidas
+
+**Alertas Críticas:**
+- Proyectos atrasados >30 días
+- Presupuesto sobre-ejecutado en alguna partida
+- Emergencias activas
+- Reportes ciudadanos >15 días sin atención
+- Vehículos con mantenimiento vencido
+- Contratos próximos a vencer
+
+**B) Dashboards por Dirección:**
+
+**1. Dashboard de Finanzas:**
+- Ejecución presupuestaria por partida (gráfico de barras)
+- Compromisos pendientes de pago
+- Flujo de caja proyectado 90 días
+- Cuentas por pagar vencidas
+- Proveedores con mayor deuda
+- Comparativo año actual vs año anterior
+- Indicadores:
+  - % de ejecución presupuestaria
+  - Días promedio de pago a proveedores
+  - Eficiencia recaudatoria
+
+**2. Dashboard de Obras Públicas:**
+- Mapa de proyectos (cada uno con color según estado)
+- Lista de proyectos con % de avance físico y financiero
+- Inversión por parroquia/sector
+- Proyectos con desviaciones (costo o tiempo)
+- Valuaciones pendientes de pago
+- Contratistas activos
+- Gráfico Gantt consolidado
+- Indicadores:
+  - % promedio de avance de proyectos
+  - Inversión ejecutada / total programada
+  - Cumplimiento de cronogramas
+
+**3. Dashboard de Hacienda (Tributos):**
+- Recaudación diaria, semanal, mensual, anual
+- Gráfico de tendencia de ingresos
+- Desglose por tipo de tributo
+- Cartera de morosos por antigüedad
+- Efectividad de gestión de cobranza
+- Solvencias emitidas
+- Nuevos contribuyentes registrados
+- Indicadores:
+  - Nivel de morosidad (%)
+  - Recuperación de cartera (Bs)
+  - Eficiencia tributaria (recaudado/estimado)
+
+**4. Dashboard de Servicios Públicos:**
+- Rutas cumplidas de aseo urbano (%)
+- Toneladas recolectadas
+- Luminarias reparadas vs reportadas
+- Parques con mantenimiento al día
+- Eventos atendidos por Protección Civil
+- Tiempo promedio de respuesta a emergencias
+- Indicadores:
+  - Cobertura de servicios (%)
+  - Satisfacción ciudadana
+  - Cumplimiento de programación
+
+**5. Dashboard de Recursos Humanos:**
+- Total empleados por categoría
+- Distribución por dependencia (gráfico de torta)
+- Asistencia promedio mensual
+- Rotación de personal (altas y bajas)
+- Capacitaciones realizadas
+- Costo de nómina mensual
+- Evaluaciones de desempeño pendientes
+- Indicadores:
+  - Tasa de ausentismo
+  - Costo de personal / presupuesto
+  - % empleados evaluados
+
+**6. Dashboard de Participación Ciudadana:**
+- Reportes totales por estado
+- Mapa de calor con concentración de problemas
+- Tiempo promedio de resolución por tipo
+- Ranking de problemas más frecuentes
+- Satisfacción por tipo de problema
+- Tendencia de reportes (aumentando/disminuyendo)
+- Sectores más participativos
+- Indicadores:
+  - Tasa de resolución (%)
+  - NPS (Net Promoter Score) ciudadano
+  - Tiempo promedio de respuesta
+
+**C) Indicadores Clave de Desempeño (KPIs):**
+
+**Definición de KPIs estratégicos:**
+
+**Financieros:**
+- Ejecución presupuestaria = (Ejecutado / Aprobado) * 100
+- Nivel de recaudación = (Recaudado / Estimado) * 100
+- Autonomía financiera = (Ingresos propios / Ingresos totales) * 100
+- Eficiencia del gasto = Gasto ejecutado en programas / Gasto administrativo
+
+**Operacionales:**
+- Cumplimiento de proyectos = Proyectos culminados a tiempo / Total proyectos
+- Tiempo promedio de respuesta ciudadana = Suma días de resolución / Total reportes
+- Cobertura de servicios = Población atendida / Población total
+- Satisfacción ciudadana = Promedio de calificaciones
+
+**Recursos:**
+- Productividad de personal = Servicios prestados / Total empleados
+- Disponibilidad de flota = Vehículos operativos / Total vehículos
+- Rotación de inventario = Consumo anual / Inventario promedio
+
+**Cada KPI incluye:**
+- Valor actual
+- Meta establecida
+- % de cumplimiento
+- Tendencia (mejorando/empeorando)
+- Responsable
+- Frecuencia de medición
+- Semáforo: verde (cumple), amarillo (cerca), rojo (no cumple)
+
+**D) Reportes Automáticos Programados:**
+
+**Configuración de reportes:**
+- Tipo de reporte: financiero, operacional, estadístico
+- Frecuencia: diario, semanal, quincenal, mensual, trimestral, anual
+- Hora de generación automática
+- Destinatarios (emails)
+- Formato: PDF, Excel, dashboard interactivo
+
+**Ejemplos:**
+- Reporte diario de caja a las 5:00 PM
+- Reporte semanal de proyectos todos los lunes
+- Reporte mensual de recaudación el día 5 de cada mes
+- Reporte trimestral de gestión al Concejo Municipal
+
+**E) Análisis Predictivo y Tendencias:**
+
+**Uso de datos históricos:**
+- Proyección de ingresos tributarios próximos meses
+- Estimación de demanda de servicios
+- Previsión de consumo de inventario
+- Anticipación de necesidades de mantenimiento de flota
+- Identificación de patrones en reportes ciudadanos
+
+**Algoritmos simples:**
+- Promedio móvil
+- Regresión lineal
+- Análisis de estacionalidad
+- Detección de anomalías
+
+**Alertas Predictivas:**
+- "La recaudación de este mes va 20% por debajo de la proyección"
+- "Se estima que el cemento se agotará en 15 días"
+- "El sector X ha aumentado 40% sus reportes vs mes anterior"
+
+**F) Comparativas y Benchmarking:**
+- Comparación con períodos anteriores (mes actual vs mes anterior, año actual vs año pasado)
+- Comparación entre parroquias del municipio
+- Comparación entre dependencias
+- Identificación de mejores prácticas internas
+
+**G) Cuadro de Mando Integral (Balanced Scorecard):**
+
+**Perspectivas estratégicas:**
+
+**1. Perspectiva Ciudadana:**
+- ¿Qué tan satisfechos están nuestros ciudadanos?
+- KPIs: satisfacción, tiempo de respuesta, cobertura
+
+**2. Perspectiva de Procesos Internos:**
+- ¿Qué tan eficientes son nuestras operaciones?
+- KPIs: cumplimiento de procedimientos, tiempos de proceso, productividad
+
+**3. Perspectiva de Aprendizaje y Crecimiento:**
+- ¿Qué tan preparado está nuestro personal?
+- KPIs: capacitación, clima laboral, innovación
+
+**4. Perspectiva Financiera:**
+- ¿Qué tan sostenible es nuestra gestión?
+- KPIs: ejecución, recaudación, eficiencia del gasto
+
+**Cada perspectiva con objetivos, KPIs, metas e iniciativas**
+
+**H) Visualización Avanzada:**
+
+**Tipos de gráficos:**
+- Barras (comparaciones)
+- Líneas (tendencias temporales)
+- Torta (proporciones)
+- Mapas de calor (concentraciones geográficas)
+- Gauges/velocímetros (medidores)
+- Tablas dinámicas
+- Mapas interactivos
+- Infografías
+
+**Interactividad:**
+- Filtros dinámicos (por fecha, dependencia, tipo)
+- Drill-down (hacer clic para ver detalle)
+- Exportación de gráficos
+- Compartir dashboards
+
+**I) Sala Situacional Virtual:**
+
+**Concepto de War Room digital:**
+- Pantalla única con todos los indicadores críticos
+- Actualización en tiempo real
+- Uso en reuniones gerenciales
+- Proyectable en pantalla grande
+- Vista consolidada para toma de decisiones rápida
+
+**J) Alertas y Notificaciones Inteligentes:**
+
+**Sistema de alertas proactivo:**
+- Definición de umbrales por indicador
+- Alertas automáticas cuando se exceden
+- Notificación por: email, SMS, push notification, dentro del sistema
+- Escalamiento si no hay respuesta
+- Dashboard de alertas activas
+
+**Ejemplos:**
+- Presupuesto de partida X excedido en 10%
+- Proyecto Y con 15 días de atraso
+- Recaudación 30% por debajo de meta
+- Inventario de material Z en punto de reorden
+- Vehículo con mantenimiento vencido hace 7 días
+
+**K) Minería de Datos (Data Mining Básico):**
+
+**Descubrimiento de patrones:**
+- Correlaciones entre variables
+- Ejemplo: más reportes de basura en sectores con menor frecuencia de recolección
+- Estacionalidad de problemas
+- Segmentación de contribuyentes morosos
+- Predicción de demanda de servicios
+
+**L) Reportes de Cumplimiento Legal:**
+- Reportes ONAPRE automáticos
+- Informes de gestión para Concejo Municipal
+- Memoria y cuenta anual
+- Cumplimiento de metas del Plan de Desarrollo Municipal
+- Objetivos de Desarrollo Sostenible (ODS) aplicables
+
+---
+
+## 🔐 **12. MÓDULO DE ADMINISTRACIÓN Y SEGURIDAD DEL SISTEMA**
+
+### **¿Qué hace este módulo?**
+Controla quién puede hacer qué dentro del sistema, protege la información, lleva registro de todas las acciones y permite configurar el sistema según las necesidades del municipio.
+
+### **Funcionalidades Detalladas:**
+
+**A) Gestión de Usuarios:**
+
+**Creación de usuarios:**
+- Datos básicos: nombre, usuario, email, teléfono
+- Contraseña inicial (debe cambiarla en primer ingreso)
+- Vinculación a empleado municipal (si aplica)
+- Estado: activo, inactivo, bloqueado, suspendido
+- Fecha de creación y vencimiento (si es temporal)
+- Últimas fechas de acceso
+
+**B) Sistema de Roles y Permisos (RBAC - Role Based Access Control):**
+
+**Roles predefinidos:**
+
+**1. Alcalde:**
+- Acceso total a todo el sistema
+- Dashboards ejecutivos
+- Todas las consultas
+- Aprobaciones de alto nivel
+
+**2. Director de Finanzas:**
+- Módulo financiero completo
+- Módulo de presupuesto
+- Aprobación de pagos
+- Reportes financieros
+- Dashboard financiero
+
+**3. Director de Obras:**
+- Módulo de proyectos completo
+- Seguimiento y control
+- Aprobación de valuaciones
+- Dashboard de obras
+
+**4. Jefe de Tributación:**
+- Módulo tributario
+- Gestión de contribuyentes
+- Emisión de solvencias
+- Gestión de cobranza
+- No puede modificar tasas (eso es del Director)
+
+**5. Operador de Catastro:**
+- Módulo de catastro
+- Registro de inmuebles
+- Emisión de constancias catastrales
+- No puede aprobar permisos de construcción (solo cargar)
+
+**6. Inspector Municipal:**
+- Módulo de catastro (solo lectura)
+- Registro de inspecciones
+- Carga de reportes fotográficos
+- No puede modificar variables urbanas
+
+**7. Jefe de Recursos Humanos:**
+- Módulo de RH completo
+- Gestión de nómina
+- Aprobaciones de vacaciones
+- Evaluaciones de desempeño
+
+**8. Operador de Nómina:**
+- Carga de novedades
+- Procesamiento de nómina
+- No puede crear o eliminar empleados
+- No puede modificar salarios base (solo con autorización)
+
+**9. Jefe de Servicios Públicos:**
+- Módulo de servicios
+- Programación de rutas
+- Asignación de cuadrillas
+- Control de cumplimiento
+
+**10. Operador de Mesa de Entrada:**
+- Módulo documental
+- Registro de correspondencia
+- No puede eliminar documentos
+
+**11. Almacenista:**
+- Módulo de inventario
+- Control de entradas/salidas de almacén
+- Solicitudes de compra
+- No puede aprobar compras
+
+**12. Ciudadano (Portal Público):**
+- Consultas de deudas
+- Pagos en línea
+- Reportes de problemas
+- Seguimiento de trámites
+- Solicitud de solvencias
+- No acceso a módulos internos
+
+**13. Auditor Interno:**
+- Acceso de solo lectura a TODOS los módulos
+- Reportes de auditoría
+- Logs del sistema
+- No puede modificar nada
+
+**Permisos granulares:**
+Cada rol tiene permisos específicos por módulo y por acción:
+```
+Ejemplo: Módulo Financiero
+- Ver presupuesto: Sí
+- Modificar presupuesto: No
+- Crear compromiso: Sí
+- Aprobar pago <50mil: Sí
+- Aprobar pago >50mil: No
+- Ver reportes: Sí
+- Exportar datos: Sí
+- Eliminar registros: No
+```
+
+**Permisos especiales:**
+- Por dependencia (solo ve datos de su dirección)
+- Por proyecto (solo accede a proyectos asignados)
+- Por período (solo accede a período fiscal actual)
+- Horario de acceso permitido (solo en horario laboral)
+
+**C) Autenticación Segura:**
+
+**Inicio de sesión:**
+- Usuario y contraseña
+- Validación contra base de datos encriptada
+- Contador de intentos fallidos (3 intentos → bloqueo temporal)
+- Preguntas de seguridad (para recuperación)
+- CAPTCHA (previene ataques automatizados)
+
+**Políticas de contraseña:**
+- Longitud mínima: 8 caracteres
+- Debe incluir: mayúsculas, minúsculas, números, símbolos
+- No puede ser igual a las últimas 5 contraseñas
+- Vencimiento cada 90 días (obligatorio cambiar)
+- No puede incluir datos personales obvios (nombre, cédula)
+
+**Autenticación de dos factores (2FA) - opcional pero recomendado:**
+- Código de verificación enviado por SMS o email
+- Aplicación autenticadora (Google Authenticator, Authy)
+- Obligatorio para roles críticos (Alcalde, Directores, Finanzas)
+
+**D) Gestión de Sesiones:**
+- Sesión activa con tiempo de expiración
+- Inactividad por 30 minutos → cierre automático de sesión
+- Solo una sesión activa por usuario
+- Si inicia en otro dispositivo → cierra la anterior (o alerta de sesión múltiple)
+- Token de sesión encriptado
+
+**E) Auditoría y Trazabilidad (Logs):**
+
+**Registro completo de acciones:**
+
+**¿Qué se registra?**
+- Fecha y hora exacta (timestamp)
+- Usuario que realizó la acción
+- Dirección IP desde donde se conectó
+- Dispositivo/navegador
+- Módulo accedido
+- Acción realizada: consulta, inserción, modificación, eliminación
+- Datos antes y después (para modificaciones)
+- Resultado: exitoso, fallido, error
+
+**Ejemplos de logs:**
+```
+2025-10-10 09:15:23 | Usuario: jperez | IP: 192.168.1.45 | 
+Acción: Modificó proyecto "Reparación Calle Principal" | 
+Campo: Presupuesto | Valor anterior: 500.000 | Valor nuevo: 550.000
+
+2025-10-10 10:05:12 | Usuario: mrodriguez | IP: 192.168.1.67 | 
+Acción: Aprobó pago #1234 | Monto: 120.000 | Beneficiario: Constructora XYZ
+
+2025-10-10 11:30:45 | Usuario: admin | IP: 192.168.1.10 | 
+Acción: Creó usuario nuevo | Usuario: ngarcia | Rol: Operador de Catastro
+
+2025-10-10 14:22:10 | Usuario: alopez | IP: 200.35.67.89 | 
+Acción: Intento de acceso a módulo financiero | Resultado: DENEGADO - Sin permisos
+```
+
+**Consulta de logs:**
+- Por usuario
+- Por módulo
+- Por rango de fechas
+- Por tipo de acción
+- Por IP
+- Exportable para auditorías
+
+**Retención de logs:**
+- Almacenamiento de al menos 5 años
+- Respaldo externo
+- Inmutables (no pueden ser editados ni por el administrador)
+
+**F) Seguridad de Datos:**
+
+**Encriptación:**
+- Contraseñas: hash con salt (bcrypt, SHA-256)
+- Datos sensibles: encriptados en base de datos (números de cuenta, salarios si es muy sensible)
+- Comunicación: HTTPS (certificado SSL/TLS)
+- Respaldos: encriptados
+
+**Protección contra ataques:**
+- SQL Injection: validación y sanitización de entradas
+- XSS (Cross-Site Scripting): escapado de HTML
+- CSRF (Cross-Site Request Forgery): tokens de validación
+- Fuerza bruta: bloqueo tras múltiples intentos fallidos
+- Firewall de aplicación web (WAF)
+
+**G) Respaldos (Backups):**
+
+**Estrategia 3-2-1:**
+- 3 copias de los datos
+- 2 tipos diferentes de almacenamiento
+- 1 copia fuera del sitio
+
+**Frecuencia:**
+- Respaldo completo: semanal (domingos a medianoche)
+- Respaldo incremental: diario (diferencias del día)
+- Respaldo de transacciones críticas: en tiempo real (bases de datos)
+
+**Verificación:**
+- Pruebas de restauración mensuales
+- Verificación de integridad de respaldos
+- Tiempo de retención: 1 año mínimo
+
+**Almacenamiento:**
+- Servidor local
+- Almacenamiento en la nube (redundancia geográfica)
+- Discos externos en bóveda física
+
+**H) Recuperación ante Desastres (Disaster Recovery):**
+
+**Plan de contingencia:**
+- Identificación de sistemas críticos
+- RTO (Recovery Time Objective): tiempo máximo de caída aceptable
+- RPO (Recovery Point Objective): pérdida máxima de datos aceptable
+- Procedimientos documentados de restauración
+- Responsables y contactos de emergencia
+
+**Escenarios:**
+- Falla de hardware
+- Ataque cibernético (ransomware)
+- Desastre natural (inundación, incendio)
+- Error humano
+
+**I) Configuración del Sistema:**
+
+**Parámetros generales:**
+- Nombre del municipio
+- Logo oficial (aparece en reportes, recibos)
+- RIF del municipio
+- Dirección sede principal
+- Teléfonos y emails oficiales
+- Sitio web
+- Redes sociales oficiales
+
+**Configuración funcional:**
+
+**Financiero:**
+- Año fiscal activo
+- Estructura presupuestaria (partidas)
+- Clasificador de ingresos y gastos
+- Bancos con convenio
+- Cuentas bancarias municipales
+
+**Tributario:**
+- Tasas e impuestos vigentes
+- Alícuotas por zona (inmuebles)
+- Unidad tributaria local
+- Fechas de vencimiento
+- Intereses moratorios (%)
+- Descuentos por pronto pago
+
+**Catastro:**
+- Variables urbanas por zona
+- Tipos de permisos
+- Tasas de trámites
+- Formatos de documentos
+
+**RH:**
+- Tabulador de salarios
+- Deducciones legales (IVSS, FAOV, paro forzoso)
+- Días de vacaciones por antigüedad
+- Horarios laborales
+- Bancos para dispersión de nómina
+
+**Servicios:**
+- Rutas de aseo urbano
+- Frecuencias de recolección
+- Horarios de mercados
+- Costos de servicios de cementerio
+
+**J) Gestión de Módulos Activos:**
+- Activación/desactivación de módulos según necesidad
+- Ejemplo: Si el municipio no administra cementerios, desactiva ese módulo
+- Licenciamiento por módulos (si es sistema comercial)
+- Control de funcionalidades beta o en prueba
+
+**K) Notificaciones del Sistema:**
+
+**Configuración de alertas:**
+- Por email
+- Por SMS
+- Push notifications (app móvil)
+- Dentro del sistema (campanita)
+
+**Tipos de notificaciones:**
+- Tareas pendientes
+- Documentos por aprobar
+- Vencimientos próximos
+- Alertas críticas
+- Mensajes de otros usuarios
+- Reportes programados
+
+**L) Multiidioma (opcional):**
+- Si hay población indígena, soporte para lenguas originarias
+- Español como idioma principal
+- Inglés para turismo (si aplica)
+
+**M) Accesibilidad:**
+- Cumplimiento de normas WCAG (Web Content Accessibility Guidelines)
+- Modo alto contraste para personas con discapacidad visual
+- Tamaño de fuente ajustable
+- Navegación por teclado
+- Compatibilidad con lectores de pantalla
+
+**N) Gestión de Licencias de Software:**
+- Registro de licencias de software utilizados
+- Fechas de vencimiento
+- Renovaciones
+- Costos
+- Proveedores
+
+**O) Mantenimiento del Sistema:**
+
+**Programado:**
+- Actualizaciones de seguridad
+- Parches del sistema
+- Optimización de base de datos
+- Limpieza de datos temporales
+- Notificación anticipada a usuarios
+
+**Ventana de mantenimiento:**
+- Horarios: fines de semana o madrugadas
+- Página de "Sistema en mantenimiento"
+- Tiempo estimado
+
+**P) Soporte Técnico Interno:**
+
+**Mesa de ayuda:**
+- Sistema de tickets para problemas técnicos
+- Clasificación: hardware, software, red, acceso
+- Prioridad: baja, media, alta, crítica
+- Asignación a técnico
+- SLA (tiempo de respuesta) según prioridad
+- Base de conocimientos (soluciones comunes)
+- Chat de soporte en vivo
+
+**Q) Integración con Servicios Externos:**
+
+**APIs configurables:**
+- Bancos para pagos electrónicos
+- SMS Gateway para notificaciones
+- Email SMTP
+- Servicios de geolocalización (Google Maps)
+- Servicios de verificación (SENIAT RIF, SAIME cédula)
+- Firmas electrónicas certificadas
+
+**R) Exportación e Importación de Datos:**
+- Exportación masiva de datos (backup alternativo)
+- Formatos: Excel, CSV, PDF, XML, JSON
+- Importación controlada (validaciones)
+- Migraciones de datos de sistemas antiguos
+
+**S) Personalización Visual:**
+- Temas de colores institucionales
+- Personalización de dashboard por usuario
+- Widgets movibles y configurables
+- Favoritos y accesos rápidos
+
+---
+
+## 🌐 **13. PORTAL WEB PÚBLICO**
+
+### **¿Qué hace este módulo?**
+Es la cara pública del municipio en internet, donde los ciudadanos acceden a información, realizan trámites, consultan servicios y se comunican con la alcaldía sin necesidad de ir presencialmente.
+
+### **Funcionalidades Detalladas:**
+
+**A) Página de Inicio (Home):**
+
+**Elementos principales:**
+
+**Header (cabecera):**
+- Logo del municipio
+- Escudo y bandera
+- Nombre oficial del municipio
+- Slogan
+- Menú principal de navegación
+- Barra de búsqueda
+- Selector de idioma (si aplica)
+- Botón de acceso/login ciudadano
+- Iconos de redes sociales
+- Modo alto contraste (accesibilidad)
+- Línea de atención: teléfonos, WhatsApp, email
+
+**Slider principal:**
+- Carrusel de imágenes destacadas
+- Anuncios importantes
+- Obras inauguradas
+- Eventos próximos
+- Enlace a detalles de cada slide
+
+**Noticias destacadas:**
+- Últimas 4-6 noticias del municipio
+- Imagen, título, extracto, fecha
+- Enlace a noticia completa
+- Categorías: obras, eventos, salud, educación, deportes, cultural
+
+**Accesos rápidos:**
+Botones grandes a:
+- Pagar tributos
+- Reportar problema
+- Solicitar solvencia
+- Consultar trámites
+- Ver proyectos
+- Directorio telefónico
+- Presupuesto participativo
+- Bolsa de empleo
+
+**Eventos próximos:**
+- Calendario visual
+- Próximas actividades municipales
+- Jornadas, talleres, ferias
+- Fecha, hora, lugar
+
+**Galería de imágenes:**
+- Últimas actividades con fotos
+- Galería de videos (si tiene canal YouTube)
+
+**Footer (pie de página):**
+- Dirección física de la alcaldía
+- Teléfonos, emails
+- Horario de atención
+- Mapa de ubicación (Google Maps embebido)
+- Enlaces institucionales
+- Redes sociales
+- Política de privacidad
+- Términos de uso
+- Mapa del sitio
+
+**B) Sección Institucional:**
+
+**El Municipio:**
+- Historia del municipio
+- Geografía: límites, superficie, población
+- Parroquias que lo conforman
+- Símbolos: escudo, bandera, himno
+- Atractivos turísticos
+- Actividad económica principal
+
+**Autoridades:**
+- Alcalde o Alcaldesa:
+  - Foto oficial
+  - Biografía
+  - Propuestas de campaña
+  - Contacto directo
+- Vicealcalde (si existe)
+- Concejales:
+  - Por cada uno: foto, nombre, partido, contacto
+- Directores de dependencias:
+  - Organigrama con fotos
+  - Responsabilidades
+
+**Misión, Visión y Valores:**
+- Texto institucional
+- Objetivos estratégicos
+
+**Marco Legal:**
+- Ley Orgánica del Poder Público Municipal
+- Ordenanzas municipales (descargables)
+- Reglamentos internos
+- Gacetas municipales (históricas y actuales)
+
+**Plan de Desarrollo Municipal:**
+- Ejes estratégicos
+- Programas y proyectos
+- Metas a corto, mediano y largo plazo
+- Descarga del documento completo
+
+**Memorias y Cuentas:**
+- Informe anual de gestión
+- Logros del período
+- Estadísticas
+- Descarga en PDF
+
+**C) Transparencia y Acceso a la Información:**
+
+**Cumplimiento de la Ley de Transparencia:**
+
+**Presupuesto Municipal:**
+- Presupuesto aprobado del año actual
+- Ejecución presupuestaria mensual actualizada
+- Por partidas, proyectos, dependencias
+- Gráficos de ejecución
+- Descargable en Excel y PDF
+
+**Contrataciones:**
+- Licitaciones públicas:
+  - Activas: en proceso de recepción de ofertas
+  - Adjudicadas: ganador, monto
+  - Desiertas o anuladas
+- Órdenes de compra emitidas
+- Contratos suscritos (con nombres de contratistas y montos)
+- Proceso de cada contratación
+
+**Nómina Municipal:**
+- Listado de empleados (solo: nombre, cargo, dependencia)
+- No se publican salarios individuales por privacidad
+- Sí se publica: costo total de nómina mensual
+- Total de empleados por categoría
+
+**Viáticos y Gastos de Representación:**
+- Si el alcalde o funcionarios viajan, se publica:
+  - Destino, motivo, fechas, costo
+
+**Declaraciones Juradas de Patrimonio:**
+- Del Alcalde y directores
+- Al inicio y fin del período
+- (Si la ley local lo requiere)
+
+**Subvenciones y Donaciones:**
+- A quién se donó o subvencionó
+- Monto
+- Justificación
+
+**Bienes Municipales:**
+- Inventario de bienes inmuebles
+- Vehículos de la alcaldía
+
+**Informes de Gestión:**
+- Trimestrales
+- Anuales
+- Por dependencia
+
+**Calendario de Actividades:**
+- Sesiones del Concejo Municipal (fechas)
+- Audiencias públicas
+- Rendiciones de cuentas
+
+**Solicitud de Información Pública:**
+- Formulario para solicitar información no publicada
+- Proceso según LOAI
+- Tiempo de respuesta: 20 días hábiles
+- Seguimiento de solicitud
+
+**D) Trámites y Servicios en Línea:**
+
+**Catálogo de Trámites:**
+Lista completa de todos los trámites disponibles, cada uno con:
+- Nombre del trámite
+- Descripción clara
+- Requisitos (documentos necesarios)
+- Costo (si es gratuito o monto de tasa)
+- Tiempo de respuesta estimado
+- Dependencia responsable
+- Descarga de formularios (PDF rellenable)
+- Opción de iniciar en línea (si está disponible)
+
+**Ejemplos de trámites:**
+- Solicitud de solvencia municipal
+- Permiso de construcción
+- Renovación de patente comercial
+- Certificado de residencia
+- Constancia catastral
+- Certificado de no deudor
+- Permiso de espectáculos públicos
+- Registro de nacimiento (si el municipio lo gestiona)
+- Traspaso de vehículo (municipal)
+- Permiso de ocupación de vía pública
+- Otros según competencias
+
+**Trámites 100% en línea:**
+- Solvencia municipal:
+  ```
+  1. Ciudadano ingresa con cédula
+  2. Sistema verifica que no tiene deudas
+  3. Si está solvente, genera PDF con código QR
+  4. Descarga inmediata
+  5. Verificable en línea por terceros
+  ```
+
+- Consulta de deuda tributaria:
+  - Ingresa cédula o RIF
+  - Ve todas sus deudas detalladas
+  - Histórico de pagos
+
+- Certificado catastral:
+  - Ingresa número de catastro o dirección
+  - Sistema genera certificado
+  - Descarga con código de verificación
+
+**Seguimiento de Expedientes:**
+- Ingresa número de expediente
+- Ve en qué etapa está
+- Último movimiento
+- Observaciones
+- Tiempo en cada estación
+- Notificaciones si hay requerimientos
+
+**E) Pagos Electrónicos:**
+
+**Portal de Pagos Integrado:**
+
+**Servicios pagables:**
+- Impuesto sobre inmuebles
+- Patente comercial (ISAE)
+- Impuesto sobre vehículos
+- Tasas administrativas
+- Multas municipales
+- Servicios de cementerio
+- Alquiler de espacios
+- Otros tributos
+
+**Proceso de pago:**
+```
+1. Ciudadano selecciona "Pagar en línea"
+2. Ingresa cédula/RIF
+3. Sistema muestra todas sus deudas
+4. Selecciona cuál(es) pagar
+5. Sistema genera planilla con monto total
+6. Elige método de pago:
+   - Pago móvil (genera código C2P para bancos venezolanos)
+   - Transferencia bancaria (datos de cuentas municipales)
+   - Tarjeta de débito/crédito (pasarela de pago)
+   - Puntos de pago autorizados (imprime planilla con código)
+7. Realiza el pago
+8. Sube comprobante (si fue transferencia o pago móvil)
+9. Sistema valida (puede ser automático o manual)
+10. Recibe recibo digital con código de transacción
+11. Se actualiza su estado a "solvente"
+```
+
+**Pasarela de pago segura:**
+- Certificado SSL
+- Encriptación de datos bancarios
+- Cumplimiento PCI-DSS (estándar de seguridad)
+- Recibos con firma digital
+
+**Consulta de pagos realizados:**
+- Histórico de pagos
+- Descargar recibos antiguos
+- Certificación de pagos
+
+**F) Sistema de Reportes Ciudadanos:**
+
+**Interfaz pública para reportar problemas:**
+
+**Opciones de reporte:**
+
+**1. Desde el Portal Web:**
+- Formulario intuitivo
+- Selección de tipo de problema (lista desplegable)
+- Ubicación: puede escribir dirección o marcar en mapa interactivo
+- Descripción del problema (campo de texto)
+- Adjuntar hasta 5 fotos
+- Datos de contacto (opcional para seguimiento)
+- Botón "Enviar reporte"
+- Recibe número de ticket: RP-2025-00456
+- Confirmación por email
+
+**2. Desde App Móvil:**
+- Misma funcionalidad
+- Ventaja: geolocalización automática con GPS
+- Foto directa con cámara del teléfono
+- Más rápido y conveniente
+
+**Consulta de Estado:**
+- Ingresa número de ticket
+- Ve:
+  - Estado actual
+  - Fecha de reporte
+  - Tipo de problema
+  - Ubicación
+  - Descripción
+  - Fotos adjuntas
+  - Dependencia asignada
+  - Fecha estimada de solución
+  - Actualizaciones
+  - Resolución final (cuando esté resuelto)
+  - Fotos del "después"
+- Calificar el servicio (cuando esté resuelto)
+
+**Mapa de Reportes Públicos:**
+- Todos los reportes visibles en un mapa
+- Filtros: por tipo, por estado, por fecha
+- Transparencia total
+- Ciudadanos ven que la alcaldía responde
+
+**G) Directorio de Servicios Municipales:**
+
+**Contactos completos:**
+
+Por cada dependencia:
+- Nombre oficial
+- Director/Jefe
+- Teléfonos (directo y extensiones)
+- Email institucional
+- Ubicación física
+- Horario de atención
+- Servicios que presta
+- Cómo llegar (mapa)
+
+**Emergencias:**
+- Bomberos municipal: teléfono
+- Policía municipal: teléfono
+- Protección Civil: teléfono
+- Ambulancias: teléfono
+- Línea directa con el alcalde
+
+**H) Noticias y Comunicaciones:**
+
+**Blog Municipal:**
+- Publicación frecuente de noticias
+- Inauguraciones de obras
+- Eventos realizados
+- Logros
+- Información de interés comunitario
+- Alertas (cortes de agua, cierres de calles)
+- Convocatorias
+
+**Cada noticia con:**
+- Título llamativo
+- Fecha de publicación
+- Categoría/etiquetas
+- Contenido con formato (negrita, listas, etc.)
+- Imágenes (galería)
+- Videos embebidos (YouTube)
+- Compartir en redes sociales
+- Comentarios (moderados)
+
+**Boletín informativo:**
+- Suscripción por email
+- Envío semanal o quincenal
+- Resumen de actividades
+
+**Comunicados oficiales:**
+- Sección especial para comunicados formales
+- Diferenciados de noticias regulares
+
+**I) Agenda de Eventos:**
+
+**Calendario público:**
+- Vista mensual
+- Todos los eventos municipales
+- Jornadas de salud, vacunación
+- Talleres y capacitaciones
+- Actividades deportivas
+- Eventos culturales (teatro, cine, conciertos)
+- Sesiones del Concejo Municipal
+- Cabildo abierto
+
+**Cada evento con:**
+- Nombre
+- Fecha y hora
+- Lugar exacto
+- Descripción
+- Es gratuito o tiene costo
+- Inscripción (si requiere)
+- Cupo limitado o abierto
+- Contacto para más información
+- Compartir en redes
+
+**J) Proyectos Municipales:**
+
+**Mapa interactivo de proyectos:**
+- Todos los proyectos del municipio visibles en mapa
+- Filtros: en ejecución, culminados, por área (vialidad, salud, deportes)
+- Al hacer clic en cada proyecto:
+  - Nombre
+  - Descripción
+  - Presupuesto
+  - % de avance
+  - Fecha inicio y fin estimada
+  - Beneficiarios
+  - Fotos del progreso (carrusel)
+  - Contratista
+  - Responsable municipal
+
+**Galería de Obras Culminadas:**
+- Antes y después
+- Impacto en la comunidad
+
+**K) Presupuesto Participativo:**
+
+**Plataforma de participación:**
+
+**Fase 1: Propuestas:**
+- Ciudadanos suben ideas de proyectos
+- Formulario: nombre proyecto, descripción, ubicación, beneficio esperado
+- Pueden agregar fotos o videos explicativos
+- Se discute en foros comunitarios
+
+**Fase 2: Evaluación Técnica:**
+- Alcaldía evalúa viabilidad
+- Publica proyectos factibles con presupuesto real
+- Explica los rechazados
+
+**Fase 3: Votación:**
+- Plataforma de votación abierta durante 2-4 semanas
+- Ciudadanos votan (con cédula, 1 voto por persona)
+- Pueden votar múltiples proyectos
+- Conteo público y transparente en tiempo real
+
+**Fase 4: Resultados:**
+- Publicación de proyectos ganadores
+- Compromiso de ejecución
+- Cronograma
+
+**Seguimiento de Ejecución:**
+- Cada proyecto ganador se ejecuta con transparencia total
+- Actualización de avances
+
+**L) Bolsa de Empleo Municipal:**
+
+**Sección de Recursos Humanos Pública:**
+
+**Convocatorias abiertas:**
+- Vacantes disponibles
+- Cargo
+- Perfil requerido (estudios, experiencia)
+- Funciones
+- Remuneración estimada
+- Cómo aplicar
+
+**Postulación en línea:**
+- Registro en plataforma
+- Carga de CV (PDF)
+- Formulario de datos
+- Recibe número de postulación
+- Seguimiento del proceso
+
+**M) Consultas e Interacción:**
+
+**Formulario de contacto:**
+- Nombre, email, teléfono
+- Asunto
+- Mensaje
+- Sistema genera ticket
+- Respuesta en máximo 5 días hábiles
+- Ciudadano puede ver estado de su consulta
+
+**Buzón de Sugerencias:**
+- Anónimo o identificado
+- Ideas para mejorar servicios
+- Alcaldía revisa y puede implementar
+
+**Chat en vivo (opcional):**
+- Atención en horario laboral
+- Chatbot para preguntas frecuentes
+- Conexión con operador humano si es necesario
+
+**N) Galerías Multimedia:**
+
+**Galería de Fotos:**
+- Organizadas por eventos
+- Álbumes de inauguraciones
+- Actividades comunitarias
+- Antes/después de obras
+- Descargables
+
+**Galería de Videos:**
+- Canal YouTube embebido
+- Videos institucionales
+- Cobertura de eventos
+- Cápsulas educativas
+- Transmisiones en vivo (sesiones del Concejo)
+
+**O) Educación Ciudadana:**
+
+**Sección informativa:**
+- ¿Qué son los tributos municipales y para qué se usan?
+- Derechos y deberes del ciudadano
+- Cómo hacer un trámite paso a paso (tutoriales)
+- Videos explicativos
+- Infografías
+- Preguntas frecuentes (FAQ)
+
+**P) Participación Comunitaria:**
+
+**Consejos Comunales:**
+- Listado de consejos comunales del municipio
+- Datos de contacto
+- Proyectos ejecutados con cada uno
+- Cómo registrar un consejo comunal
+
+**Organizaciones Sociales:**
+- Directorio de organizaciones
+- Fundaciones
+- Asociaciones civiles
+- Cooperativas
+
+**Q) Turismo y Cultura:**
+
+**Guía turística del municipio:**
+- Sitios de interés
+- Monumentos históricos
+- Museos
+- Gastronomía local
+- Fiestas tradicionales
+- Cómo llegar
+- Mapas turísticos descargables
+
+**Agenda cultural:**
+- Casa de la cultura (si existe)
+- Biblioteca municipal
+- Eventos artísticos
+- Exposiciones
+- Talleres
+
+**R) Accesibilidad y Usabilidad:**
+
+**Diseño responsive:**
+- Se adapta a: PC, tablet, móvil
+- Navegación fácil en cualquier dispositivo
+
+**Cumplimiento de estándares web:**
+- HTML5, CSS3
+- Velocidad de carga optimizada
+- Compatible con todos los navegadores
+
+**SEO (Optimización para motores de búsqueda):**
+- Fácil de encontrar en Google
+- Palabras clave: "alcaldía de [municipio]", "trámites [municipio]", etc.
+
+**S) Integración con Redes Sociales:**
+- Widgets de Facebook, Twitter/X, Instagram
+- Publicaciones recientes del municipio
+- Botones de compartir
+- Seguimiento de hashtags oficiales
+
+**T) Estadísticas del Portal:**
+- Contador de visitas
+- Páginas más visitadas
+- Trámites más solicitados
+- Para mejorar continuamente
+
+**U) Seguridad del Portal:**
+- Certificado SSL (https://)
+- Protección contra ataques
+- Validación de formularios
+- Backup diario del sitio
+
+---
+
+## 📱 **14. APLICACIÓN MÓVIL CIUDADANA**
+
+### **¿Qué hace este módulo?**
+Lleva los servicios municipales al bolsillo de cada ciudadano mediante una app para smartphones, facilitando la interacción con la alcaldía desde cualquier lugar y en cualquier momento.
+
+### **Funcionalidades Detalladas:**
+
+**A) Características Generales de la App:**
+
+**Plataformas:**
+- Android (Google Play Store)
+- iOS (Apple App Store)
+- Diseño nativo o híbrido (Flutter, React Native)
+
+**Nombre de la app:**
+- "Mi Municipio [Nombre]"
+- "Alcaldía [Nombre] en tu mano"
+- Logo del municipio como icono
+
+**Requisitos técnicos:**
+- Android 6.0 o superior
+- iOS 12.0 o superior
+- Conexión a internet (WiFi o datos móviles)
+- Permisos: cámara, ubicación, notificaciones, almacenamiento
+
+**B) Onboarding (Primera vez):**
+
+**Proceso de registro:**
+```
+1. Descarga la app
+2. Pantalla de bienvenida (slider de 3-4 pantallas explicando funcionalidades)
+3. Registro:
+   - Número de cédula
+   - Nombre completo
+   - Email
+   - Teléfono
+   - Contraseña
+   - Foto (opcional)
+4. Verificación:
+   - Código SMS al teléfono registrado
+   - Confirma código
+5. Activación de cuenta
+6. Tutorial rápido de uso
+7. Solicita permisos necesarios (ubicación, cámara, notificaciones)
+8. Listo para usar
+```
+
+**Login:**
+- Usuario: cédula o email
+- Contraseña
+- Recordar sesión
+- Recuperación de contraseña
+- Biométrico (huella o Face ID) - opcional
+
+**C) Pantalla Principal (Home):**
+
+**Dashboard ciudadano:**
+
+**Banner superior:**
+- Saludo personalizado: "¡Hola, Juan!"
+- Foto de perfil
+- Ícono de notificaciones (con contador si hay nuevas)
+
+**Accesos directos (iconos grandes):**
+- 🆘 Reportar Problema
+- 💰 Mis Deudas
+- 💳 Pagar Ahora
+- 📄 Solicitar Solvencia
+- 🗺️ Mis Reportes
+- 📋 Trámites
+- 📢 Noticias
+- 📞 Emergencias
+
+**Widget informativo:**
+- Próximo vencimiento de pago
+- Estado de último reporte
+- Próximo evento municipal
+
+**Menú inferior (tabs):**
+- 🏠 Inicio
+- 📍 Mapa
+- ➕ Reportar
+- 📬 Mis Trámites
+- 👤 Perfil
+
+**D) Módulo: Reportar Problemas**
+
+**Pantalla optimizada para reportes rápidos:**
+
+**Flujo simplificado:**
+```
+1. Usuario presiona "Reportar Problema"
+
+2. Pantalla con botones de categoría:
+   [Bache] [Basura] [Alumbrado] [Fuga de agua]
+   [Árbol caído] [Señal dañada] [Otro]
+
+3. Selecciona categoría → Se activa automáticamente:
+
+4. Geolocalización:
+   - GPS obtiene ubicación actual
+   - Mapa muestra con pin rojo "Aquí está el problema"
+   - Usuario puede ajustar manualmente arrastrando el pin
+   - Muestra dirección aproximada
+
+5. Foto:
+   - Botón grande "Tomar Foto"
+   - Abre cámara del teléfono
+   - Toma foto del problema
+   - Puede tomar hasta 5 fotos
+   - Opción: subir desde galería
+
+6. Descripción:
+   - Campo de texto: "Describe el problema"
+   - Teclado aparece automáticamente
+   - Máximo 500 caracteres
+
+7. Datos de contacto:
+   - Pre-llenado con datos de perfil
+   - Puede editarlos o marcar "Reportar anónimamente"
+
+8. Botón "Enviar Reporte" grande y colorido
+
+9. Confirmación:
+   - ✅ "¡Reporte enviado!"
+   - Número de ticket: RP-2025-01234
+   - "Te notificaremos cuando lo atendamos"
+   - Opción: "Ver mis reportes"
+```
+
+**Ventajas del móvil:**
+- Foto instantánea de calidad
+- Ubicación exacta con GPS
+- Rapidez (menos de 1 minuto en reportar)
+- Desde el lugar del problema
+
+**E) Módulo: Mis Reportes**
+
+**Lista de todos los reportes del usuario:**
+
+**Por cada reporte (card):**
+- Foto miniatura del problema
+- Número de ticket
+- Tipo de problema
+- Ubicación
+- Fecha de reporte
+- Estado con color:
+  - 🟡 Recibido (amarillo)
+  - 🔵 En Proceso (azul)
+  - 🟢 Resuelto (verde)
+  - 🔴 Rechazado/Inválido (rojo)
+- Hace X días
+- Botón "Ver detalles"
+
+**Vista detallada de reporte:**
+- Todas las fotos (galería deslizable)
+- Mapa con ubicación exacta
+- Descripción completa
+- Línea de tiempo:
+  ```
+  10 Oct 2025, 8:30 AM - Reporte recibido
+  10 Oct 2025, 9:15 AM - Asignado a Dirección de Obras
+  11 Oct 2025, 10:00 AM - Cuadrilla en camino
+  11 Oct 2025, 2:30 PM - ✅ Problema resuelto
+  ```
+- Foto del "después" (cuando se resolvió)
+- Calificación del servicio (estrellas)
+- Comentarios
+- Botón "Compartir" (WhatsApp, redes)
+- Botón "Reportar problema similar aquí"
+
+**Filtros:**
+- Todos / Activos / Resueltos
+- Ordenar por: más recientes, más antiguos
+
+**F) Módulo: Mis Deudas y Pagos**
+
+**Consulta de deuda tributaria:**
+
+**Pantalla principal:**
+- Resumen:
+  ```
+  Estado: DEUDOR / SOLVENTE
+  Total a pagar: Bs. XXXX
+  ```
+
+**Desglose por tributo:**
+- Impuesto sobre Inmuebles:
+  - Períodos: 2023, 2024, 2025
+  - Monto por período
+  - Intereses de mora
+  - Total
+- Patente Comercial:
+  - Establecimiento: "Bodega La Esquina"
+  - Período vencido: 2024
+  - Monto
+- Multas de Tránsito:
+  - Fecha de infracción
+  - Tipo
+  - Monto
+
+**Botón "Generar Planilla de Pago"**
+
+**Proceso de pago desde la app:**
+```
+1. Selecciona deudas a pagar (checkbox)
+2. Presiona "Pagar Ahora"
+3. Pantalla de métodos de pago:
+   
+   💳 Pago Móvil (C2P):
+   - Genera código de referencia
+   - Monto total
+   - Bancos disponibles: BDV, Banesco, Mercantil...
+   - Instrucciones:
+     "1. Abre tu app bancaria
+      2. Selecciona Pago Móvil
+      3. Pago a Comercio (C2P)
+      4. RIF: J-XXXXXXXX-X
+      5. Teléfono: 0424-XXXXXXX
+      6. Monto: Bs. XXXX
+      7. Referencia: RP-2025-XXXX"
+   - Botón "Copiar referencia"
+   - Botón "Ya realicé el pago"
+
+   🏦 Transferencia Bancaria:
+   - Muestra datos de cuentas bancarias del municipio
+   - Bancos: Venezuela, Bicentenario, etc.
+   - Números de cuenta
+   - Botón "Copiar número de cuenta"
+   - Referencia a colocar
+   
+   💵 Pagar en Taquilla:
+   - Descarga PDF de planilla
+   - Con código QR
+   - Llevar a taquilla municipal o banco autorizado
+
+4. Usuario realiza pago en su banco
+
+5. Regresa a app, presiona "Subir Comprobante"
+   - Toma foto del comprobante o captura de pantalla
+   - Sube al sistema
+
+6. Sistema recibe notificación
+   - Validación (puede ser automática si hay integración bancaria)
+   - Si es manual, analista verifica en 24h
+
+7. Notificación push: "✅ ¡Pago verificado!"
+
+8. Estado cambia a SOLVENTE
+
+9. Puede descargar recibo digital
+```
+
+**Historial de pagos:**
+- Lista de pagos realizados
+- Fecha, concepto, monto
+- Descargar recibo
+- Compartir recibo (WhatsApp, email)
+
+**G) Módulo: Solvencias y Certificaciones**
+
+**Solicitar documentos:**
+
+**Solvencia Municipal:**
+- Presiona "Solicitar Solvencia"
+- Sistema verifica estado de deuda
+- Si está solvente:
+  - Genera PDF inmediatamente
+  - Con código QR de verificación
+  - Válida por 30 días
+  - Descarga y comparte
+- Si tiene deudas:
+  - "No puedes obtener solvencia. Tienes Bs. XXX en deudas"
+  - Botón "Pagar Ahora"
+
+**Otras certificaciones:**
+- Certificado catastral
+- Constancia de residencia (si aplica)
+- Certificado de no deudor
+- Proceso similar
+
+**Mis documentos:**
+- Todos los certificados descargados
+- Almacenados en la app
+- Acceso offline
+- Compartir por WhatsApp, email, etc.
+
+**H) Módulo: Trámites**
+
+**Catálogo de trámites disponibles:**
+- Lista completa igual que en web
+- Por cada trámite:
+  - Nombre
+  - Descripción
+  - Requisitos
+  - Tiempo estimado
+  - Costo
+  - Botón "Iniciar Trámite" o "Más información"
+
+**Iniciar trámite desde app:**
+- Formulario móvil optimizado
+- Campos a llenar
+- Adjuntar fotos de documentos (con cámara)
+- Firma digital (con dedo en pantalla)
+- Enviar solicitud
+- Recibe número de expediente
+
+**Mis Trámites:**
+- Todos los trámites iniciados
+- Estado de cada uno
+- Seguimiento en tiempo real
+- Notificaciones de avances
+- Alertas si falta algún documento
+
+**I) Módulo: Noticias e Información**
+
+**Feed de noticias:**
+- Últimas noticias del municipio
+- Formato card atractivo
+- Imagen, título, fecha, extracto
+- Al tocar: abre noticia completa
+- Scroll infinito
+
+**Categorías:**
+- Todas / Obras / Salud / Educación / Eventos / Emergencias
+
+**Notificaciones push:**
+- Alcaldía puede enviar notificaciones importantes:
+  - "Corte de agua programado en sector X"
+  - "Nueva obra inaugurada en tu sector"
+  - "¡Llegó el situado! Pronto obras en tu comunidad"
+  - "Alerta: Lluvias intensas próximas 48h"
+  - "Jornada de vacunación este sábado"
+- Usuario puede personalizar qué notificaciones quiere recibir
+
+**J) Módulo: Mapa Interactivo**
+
+**Vista de mapa del municipio:**
+
+**Capas de información:**
+- 📍 Todos los reportes ciudadanos (pins coloreados por tipo)
+- 🚧 Proyectos en ejecución
+- 🏛️ Oficinas municipales
+- 🏥 Ambulatorios
+- 🏫 Escuelas municipales
+- 🏪 Mercados
+- ⚽ Canchas y parques
+- 🚒 Estación de bomberos
+- 👮 Comandos policiales
+
+**Interacción:**
+- Zoom in/out
+- Tocar un pin → muestra información
+- Navegación GPS a ese punto (integración con Google Maps o Waze)
+- Filtros: mostrar solo un tipo de información
+
+**"Cerca de mí":**
+- Muestra servicios municipales cercanos a ubicación actual
+- "Ambulatorio más cercano: 800 metros"
+- Botón "Cómo llegar"
+
+**K) Módulo: Emergencias**
+
+**Acceso rápido a números de emergencia:**
+
+**Botones grandes:**
+- 🚒 Bomberos: [Teléfono]
+  - Botón "Llamar ahora" (marca directamente)
+- 👮 Policía Municipal: [Teléfono]
+- 🚑 Ambulancia: [Teléfono]
+- 🛡️ Protección Civil: [Teléfono]
+- 📞 Línea Alcalde: [Teléfono]
+
+**Reportar emergencia desde app:**
+- Formulario rápido de emergencia
+- Tipo: incendio, inundación, accidente, etc.
+- Ubicación GPS automática
+- Descripción breve
+- Foto
+- Envío prioritario
+- Notificación inmediata a autoridades
+
+**Alertas de emergencia:**
+- Sistema puede enviar alertas masivas:
+  - "⚠️ Alerta de inundación en sectores bajos"
+  - "🔥 Incendio forestal activo, manténgase alejado de zona X"
+  - "🌪️ Alerta meteorológica: vientos fuertes próximas 6 horas"
+
+**L) Módulo: Mi Perfil**
+
+**Datos del usuario:**
+- Foto de perfil (editable)
+- Nombre completo
+- Cédula
+- Email
+- Teléfono
+- Dirección
+- Fecha de nacimiento
+- Botón "Editar datos"
+
+**Configuraciones:**
+- Cambiar contraseña
+- Notificaciones:
+  - Push notifications (activar/desactivar)
+  - Por tipo: reportes, pagos, noticias, emergencias
+  - Sonido y vibración
+- Privacidad:
+  - Permitir ubicación
+  - Reportes anónimos por defecto
+- Idioma (si multiidioma)
+- Tema: claro / oscuro
+
+**Mis estadísticas:**
+- Reportes realizados: X
+- Reportes resueltos: Y
+- Tasa de resolución: Z%
+- Calificación promedio dada: ⭐⭐⭐⭐
+- Ciudadano activo desde: [fecha]
+
+**Ayuda y soporte:**
+- Preguntas frecuentes (FAQ)
+- Tutorial de uso (repetir onboarding)
+- Contáctanos (formulario)
+- Acerca de la app (versión, créditos)
+- Términos y condiciones
+- Política de privacidad
+
+**Cerrar sesión**
+
+**M) Funcionalidades Transversales:**
+
+**Notificaciones Push:**
+- Cada reporte actualizado
+- Deuda próxima a vencer
+- Trámite con novedad
+- Eventos próximos en tu sector
+- Noticias destacadas
+- Emergencias
+
+**Uso offline:**
+- Consulta de documentos descargados
+- Ver reportes anteriores (cache)
+- Preparar reportes (se envía cuando tenga conexión)
+
+**Compartir:**
+- Todo contenido compartible a:
+  - WhatsApp (principalmente)
+  - Facebook
+  - Twitter/X
+  - Instagram
+  - Email
+  - Mensaje de texto
+
+**Escaneo de códigos QR:**
+- Verificación de solvencias
+- Verificación de documentos
+- Pagos con QR (si bancos lo soportan)
+
+**N) Gamificación (Opcional):**
+
+**Motivar participación ciudadana:**
+
+**Sistema de puntos:**
+- Por cada reporte válido: +10 puntos
+- Por calificar servicio: +5 puntos
+- Por participar en presupuesto participativo: +20 puntos
+- Por pagar a tiempo: +5 puntos
+
+**Niveles:**
+- Ciudadano Novato (0-50 pts)
+- Ciudadano Activo (51-200 pts)
+- Ciudadano Comprometido (201-500 pts)
+- Ciudadano Estrella (500+ pts)
+
+**Reconocimientos:**
+- Insignias digitales
+- Ranking de ciudadanos más activos (anónimo o con consentimiento)
+- Beneficios: descuentos en tributos, reconocimientos públicos
+
+**Retos comunitarios:**
+- "Reportemos 100 problemas este mes"
+- "Limpieza del sector: participa y gana puntos"
+
+**O) Integración con Redes Sociales:**
+- Login social (Facebook, Google)
+- Compartir logros
+- Invitar amigos a descargar la app
+
+**P) Accesibilidad:**
+- Modo alto contraste
+- Tamaño de texto ajustable
+- Compatibilidad con lectores de pantalla (TalkBack, VoiceOver)
+- Navegación por voz (integración con asistentes)
+
+**Q) Seguridad:**
+- Comunicación encriptada (HTTPS)
+- Sesión con timeout
+- PIN o biométrico para acceso
+- Notificación de login desde nuevo dispositivo
+- Opción de cerrar todas las sesiones remotamente
+
+**R) Estadísticas de Uso (Backend):**
+- Alcaldía puede ver:
+  - Descargas totales
+  - Usuarios activos mensuales
+  - Reportes desde app vs web
+  - Funcionalidades más usadas
+  - Calificación de la app (store)
+  - Comentarios de usuarios
+- Para mejorar continuamente
+
+**S) Actualizaciones:**
+- App Store / Play Store
+- Notificación de actualización disponible
+- Mejoras y nuevas funcionalidades
+- Corrección de bugs
+- Notas de versión visibles
+
+---
+
+## 🎯 **RESUMEN EJECUTIVO - BENEFICIOS DEL SISTEMA COMPLETO**
+
+**Para la Alcaldía:**
+- ✅ Transparencia total en la gestión
+- ✅ Eficiencia operativa (menos papel, más rapidez)
+- ✅ Mejor toma de decisiones (datos en tiempo real)
+- ✅ Control financiero estricto
+- ✅ Seguimiento de proyectos preciso
+- ✅ Optimización de recursos (flota, inventario, personal)
+- ✅ Cumplimiento normativo automático
+
+**Para los Ciudadanos:**
+- ✅ Servicios 24/7 desde casa o móvil
+- ✅ Trámites rápidos sin colas
+- ✅ Transparencia (ven a dónde va su dinero)
+- ✅ Participación activa (reportes, presupuesto participativo)
+- ✅ Mejor calidad de servicios públicos
+- ✅ Comunicación directa con autoridades
+
+**Para los Empleados Municipales:**
+- ✅ Trabajo más organizado
+- ✅ Menos tareas manuales repetitivas
+- ✅ Información centralizada
+- ✅ Colaboración entre dependencias
+- ✅ Evaluación justa de desempeño
+- ✅ Autogestión (vacaciones, recibos de pago)
+
+---
+
+# Módulo de Estructura Organizacional y Departamentos
+
+## 🎯 **CONCEPTO Y PROPÓSITO**
+
+Este módulo gestiona la **estructura organizacional completa de la alcaldía**, incluyendo departamentos, direcciones, unidades, y la asignación de usuarios a cada una. Es un módulo **transversal y fundamental** que afecta a todos los demás módulos del sistema.
+
+## 🏛️ **JERARQUÍA ORGANIZACIONAL**
+
+```
+Alcaldía
+├── Despacho del Alcalde
+├── Direcciones (nivel estratégico)
+│   ├── Dirección de Finanzas
+│   ├── Dirección de Obras Públicas
+│   ├── Dirección de Recursos Humanos
+│   ├── Dirección de Servicios Públicos
+│   └── ...
+├── Departamentos (nivel táctico)
+│   ├── Dentro de cada Dirección
+│   ├── Departamento de Presupuesto
+│   ├── Departamento de Contabilidad
+│   └── ...
+└── Unidades (nivel operativo)
+    ├── Unidad de Caja
+    ├── Unidad de Catastro
+    └── ...
+```
+
+## 📊 **MODELOS DE BASE DE DATOS**
+
+```prisma
+// Estructura organizacional jerárquica
+model Department {
+  id          String   @id @default(uuid())
+  code        String   @unique // FIN, OBR, RRHH, etc.
+  name        String   // "Dirección de Finanzas"
+  shortName   String?  // "Finanzas"
+  description String?  @db.Text
+  type        DepartmentType // DIRECTION, DEPARTMENT, UNIT
+  level       Int      // 1=Dirección, 2=Departamento, 3=Unidad
+  
+  // Jerarquía (auto-referencia)
+  parentId    String?
+  parent      Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children    Department[] @relation("DepartmentHierarchy")
+  
+  // Responsable del departamento
+  headId      String?
+  head        User?    @relation("DepartmentHead", fields: [headId], references: [id])
+  
+  // Metadata
+  isActive    Boolean  @default(true)
+  email       String?
+  phone       String?
+  extension   String?  // Extensión telefónica
+  location    String?  // Ubicación física (piso, oficina)
+  
+  // Configuración
+  budget      Decimal? @db.Decimal(15,2) // Presupuesto asignado (si aplica)
+  maxStaff    Int?     // Número máximo de empleados
+  
+  // Relaciones
+  users       UserDepartment[]
+  permissions DepartmentPermission[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([parentId])
+  @@index([type])
+  @@map("departments")
+}
+
+enum DepartmentType {
+  MAYOR_OFFICE    // Despacho del Alcalde
+  DIRECTION       // Dirección (nivel estratégico)
+  DEPARTMENT      // Departamento (nivel táctico)
+  UNIT            // Unidad (nivel operativo)
+}
+
+// Relación muchos a muchos: Usuarios pueden estar en múltiples departamentos
+model UserDepartment {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  
+  // Rol específico en este departamento
+  role         DepartmentRole @default(MEMBER)
+  isPrimary    Boolean  @default(false) // Departamento principal del usuario
+  
+  assignedAt   DateTime @default(now())
+  assignedBy   String?  // ID del usuario que hizo la asignación
+  
+  @@unique([userId, departmentId])
+  @@index([userId])
+  @@index([departmentId])
+  @@map("user_departments")
+}
+
+enum DepartmentRole {
+  HEAD          // Jefe/Director del departamento
+  SUPERVISOR    // Supervisor/Coordinador
+  MEMBER        // Miembro regular
+  ASSISTANT     // Asistente
+}
+
+// Permisos específicos por departamento (para casos especiales)
+model DepartmentPermission {
+  id           String   @id @default(uuid())
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  
+  module       String   // projects, finance, hr, etc.
+  action       String   // read, create, update, delete, approve
+  canDelegate  Boolean  @default(false) // Puede delegar permisos a subordinados
+  
+  createdAt    DateTime @default(now())
+  
+  @@unique([departmentId, module, action])
+  @@map("department_permissions")
+}
+
+// Actualizar modelo User para incluir relaciones
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  
+  // Relación con departamentos
+  departments UserDepartment[]
+  headOfDepartments Department[] @relation("DepartmentHead")
+  
+  // ... resto de campos existentes
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("users")
+}
+```
+
+## 🔧 **FUNCIONALIDADES DEL MÓDULO**
+
+### **1. Gestión de Departamentos (CRUD)**
+
+**Crear Departamento:**
+- Nombre y código único
+- Tipo (Dirección, Departamento, Unidad)
+- Departamento padre (si aplica)
+- Jefe/responsable
+- Datos de contacto
+- Ubicación física
+- Presupuesto asignado (opcional)
+
+**Listar Departamentos:**
+- Vista jerárquica tipo árbol (organigrama)
+- Vista de lista plana con filtros
+- Filtros: tipo, activo/inactivo, búsqueda
+- Ordenamiento por nivel, nombre, código
+
+**Actualizar Departamento:**
+- Cambiar responsable
+- Reasignar en jerarquía
+- Activar/desactivar
+- Modificar datos de contacto
+
+**Eliminar Departamento:**
+- Validar que no tenga empleados asignados
+- Validar que no tenga departamentos hijos
+- Soft delete (marcar como inactivo)
+
+### **2. Asignación de Usuarios a Departamentos**
+
+**Asignar Usuario:**
+- Seleccionar usuario
+- Seleccionar departamento(s)
+- Definir rol en el departamento
+- Marcar departamento principal
+- Un usuario puede estar en múltiples departamentos con diferentes roles
+
+**Transferir Usuario:**
+- Cambiar de departamento principal
+- Mantener histórico de asignaciones
+
+**Remover Usuario:**
+- Quitar de departamento específico
+- Validar que no sea el jefe del departamento
+
+**Ver Asignaciones:**
+- Por usuario: todos sus departamentos
+- Por departamento: todos sus miembros
+
+### **3. Organigrama Visual**
+
+**Vista Interactiva:**
+- Árbol jerárquico expandible/colapsable
+- Cada nodo muestra:
+  - Nombre del departamento
+  - Jefe actual
+  - Número de empleados
+  - Departamentos hijos
+- Click para ver detalle
+- Drag & drop para reorganizar (con confirmación)
+
+**Exportar Organigrama:**
+- PDF para impresión
+- Imagen PNG/SVG
+- Datos en Excel
+
+### **4. Permisos y Accesos por Departamento**
+
+**Configuración de Permisos:**
+- Definir qué puede hacer cada departamento en cada módulo
+- Ejemplo: Finanzas puede aprobar pagos, Obras solo consultar presupuesto
+- Permisos heredables de padre a hijos
+- Permisos delegables
+
+**Validación de Acceso:**
+- Middleware verifica:
+  1. Usuario autenticado ✓
+  2. Usuario tiene rol adecuado ✓
+  3. Usuario pertenece a departamento con permisos ✓
+- Log de intentos de acceso denegados
+
+### **5. Reportes y Estadísticas**
+
+**Reportes Disponibles:**
+- Empleados por departamento
+- Organigrama completo
+- Departamentos sin jefe asignado
+- Usuarios sin departamento
+- Distribución de personal por nivel
+- Presupuesto por departamento
+- Departamentos inactivos
+
+### **6. Integración con Otros Módulos**
+
+**Proyectos:**
+- Proyecto asignado a departamento responsable
+- Reportes de proyectos por departamento
+
+**Finanzas:**
+- Presupuesto por departamento
+- Gastos por departamento
+- Aprobaciones según jerarquía departamental
+
+**Recursos Humanos:**
+- Nómina agrupada por departamento
+- Evaluaciones de desempeño por departamento
+- Capacitaciones por departamento
+
+**Reportes Ciudadanos:**
+- Asignación automática según tipo de problema
+- Routing a departamento competente
+
+## 🎨 **DISEÑO DE INTERFAZ**
+
+### **Página Principal: `/organizacion/departamentos`**
+
+**Layout:**
+```
+┌─────────────────────────────────────────────────┐
+│  📊 Estructura Organizacional                   │
+├─────────────────────────────────────────────────┤
+│  [+ Nuevo Departamento]  [📥 Exportar]  [🔄]    │
+├──────────────────┬──────────────────────────────┤
+│                  │                              │
+│  Árbol           │  Detalles                    │
+│  Jerárquico      │                              │
+│                  │  Dirección de Finanzas       │
+│  ▼ Alcaldía      │  Código: FIN                 │
+│    ▼ Finanzas    │  Jefe: Juan Pérez           │
+│      - Presup.   │  Email: finanzas@...         │
+│      - Contab.   │  Teléfono: 0212-1234567     │
+│    ▼ Obras       │  Empleados: 12              │
+│      - Proyectos │                              │
+│      - Manten.   │  [Ver Empleados] [Editar]    │
+│    • RRHH        │                              │
+│                  │                              │
+└──────────────────┴──────────────────────────────┘
+```
+
+**Componentes Clave:**
+- `DepartmentTree` - Árbol jerárquico interactivo
+- `DepartmentCard` - Card con información resumida
+- `DepartmentForm` - Formulario crear/editar
+- `OrgChart` - Organigrama visual avanzado
+- `StaffAssignment` - Asignación de personal
+
+### **Página de Detalle: `/organizacion/departamentos/[id]`**
+
+**Tabs:**
+1. **Información General**
+   - Datos del departamento
+   - Jefe actual
+   - Departamento padre
+   - Sub-departamentos
+
+2. **Personal**
+   - Lista de empleados asignados
+   - Rol de cada uno
+   - Botón "Asignar Empleado"
+   - Transferir empleado
+
+3. **Permisos**
+   - Matriz de permisos por módulo
+   - Toggle switches para activar/desactivar
+
+4. **Presupuesto** (si aplica)
+   - Presupuesto asignado
+   - Ejecución
+   - Comparativas
+
+5. **Actividad**
+   - Log de cambios
+   - Asignaciones/remociones de personal
+   - Cambios de estructura
+
+### **Modal: Asignar Empleado**
+
+```
+┌──────────────────────────────────────┐
+│  Asignar Empleado al Departamento    │
+├──────────────────────────────────────┤
+│                                      │
+│  Empleado: [Buscar empleado... ▼]   │
+│                                      │
+│  Departamento: Dirección de Finanzas│
+│                                      │
+│  Rol en el departamento:             │
+│  ○ Jefe                              │
+│  ○ Supervisor                        │
+│  ● Miembro                           │
+│  ○ Asistente                         │
+│                                      │
+│  ☑ Marcar como departamento principal│
+│                                      │
+│  [Cancelar]  [Asignar Empleado]     │
+└──────────────────────────────────────┘
+```
+
+## 🔌 **API ENDPOINTS**
+
+### **Departamentos**
+```javascript
+// CRUD básico
+GET    /api/departments                    // Listar todos
+GET    /api/departments/tree               // Árbol jerárquico
+GET    /api/departments/:id                // Detalle
+POST   /api/departments                    // Crear
+PATCH  /api/departments/:id                // Actualizar
+DELETE /api/departments/:id                // Eliminar
+
+// Jerarquía
+GET    /api/departments/:id/children       // Sub-departamentos
+GET    /api/departments/:id/ancestors      // Departamentos padre
+POST   /api/departments/:id/move           // Mover en jerarquía
+
+// Personal
+GET    /api/departments/:id/staff          // Empleados del departamento
+POST   /api/departments/:id/staff          // Asignar empleado
+DELETE /api/departments/:id/staff/:userId  // Remover empleado
+PATCH  /api/departments/:id/staff/:userId  // Cambiar rol
+
+// Permisos
+GET    /api/departments/:id/permissions    // Permisos del departamento
+POST   /api/departments/:id/permissions    // Asignar permiso
+DELETE /api/departments/:id/permissions/:permId // Remover permiso
+
+// Reportes
+GET    /api/departments/stats              // Estadísticas generales
+GET    /api/departments/orgchart           // Datos para organigrama
+```
+
+### **Usuarios (extensión)**
+```javascript
+// Ver departamentos de un usuario
+GET    /api/users/:id/departments          // Departamentos asignados
+
+// Asignar/remover departamento
+POST   /api/users/:id/departments          // Asignar a departamento
+DELETE /api/users/:id/departments/:deptId  // Remover de departamento
+
+// Transferir
+POST   /api/users/:id/transfer             // Transferir de departamento
+```
+
+## 🔐 **CONTROL DE ACCESOS**
+
+### **Permisos del Módulo:**
+```javascript
+const DEPARTMENT_PERMISSIONS = {
+  // Administración general
+  'department:view': 'Ver estructura organizacional',
+  'department:create': 'Crear departamentos',
+  'department:update': 'Modificar departamentos',
+  'department:delete': 'Eliminar departamentos',
+  
+  // Gestión de personal
+  'department:assign_staff': 'Asignar personal a departamentos',
+  'department:remove_staff': 'Remover personal de departamentos',
+  'department:transfer_staff': 'Transferir personal entre departamentos',
+  
+  // Jerarquía
+  'department:reorganize': 'Reorganizar estructura jerárquica',
+  'department:set_head': 'Asignar jefe de departamento',
+  
+  // Permisos
+  'department:manage_permissions': 'Gestionar permisos de departamentos',
+  
+  // Reportes
+  'department:view_reports': 'Ver reportes organizacionales',
+  'department:export': 'Exportar organigrama',
+};
+```
+
+### **Validaciones Importantes:**
+1. **Solo RRHH y Administradores** pueden crear/modificar departamentos
+2. **Jefe de departamento** puede ver su equipo pero no modificarlo
+3. **Usuario** solo ve su departamento y jefes superiores
+4. **Cambios en jerarquía** requieren aprobación de nivel superior
+5. **No se puede eliminar** departamento con personal o hijos
+
+## 🧪 **CASOS DE USO PRINCIPALES**
+
+### **Caso 1: Nuevo Empleado**
+```
+Usuario: Director de RRHH
+
+1. Crea usuario en módulo RRHH
+2. Va a Organización → Departamentos
+3. Busca el departamento destino
+4. Click "Asignar Empleado"
+5. Selecciona al nuevo empleado
+6. Define rol: "Miembro"
+7. Marca como departamento principal
+8. Sistema envía notificación al jefe del departamento
+9. Empleado ahora tiene accesos según su departamento
+```
+
+### **Caso 2: Promoción (Cambio de Departamento)**
+```
+Usuario: Director de RRHH
+
+1. Busca al empleado
+2. Ve sus asignaciones actuales
+3. Click "Transferir"
+4. Selecciona nuevo departamento
+5. Cambia rol a "Supervisor"
+6. Sistema:
+   - Registra histórico
+   - Actualiza permisos
+   - Notifica a ambos jefes (antiguo y nuevo)
+   - Actualiza organigrama
+```
+
+### **Caso 3: Consulta de Estructura**
+```
+Usuario: Cualquier empleado autenticado
+
+1. Va a Organización
+2. Ve organigrama completo
+3. Puede navegar por árbol jerárquico
+4. Ve departamentos y jefes
+5. No ve datos sensibles (salarios, etc.)
+6. Puede buscar por nombre de departamento
+```
+
+### **Caso 4: Creación de Nuevo Departamento**
+```
+Usuario: Administrador
+
+1. Click "Nuevo Departamento"
+2. Llena formulario:
+   - Nombre: "Departamento de Sistemas"
+   - Código: SIS
+   - Tipo: DEPARTMENT
+   - Padre: Dirección de Administración
+   - Jefe: Selecciona empleado
+3. Guarda
+4. Sistema crea departamento y lo ubica en jerarquía
+5. Asigna al jefe automáticamente
+6. Organigrama se actualiza
+```
+
+## 📈 **MÉTRICAS Y REPORTES**
+
+### **Dashboard del Módulo:**
+```
+┌──────────────────────────────────────────────┐
+│  Estructura Organizacional - Resumen         │
+├──────────────────────────────────────────────┤
+│                                              │
+│  📊 Estadísticas Generales                   │
+│  ┌─────────┬─────────┬─────────┬──────────┐ │
+│  │ Total   │ Direcc. │ Depart. │ Unidades │ │
+│  │ 45      │ 8       │ 22      │ 15       │ │
+│  └─────────┴─────────┴─────────┴──────────┘ │
+│                                              │
+│  👥 Personal                                 │
+│  ┌─────────────────┬──────────────────────┐ │
+│  │ Total Empleados │ Con Departamento Asig│ │
+│  │ 350             │ 342 (97.7%)         │ │
+│  └─────────────────┴──────────────────────┘ │
+│                                              │
+│  📋 Distribución por Dirección               │
+│  ┌──────────────────────────────┬─────────┐ │
+│  │ Finanzas                     │ ███ 45  │ │
+│  │ Obras Públicas               │ ████ 78 │ │
+│  │ RRHH                         │ ██ 32   │ │
+│  │ Servicios Públicos           │ █████ 95│ │
+│  └──────────────────────────────┴─────────┘ │
+│                                              │
+│  ⚠️  Alertas                                 │
+│  • 3 departamentos sin jefe asignado        │
+│  • 8 empleados sin departamento principal   │
+│                                              │
+└──────────────────────────────────────────────┘
+```
+
+### **Reportes Exportables:**
+1. **Organigrama Completo** (PDF/PNG)
+2. **Listado de Personal por Departamento** (Excel)
+3. **Matriz de Responsabilidades** (Excel)
+4. **Directorio Telefónico** (PDF)
+5. **Estructura de Costos** (si incluye presupuestos)
+
+## 🔄 **FLUJO DE DATOS CON OTROS MÓDULOS**
+
+### **Con Proyectos:**
+```javascript
+// Al crear proyecto, se asigna departamento responsable
+const project = {
+  name: "Reparación Calle Principal",
+  responsibleDepartmentId: "dept-obras-uuid",
+  // ... otros datos
+};
+
+// En queries: filtrar proyectos por departamento del usuario
+const myDepartmentProjects = await prisma.project.findMany({
+  where: {
+    responsibleDepartmentId: user.primaryDepartmentId
+  }
+});
+```
+
+### **Con Finanzas:**
+```javascript
+// Presupuesto asignado por departamento
+const departmentBudget = await prisma.budgetItem.findMany({
+  where: {
+    departmentId: "dept-finanzas-uuid"
+  }
+});
+
+// Aprobaciones según nivel jerárquico
+if (transaction.amount > 10000) {
+  // Requiere aprobación del jefe de dirección
+  approver = await getDepartmentHead(user.department.parentId);
+}
+```
+
+### **Con RRHH:**
+```javascript
+// Nómina agrupada por departamento
+const payrollByDept = await prisma.employee.groupBy({
+  by: ['departmentId'],
+  _sum: {
+    salary: true
+  }
+});
+
+// Evaluaciones de desempeño del departamento
+const deptEvaluations = await prisma.evaluation.findMany({
+  where: {
+    employee: {
+      departments: {
+        some: {
+          departmentId: currentDeptId
+        }
+      }
+    }
+  }
+});
+```
+
+### **Con Reportes Ciudadanos:**
+```javascript
+// Auto-asignación según tipo de problema
+const problemDepartmentMapping = {
+  'bache': 'dept-obras',
+  'basura': 'dept-aseo',
+  'alumbrado': 'dept-servicios',
+  'fuga_agua': 'dept-agua',
+};
+
+// Al crear reporte
+const report = await prisma.citizenReport.create({
+  data: {
+    type: 'bache',
+    assignedDepartmentId: problemDepartmentMapping['bache'],
+    // ...
+  }
+});
+```
+
+## 🎯 **PRIORIDAD DE IMPLEMENTACIÓN**
+
+Este módulo debe implementarse **TEMPRANO** (después de autenticación, antes o en paralelo con Proyectos), porque:
+
+1. **Afecta a todos los módulos** - Necesario para permisos granulares
+2. **Estructura de datos compartida** - Otros módulos dependen de él
+3. **Permisos y accesos** - Base para RBAC avanzado
+4. **Reportes** - Muchos reportes se agrupan por departamento
+
+### **Orden Sugerido:**
+```
+FASE 0: Core (Auth + RBAC básico)
+FASE 0.5: Estructura Organizacional ← NUEVO
+  ├── Modelos de BD
+  ├── CRUD de departamentos
+  ├── Asignación de usuarios
+  ├── Organigrama básico
+  └── Permisos por departamento
+  
+FASE 1: Proyectos (ya incluye departamento responsable)
+FASE 2: Finanzas (ya incluye presupuesto por departamento)
+...
+```
+
+## 📝 **CONSIDERACIONES TÉCNICAS**
+
+### **Performance:**
+- Usar **recursive CTEs** en PostgreSQL para queries jerárquicas eficientes
+- Cachear árbol de departamentos (cambia poco)
+- Índices en `parentId` para queries rápidas
+
+### **Ejemplo Query Recursiva:**
+```javascript
+// Obtener todos los ancestros de un departamento
+const getAncestors = async (departmentId) => {
+  return await prisma.$queryRaw`
+    WITH RECURSIVE ancestors AS (
+      SELECT * FROM departments WHERE id = ${departmentId}
+      UNION ALL
+      SELECT d.* FROM departments d
+      INNER JOIN ancestors a ON d.id = a."parentId"
+    )
+    SELECT * FROM ancestors;
+  `;
+};
+
+// Obtener todo el subárbol de un departamento
+const getDescendants = async (departmentId) => {
+  return await prisma.$queryRaw`
+    WITH RECURSIVE descendants AS (
+      SELECT * FROM departments WHERE id = ${departmentId}
+      UNION ALL
+      SELECT d.* FROM departments d
+      INNER JOIN descendants desc ON d."parentId" = desc.id
+    )
+    SELECT * FROM descendants;
+  `;
+};
+```
+
+### **Validaciones Críticas:**
+```javascript
+// No permitir ciclos en jerarquía
+const validateNoCycle = async (deptId, newParentId) => {
+  const ancestors = await getAncestors(newParentId);
+  if (ancestors.some(a => a.id === deptId)) {
+    throw new Error('No se puede crear ciclo en jerarquía');
+  }
+};
+
+// Validar límite de empleados
+const validateMaxStaff = async (deptId) => {
+  const dept = await prisma.department.findUnique({
+    where: { id: deptId },
+    include: { _count: { select: { users: true } } }
+  });
+  
+  if (dept.maxStaff && dept._count.users >= dept.maxStaff) {
+    throw new Error('Departamento ha alcanzado límite de personal');
+  }
+};
+```
+
+### **Seeds de Ejemplo:**
+```javascript
+// prisma/seeds/departments.js
+const seedDepartments = async () => {
+  // Nivel 1: Direcciones
+  const finanzas = await prisma.department.create({
+    data: {
+      code: 'FIN',
+      name: 'Dirección de Finanzas',
+      type: 'DIRECTION',
+      level: 1,
+    }
+  });
+  
+  // Nivel 2: Departamentos
+  await prisma.department.createMany({
+    data: [
+      {
+        code: 'FIN-PRES',
+        name: 'Departamento de Presupuesto',
+        type: 'DEPARTMENT',
+        level: 2,
+        parentId: finanzas.id,
+      },
+      {
+        code: 'FIN-CONT',
+        name: 'Departamento de Contabilidad',
+        type: 'DEPARTMENT',
+        level: 2,
+        parentId: finanzas.id,
+      }
+    ]
+  });
+};
+```
+
+---
+

@@ -1,0 +1,183 @@
+{
+  "id": "fase-3-rrhh",
+  "title": "FASE 3: MÓDULO DE RECURSOS HUMANOS",
+  "description": "Desarrollo del sistema para la gestión del personal de la alcaldía, incluyendo expedientes, nómina y control de asistencia.",
+  "details": [
+    "Diseñar y aplicar el schema de BD para empleados, cargos, nómina, asistencia, vacaciones y permisos.",
+    "Implementar la API para la gestión de expedientes de personal (CRUD de empleados).",
+    "Desarrollar la API para el procesamiento y cálculo de la nómina (asignaciones, deducciones).",
+    "Crear endpoints para la gestión de solicitudes de vacaciones y permisos.",
+    "Implementar un sistema para el registro y control de asistencia.",
+    "Escribir tests unitarios y de integración para toda la API del módulo de RRHH.",
+    "Crear las páginas del frontend para la administración de personal, consulta de recibos de pago y gestión de solicitudes.",
+    "Desarrollar la interfaz para la gestión de expedientes digitales de los empleados.",
+    "Escribir tests para los componentes y flujos del frontend de RRHH."
+  ],
+  "dependencies": ["fase-0-core"],
+  "status": "done",
+  "acceptance_criteria": [
+    "Se puede registrar un nuevo empleado con toda su información personal y laboral.",
+    "El sistema calcula la nómina quincenal/mensual de forma automática y correcta.",
+    "Un empleado puede solicitar vacaciones y un supervisor puede aprobarlas o rechazarlas a través del sistema.",
+    "La API del módulo de RRHH tiene un coverage de tests superior al 70%.",
+    "Desde el frontend, un administrador puede gestionar el ciclo de vida completo de un empleado.",
+    "Un empleado puede consultar y descargar sus recibos de pago desde su perfil.",
+    "Todos los tests del frontend para este módulo pasan correctamente."
+  ],
+  "subtasks": [
+    {
+      "id": "f3-sub1",
+      "title": "Diseño del Schema de Base de Datos de RRHH",
+      "description": "Definir en schema.prisma los modelos para Employee (empleado), Position (cargo), Payroll (nómina), PayrollConcept (conceptos de nómina), Attendance (asistencia), VacationRequest (solicitudes de vacaciones), Leave (permisos) y PerformanceEvaluation. Incluir enums para tipos de contrato, estados, etc.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f3-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas de RRHH en PostgreSQL y actualizar el cliente de Prisma.",
+      "status": "done",
+      "dependencies": ["f3-sub1"]
+    },
+    {
+      "id": "f3-sub3",
+      "title": "Crear Estructura del Módulo de RRHH (Backend)",
+      "description": "Crear estructura backend/src/modules/hr/ con subcarpetas para controllers, services, routes.js y validations.js.",
+      "status": "done",
+      "dependencies": ["f3-sub2"]
+    },
+    {
+      "id": "f3-sub4",
+      "title": "Implementar API de Gestión de Empleados",
+      "description": "Desarrollar CRUD completo para empleados: crear, listar, obtener por ID, actualizar y dar de baja. Incluir generación automática del número de empleado, validaciones de datos personales y laborales.",
+      "status": "done",
+      "dependencies": ["f3-sub3"]
+    },
+    {
+      "id": "f3-sub5",
+      "title": "Desarrollar API de Expediente Digital",
+      "description": "Crear endpoints para gestionar la documentación del empleado: subir documentos (cédula, títulos, contratos), actualizar información académica y laboral, consultar historial de cargos.",
+      "status": "done",
+      "dependencies": ["f3-sub4"]
+    },
+    {
+      "id": "f3-sub6",
+      "title": "Implementar Motor de Cálculo de Nómina",
+      "description": "Desarrollar el servicio que calcula la nómina automáticamente: asignaciones (sueldo base, primas, bonos), deducciones (IVSS, FAOV, paro forzoso, préstamos), aportes patronales. Implementar lógica según leyes venezolanas.",
+      "status": "done",
+      "dependencies": ["f3-sub4"]
+    },
+    {
+      "id": "f3-sub7",
+      "title": "Crear API de Procesamiento de Nómina",
+      "description": "Implementar el flujo completo de nómina: cierre de novedades, integración con asistencia, cálculo automático, revisión, aprobación y generación de archivos (TXT bancario, recibos PDF). Endpoints para procesar y consultar nóminas.",
+      "status": "done",
+      "dependencies": ["f3-sub6"]
+    },
+    {
+      "id": "f3-sub8",
+      "title": "Desarrollar API de Control de Asistencia",
+      "description": "Crear endpoints para registrar marcaciones (entrada/salida), calcular retardos y faltas, gestionar justificaciones y generar reportes de asistencia por empleado y dependencia.",
+      "status": "done",
+      "dependencies": ["f3-sub3"]
+    },
+    {
+      "id": "f3-sub9",
+      "title": "Implementar API de Gestión de Vacaciones",
+      "description": "Desarrollar servicios para calcular días de vacaciones disponibles según antigüedad, crear solicitudes de vacaciones, aprobar/rechazar por supervisor, descontar días y programar bono vacacional.",
+      "status": "done",
+      "dependencies": ["f3-sub4"]
+    },
+    {
+      "id": "f3-sub10",
+      "title": "Crear API de Permisos y Licencias",
+      "description": "Implementar gestión de permisos remunerados y no remunerados, reposos médicos, licencias especiales (maternidad, paternidad). Workflow de solicitud y aprobación.",
+      "status": "done",
+      "dependencies": ["f3-sub4"]
+    },
+    {
+      "id": "f3-sub11",
+      "title": "Desarrollar Cálculo de Prestaciones Sociales",
+      "description": "Implementar servicio para calcular prestaciones sociales según ley venezolana (antigüedad, intereses), provisionar mensualmente y generar liquidaciones al egreso.",
+      "status": "done",
+      "dependencies": ["f3-sub7"]
+    },
+    {
+      "id": "f3-sub12",
+      "title": "Escribir Tests del Backend de RRHH",
+      "description": "Desarrollar tests unitarios y de integración para todos los servicios y endpoints del módulo de RRHH. Validar cálculos de nómina, vacaciones y prestaciones sociales. Objetivo: >70% coverage.",
+      "status": "done",
+      "dependencies": ["f3-sub11"]
+    },
+    {
+      "id": "f3-sub13",
+      "title": "Crear Estructura del Módulo de RRHH (Frontend)",
+      "description": "Crear estructura en frontend: pages en app/(dashboard)/rrhh/ y componentes en components/modules/hr/.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f3-sub14",
+      "title": "Desarrollar Hook Personalizado useEmployees",
+      "description": "Crear custom hook usando React Query para manejar fetching y mutaciones de datos de empleados, nómina, asistencia y vacaciones.",
+      "status": "done",
+      "dependencies": ["f3-sub13"]
+    },
+    {
+      "id": "f3-sub15",
+      "title": "Crear Página de Gestión de Personal",
+      "description": "Desarrollar interfaz para listar empleados con filtros (activos/inactivos, por dependencia), buscar por nombre o cédula, ver ficha resumen y acceder al expediente completo. Incluir botones de acción para editar, dar de baja, etc.",
+      "status": "done",
+      "dependencies": ["f3-sub14"]
+    },
+    {
+      "id": "f3-sub16",
+      "title": "Desarrollar Formulario de Registro de Empleado",
+      "description": "Crear formulario multi-paso para ingresar un nuevo empleado: datos personales, académicos, laborales y carga de documentos. Usar React Hook Form con validación Zod.",
+      "status": "done",
+      "dependencies": ["f3-sub14"]
+    },
+    {
+      "id": "f3-sub17",
+      "title": "Crear Página de Expediente Digital",
+      "description": "Desarrollar vista detallada del expediente de un empleado con tabs: datos personales, académicos, laborales, documentos, historial de cargos, evaluaciones, capacitaciones. Permitir edición y carga de documentos.",
+      "status": "done",
+      "dependencies": ["f3-sub14"]
+    },
+    {
+      "id": "f3-sub18",
+      "title": "Desarrollar Módulo de Procesamiento de Nómina",
+      "description": "Crear interfaz para gestionar el proceso de nómina: seleccionar período, cargar novedades, ejecutar cálculo, revisar resultados, aprobar, generar archivos para banco. Mostrar resumen con totales por concepto.",
+      "status": "done",
+      "dependencies": ["f3-sub14"]
+    },
+    {
+      "id": "f3-sub19",
+      "title": "Crear Portal del Empleado",
+      "description": "Desarrollar portal donde cada empleado pueda consultar y descargar sus recibos de pago, ver su saldo de vacaciones, solicitar permisos/vacaciones, consultar su asistencia y actualizar datos personales.",
+      "status": "done",
+      "dependencies": ["f3-sub14"]
+    },
+    {
+      "id": "f3-sub20",
+      "title": "Implementar Gestión de Asistencia",
+      "description": "Crear interfaz para registrar marcaciones manuales (si no hay biométrico), consultar asistencia por empleado o dependencia, justificar faltas/retardos, generar reportes exportables.",
+      "status": "done",
+      "dependencies": ["f3-sub14"]
+    },
+    {
+      "id": "f3-sub21",
+      "title": "Desarrollar Módulo de Vacaciones",
+      "description": "Crear interfaz para que supervisores gestionen solicitudes de vacaciones (aprobar/rechazar), visualizar calendario de vacaciones del área, programar vacaciones anuales.",
+      "status": "done",
+      "dependencies": ["f3-sub14"]
+    },
+    {
+      "id": "f3-sub22",
+      "title": "Escribir Tests del Frontend de RRHH",
+      "description": "Desarrollar tests de componentes y de integración para los flujos principales del módulo de RRHH (registrar empleado, procesar nómina, solicitar vacaciones).",
+      "status": "done",
+      "dependencies": ["f3-sub21"]
+    }
+  ]
+}

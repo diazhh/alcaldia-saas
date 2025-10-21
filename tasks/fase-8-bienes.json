@@ -1,0 +1,123 @@
+{
+  "id": "fase-8-bienes",
+  "title": "FASE 8: MÓDULO DE INVENTARIO Y BIENES MUNICIPALES",
+  "description": "Registra y controla todos los bienes propiedad del municipio, desde edificios hasta computadoras, para evitar pérdidas y optimizar su uso.",
+  "details": [
+    "Clasificar y registrar todos los bienes inmuebles y muebles del municipio con un código único y etiqueta.",
+    "Implementar el cálculo automático de depreciación de activos.",
+    "Gestionar los movimientos de bienes: asignación, traspaso, préstamo, reparación y desincorporación.",
+    "Controlar el inventario de almacén (bienes fungibles) con control de stock, entradas y salidas.",
+    "Digitalizar el proceso de solicitudes de compra, desde la requisición hasta la entrega.",
+    "Facilitar el proceso de inventario físico periódico mediante el uso de escáneres o app móvil."
+  ],
+  "dependencies": ["fase-0-core"],
+  "status": "done",
+  "acceptance_criteria": [
+    "Cada bien del municipio tiene una ficha detallada con su custodio, ubicación, valor y estado.",
+    "Cualquier movimiento de un bien (ej. traspaso entre oficinas) queda registrado con un acta digital.",
+    "El sistema alerta cuando el stock de un artículo de almacén llega a su punto de reorden.",
+    "El proceso de solicitud de compra está completamente digitalizado y requiere las aprobaciones correspondientes.",
+    "Se puede generar un reporte completo del patrimonio municipal valorizado en cualquier momento.",
+    "La API del módulo tiene un coverage de tests superior al 70%."
+  ],
+  "subtasks": [
+    {
+      "id": "f8-sub1",
+      "title": "Diseño del Schema de Base de Datos de Bienes",
+      "description": "Definir modelos para Asset (bien), AssetMovement (movimiento), Warehouse (almacén), InventoryItem (artículos fungibles), PurchaseRequest (solicitud de compra). Incluir depreciación y custodia.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f8-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas de inventario y bienes.",
+      "status": "done",
+      "dependencies": ["f8-sub1"]
+    },
+    {
+      "id": "f8-sub3",
+      "title": "Implementar API de Registro de Bienes",
+      "description": "Desarrollar CRUD para bienes inmuebles y muebles: código único, descripción, ubicación, custodio, valor, estado, documentación, fotos.",
+      "status": "done",
+      "dependencies": ["f8-sub2"]
+    },
+    {
+      "id": "f8-sub4",
+      "title": "Desarrollar Cálculo de Depreciación",
+      "description": "Implementar cálculo automático de depreciación mensual/anual según método de línea recta y vida útil por tipo de bien.",
+      "status": "done",
+      "dependencies": ["f8-sub3"]
+    },
+    {
+      "id": "f8-sub5",
+      "title": "Crear API de Movimientos de Bienes",
+      "description": "Implementar gestión de movimientos: asignación inicial, traspaso interno, préstamo temporal, reparación, baja. Actas digitales con firmas.",
+      "status": "done",
+      "dependencies": ["f8-sub3"]
+    },
+    {
+      "id": "f8-sub6",
+      "title": "Desarrollar API de Inventario de Almacén",
+      "description": "Implementar control de stock: entradas, salidas, stock mínimo/máximo, puntos de reorden, valoración, rotación, reportes de consumo.",
+      "status": "done",
+      "dependencies": ["f8-sub2"]
+    },
+    {
+      "id": "f8-sub7",
+      "title": "Implementar Flujo de Solicitudes de Compra",
+      "description": "Desarrollar proceso completo: solicitud por dependencia, aprobaciones, verificación presupuestaria, cotización, orden de compra, recepción, entrega.",
+      "status": "done",
+      "dependencies": ["f8-sub6"]
+    },
+    {
+      "id": "f8-sub8",
+      "title": "Crear Sistema de Etiquetado",
+      "description": "Implementar generación de códigos únicos con QR/código de barras, soporte para escaneo desde app móvil.",
+      "status": "done",
+      "dependencies": ["f8-sub3"]
+    },
+    {
+      "id": "f8-sub9",
+      "title": "Escribir Tests del Backend de Bienes",
+      "description": "Desarrollar tests unitarios y de integración. Objetivo: >70% coverage.",
+      "status": "done",
+      "dependencies": ["f8-sub8"]
+    },
+    {
+      "id": "f8-sub10",
+      "title": "Crear Módulo de Gestión de Bienes",
+      "description": "Desarrollar interfaz para gestionar inventario de bienes: listado, búsqueda, ficha detallada, actualización, carga de documentos.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f8-sub11",
+      "title": "Implementar Módulo de Movimientos",
+      "description": "Crear interfaz para registrar y aprobar movimientos de bienes, generar actas, consultar historial, paz y salvo.",
+      "status": "done",
+      "dependencies": ["f8-sub10"]
+    },
+    {
+      "id": "f8-sub12",
+      "title": "Desarrollar Módulo de Almacén",
+      "description": "Crear interfaz para gestionar inventario fungible: entradas, salidas, solicitudes, alertas de stock, reportes.",
+      "status": "done",
+      "dependencies": ["f8-sub10"]
+    },
+    {
+      "id": "f8-sub13",
+      "title": "Crear Sistema de Solicitudes de Compra",
+      "description": "Desarrollar interfaz para crear solicitudes, flujo de aprobaciones, gestión de compras, seguimiento.",
+      "status": "done",
+      "dependencies": ["f8-sub10"]
+    },
+    {
+      "id": "f8-sub14",
+      "title": "Escribir Tests del Frontend de Bienes",
+      "description": "Desarrollar tests de componentes y flujos principales (registrar bien, traspasar bien, solicitar compra).",
+      "status": "done",
+      "dependencies": ["f8-sub13"]
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "id": "fase-0.5-organizacion",
+  "title": "FASE 0.5: MÓDULO DE ESTRUCTURA ORGANIZACIONAL",
+  "description": "Módulo transversal y fundamental que gestiona la estructura organizacional completa de la alcaldía: departamentos, direcciones, unidades, asignación de usuarios y permisos granulares por departamento. Debe implementarse temprano porque afecta a todos los módulos.",
+  "details": [
+    "Diseñar y aplicar el schema de BD para la estructura jerárquica de departamentos con auto-referencia.",
+    "Implementar la relación muchos a muchos entre usuarios y departamentos (un usuario puede estar en múltiples departamentos).",
+    "Crear el modelo de permisos por departamento para control de acceso granular.",
+    "Desarrollar API CRUD completa para gestión de departamentos (crear, listar, actualizar, eliminar).",
+    "Implementar endpoints para asignación/remoción de usuarios a departamentos con roles específicos.",
+    "Crear queries recursivas eficientes para obtener jerarquías (ancestros, descendientes).",
+    "Desarrollar interfaz de organigrama visual interactivo con árbol jerárquico expandible.",
+    "Implementar sistema de permisos y validaciones de acceso por departamento.",
+    "Crear dashboard del módulo con estadísticas de estructura organizacional.",
+    "Desarrollar reportes exportables (organigrama PDF/PNG, listado de personal, directorio telefónico).",
+    "Integrar el módulo con otros módulos para asignación de responsabilidades por departamento.",
+    "Escribir tests unitarios y de integración para toda la funcionalidad."
+  ],
+  "dependencies": ["fase-0-core"],
+  "status": "done",
+  "acceptance_criteria": [
+    "Se puede crear una estructura jerárquica completa de departamentos sin ciclos.",
+    "Un usuario puede ser asignado a múltiples departamentos con diferentes roles.",
+    "El organigrama visual muestra correctamente la estructura con jefes, empleados y sub-departamentos.",
+    "El sistema valida permisos de acceso considerando tanto el rol del usuario como su departamento.",
+    "Se pueden exportar organigramas en PDF/PNG y listados de personal en Excel.",
+    "Las queries recursivas para obtener jerarquías son eficientes y no causan problemas de rendimiento.",
+    "Los cambios en la estructura (mover departamentos, asignar jefes) se registran correctamente.",
+    "La API del módulo tiene un coverage de tests superior al 70%."
+  ],
+  "subtasks": [
+    {
+      "id": "f0.5-sub1",
+      "title": "Diseño del Schema de Estructura Organizacional",
+      "description": "Definir en schema.prisma los modelos Department (con auto-referencia para jerarquía), UserDepartment (relación muchos a muchos), DepartmentPermission, DepartmentRole enum, DepartmentType enum. Actualizar modelo User para incluir relaciones con departamentos.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f0.5-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas de estructura organizacional. Crear seeds con estructura inicial (direcciones principales, departamentos básicos).",
+      "status": "done",
+      "dependencies": ["f0.5-sub1"]
+    },
+    {
+      "id": "f0.5-sub3",
+      "title": "Implementar API CRUD de Departamentos",
+      "description": "Desarrollar servicios y controladores para crear, listar (plano y jerárquico), obtener por ID, actualizar y eliminar departamentos. Incluir validaciones: no crear ciclos, no eliminar con empleados o hijos, código único.",
+      "status": "done",
+      "dependencies": ["f0.5-sub2"]
+    },
+    {
+      "id": "f0.5-sub4",
+      "title": "Crear Queries Recursivas para Jerarquías",
+      "description": "Implementar queries con CTEs recursivos de PostgreSQL para obtener ancestros (departamentos padre hasta la raíz) y descendientes (todo el subárbol). Optimizar con índices en parentId.",
+      "status": "done",
+      "dependencies": ["f0.5-sub3"]
+    },
+    {
+      "id": "f0.5-sub5",
+      "title": "Desarrollar API de Asignación de Personal",
+      "description": "Implementar endpoints para asignar usuario a departamento (con rol), remover usuario, cambiar rol, transferir entre departamentos. Validar límite de personal por departamento, actualizar permisos automáticamente.",
+      "status": "done",
+      "dependencies": ["f0.5-sub3"]
+    },
+    {
+      "id": "f0.5-sub6",
+      "title": "Implementar Sistema de Permisos por Departamento",
+      "description": "Desarrollar lógica para asignar y validar permisos específicos por departamento y módulo. Crear middleware que verifique: usuario autenticado → tiene rol adecuado → pertenece a departamento con permisos. Log de intentos denegados.",
+      "status": "done",
+      "dependencies": ["f0.5-sub3"]
+    },
+    {
+      "id": "f0.5-sub7",
+      "title": "Crear API de Reportes y Estadísticas",
+      "description": "Implementar endpoints para: empleados por departamento, departamentos sin jefe, usuarios sin departamento, distribución de personal por nivel, datos para organigrama, estadísticas generales.",
+      "status": "done",
+      "dependencies": ["f0.5-sub5"]
+    },
+    {
+      "id": "f0.5-sub8",
+      "title": "Escribir Tests del Backend de Organización",
+      "description": "Desarrollar tests unitarios y de integración: CRUD departamentos, queries recursivas, asignaciones, validaciones (ciclos, límites), permisos. Objetivo: >70% coverage.",
+      "status": "done",
+      "dependencies": ["f0.5-sub7"]
+    },
+    {
+      "id": "f0.5-sub9",
+      "title": "Crear Componente de Árbol Jerárquico",
+      "description": "Desarrollar componente React interactivo (DepartmentTree) que muestre la estructura en formato árbol expandible/colapsable. Cada nodo muestra: nombre, código, jefe, número de empleados, estado.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f0.5-sub10",
+      "title": "Desarrollar Página Principal de Organización",
+      "description": "Crear página /organizacion/departamentos con layout dividido: árbol jerárquico a la izquierda, detalles del departamento seleccionado a la derecha. Incluir búsqueda, filtros, botón crear departamento, exportar.",
+      "status": "done",
+      "dependencies": ["f0.5-sub9"]
+    },
+    {
+      "id": "f0.5-sub11",
+      "title": "Implementar Página de Detalle de Departamento",
+      "description": "Crear página /organizacion/departamentos/[id] con tabs: Información General, Personal (lista de empleados con roles), Permisos (matriz de permisos por módulo), Presupuesto (si aplica), Actividad (log de cambios).",
+      "status": "done",
+      "dependencies": ["f0.5-sub10"]
+    },
+    {
+      "id": "f0.5-sub12",
+      "title": "Crear Formularios y Modales",
+      "description": "Desarrollar: formulario crear/editar departamento, modal asignar empleado (con selector, rol, marcar como principal), modal transferir empleado, confirmaciones de eliminación.",
+      "status": "done",
+      "dependencies": ["f0.5-sub10"]
+    },
+    {
+      "id": "f0.5-sub13",
+      "title": "Desarrollar Organigrama Visual Avanzado",
+      "description": "Crear componente OrgChart con visualización gráfica tipo diagrama de árbol (horizontal o vertical). Implementar zoom, pan, click para detalle, exportar como PNG/SVG. Usar librería como react-organizational-chart o similar.",
+      "status": "done",
+      "dependencies": ["f0.5-sub10"]
+    },
+    {
+      "id": "f0.5-sub14",
+      "title": "Implementar Dashboard de Estructura Organizacional",
+      "description": "Crear dashboard con cards de estadísticas: total departamentos por tipo, total empleados, distribución por dirección (gráfico de barras), alertas (departamentos sin jefe, empleados sin departamento).",
+      "status": "done",
+      "dependencies": ["f0.5-sub10"]
+    },
+    {
+      "id": "f0.5-sub15",
+      "title": "Desarrollar Exportación de Reportes",
+      "description": "Implementar funcionalidad para exportar: organigrama completo a PDF/PNG, listado de personal por departamento a Excel, directorio telefónico a PDF, matriz de responsabilidades.",
+      "status": "done",
+      "dependencies": ["f0.5-sub13"]
+    },
+    {
+      "id": "f0.5-sub16",
+      "title": "Escribir Tests del Frontend de Organización",
+      "description": "Desarrollar tests de componentes y flujos principales: crear departamento, asignar empleado, visualizar organigrama, exportar reportes, validaciones de formularios.",
+      "status": "done",
+      "dependencies": ["f0.5-sub15"]
+    }
+  ]
+}

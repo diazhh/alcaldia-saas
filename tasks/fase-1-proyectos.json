@@ -1,0 +1,177 @@
+{
+  "id": "fase-1-proyectos",
+  "title": "FASE 1: MÓDULO DE PROYECTOS",
+  "description": "Desarrollo del módulo completo para la gestión de proyectos municipales, desde su creación hasta el seguimiento y visualización.",
+  "details": [
+    "Definir y aplicar el schema de base de datos para proyectos, hitos, gastos y fotos en 'schema.prisma'.",
+    "Crear la API completa (CRUD) para la gestión de Proyectos.",
+    "Implementar endpoints para gestionar Hitos (Milestones) y Gastos (Expenses) asociados a un proyecto.",
+    "Desarrollar la funcionalidad de subida de archivos (fotos) para los proyectos usando Multer.",
+    "Escribir tests unitarios y de integración para toda la API del módulo de proyectos.",
+    "Crear las páginas en el frontend para listar, ver detalles, crear y editar proyectos.",
+    "Desarrollar un dashboard de proyectos con gráficos (usando Recharts) que muestre estadísticas clave.",
+    "Implementar un mapa (usando React Leaflet) para visualizar la ubicación geográfica de los proyectos.",
+    "Escribir tests de componentes y de integración para el frontend del módulo de proyectos."
+  ],
+  "dependencies": ["fase-0-core"],
+  "status": "done",
+  "acceptance_criteria": [
+    "Se puede crear, leer, actualizar y eliminar un proyecto a través de la API.",
+    "Se pueden agregar hitos y gastos a un proyecto existente.",
+    "Se pueden subir imágenes y asociarlas a un proyecto.",
+    "La API del módulo de proyectos tiene un coverage de tests superior al 70%.",
+    "La interfaz de usuario permite gestionar proyectos de forma intuitiva.",
+    "El dashboard de proyectos muestra gráficos correctos sobre el estado y presupuesto de los proyectos.",
+    "Los proyectos con coordenadas geográficas aparecen correctamente en el mapa.",
+    "Todos los tests del frontend para este módulo pasan correctamente."
+  ],
+  "subtasks": [
+    {
+      "id": "f1-sub1",
+      "title": "Diseño del Schema de Base de Datos para Proyectos",
+      "description": "Definir en schema.prisma los modelos Project, Milestone, ProjectExpense y ProjectPhoto con sus relaciones, enums (ProjectStatus, Priority, MilestoneStatus, PhotoType) e índices. Incluir campos como code, name, budget, location, coordinates, sector, category, manager, etc.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f1-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas de proyectos en PostgreSQL y generar el cliente de Prisma actualizado.",
+      "status": "done",
+      "dependencies": ["f1-sub1"]
+    },
+    {
+      "id": "f1-sub3",
+      "title": "Crear Estructura del Módulo de Proyectos (Backend)",
+      "description": "Crear la estructura de carpetas backend/src/modules/projects/ con subcarpetas para controllers, services, routes.js y validations.js siguiendo la arquitectura definida.",
+      "status": "done",
+      "dependencies": ["f1-sub2"]
+    },
+    {
+      "id": "f1-sub4",
+      "title": "Implementar Servicios de Proyectos (Backend)",
+      "description": "Desarrollar la lógica de negocio en projectService.js para crear, listar, obtener por ID, actualizar y eliminar proyectos. Incluir generación automática del código único del proyecto (ej. PRO-2025-001).",
+      "status": "done",
+      "dependencies": ["f1-sub3"]
+    },
+    {
+      "id": "f1-sub5",
+      "title": "Crear Validaciones con Zod",
+      "description": "Definir schemas de validación con Zod para la creación y actualización de proyectos, validando campos requeridos, tipos de datos, rangos numéricos y formatos de fecha.",
+      "status": "done",
+      "dependencies": ["f1-sub3"]
+    },
+    {
+      "id": "f1-sub6",
+      "title": "Desarrollar Controladores de Proyectos (Backend)",
+      "description": "Implementar los controladores HTTP en projectController.js que reciben las peticiones, llaman a los servicios y devuelven las respuestas en formato JSON estándar.",
+      "status": "done",
+      "dependencies": ["f1-sub4", "f1-sub5"]
+    },
+    {
+      "id": "f1-sub7",
+      "title": "Definir Rutas de la API de Proyectos",
+      "description": "Crear las rutas en routes.js: GET /projects, GET /projects/:id, POST /projects, PUT /projects/:id, DELETE /projects/:id. Aplicar middlewares de autenticación y autorización según roles.",
+      "status": "done",
+      "dependencies": ["f1-sub6"]
+    },
+    {
+      "id": "f1-sub8",
+      "title": "Implementar API de Hitos (Milestones)",
+      "description": "Crear servicios, controladores y rutas para gestionar hitos de un proyecto: crear, listar, actualizar estado, marcar como completado. Rutas: POST /projects/:id/milestones, GET /projects/:id/milestones, etc.",
+      "status": "done",
+      "dependencies": ["f1-sub7"]
+    },
+    {
+      "id": "f1-sub9",
+      "title": "Implementar API de Gastos (Expenses)",
+      "description": "Crear servicios, controladores y rutas para registrar y gestionar gastos asociados a proyectos. Incluir validación de que el gasto no exceda el presupuesto disponible.",
+      "status": "done",
+      "dependencies": ["f1-sub7"]
+    },
+    {
+      "id": "f1-sub10",
+      "title": "Configurar Upload de Archivos con Multer",
+      "description": "Configurar Multer en backend para permitir la subida de fotos de proyectos. Establecer límites de tamaño, tipos de archivo permitidos (jpg, png) y carpeta de almacenamiento. Crear endpoint POST /projects/:id/photos.",
+      "status": "done",
+      "dependencies": ["f1-sub7"]
+    },
+    {
+      "id": "f1-sub11",
+      "title": "Escribir Tests del Backend",
+      "description": "Desarrollar tests unitarios para los servicios y tests de integración para los endpoints usando Jest y Supertest. Cubrir casos exitosos y de error. Objetivo: >70% coverage.",
+      "status": "done",
+      "dependencies": ["f1-sub10"]
+    },
+    {
+      "id": "f1-sub12",
+      "title": "Crear Estructura del Módulo de Proyectos (Frontend)",
+      "description": "Crear la estructura de carpetas en frontend: pages en app/(dashboard)/proyectos/ y componentes en components/modules/projects/. Configurar las rutas del App Router de Next.js.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f1-sub13",
+      "title": "Desarrollar Hook Personalizado useProjects",
+      "description": "Crear un custom hook usando React Query (Tanstack Query) para manejar el fetching, caching y mutaciones de datos de proyectos desde la API.",
+      "status": "done",
+      "dependencies": ["f1-sub12"]
+    },
+    {
+      "id": "f1-sub14",
+      "title": "Crear Página de Listado de Proyectos",
+      "description": "Desarrollar la página que muestra todos los proyectos en una tabla con DataTable de shadcn/ui. Incluir filtros por estado, búsqueda por nombre y paginación. Mostrar código, nombre, presupuesto, estado y acciones.",
+      "status": "done",
+      "dependencies": ["f1-sub13"]
+    },
+    {
+      "id": "f1-sub15",
+      "title": "Crear Página de Detalle de Proyecto",
+      "description": "Desarrollar la página que muestra la información completa de un proyecto: datos generales, hitos con su progreso, lista de gastos, galería de fotos y ubicación en mapa. Usar Cards y Tabs de shadcn/ui.",
+      "status": "done",
+      "dependencies": ["f1-sub13"]
+    },
+    {
+      "id": "f1-sub16",
+      "title": "Crear Formulario de Proyecto",
+      "description": "Desarrollar un formulario reutilizable con React Hook Form y validación Zod para crear y editar proyectos. Incluir campos para datos básicos, presupuesto, fechas, ubicación y selector de responsable.",
+      "status": "done",
+      "dependencies": ["f1-sub13"]
+    },
+    {
+      "id": "f1-sub17",
+      "title": "Implementar Selector de Ubicación en Mapa",
+      "description": "Integrar un selector de coordenadas geográficas en el formulario usando React Leaflet o Google Maps React. Permitir hacer clic en el mapa para establecer la ubicación del proyecto.",
+      "status": "done",
+      "dependencies": ["f1-sub16"]
+    },
+    {
+      "id": "f1-sub18",
+      "title": "Desarrollar Dashboard de Proyectos",
+      "description": "Crear una página dashboard que muestre estadísticas clave con gráficos usando Recharts: total de proyectos por estado, inversión ejecutada, proyectos por sector, presupuesto vs ejecutado. Incluir cards con métricas principales.",
+      "status": "done",
+      "dependencies": ["f1-sub13"]
+    },
+    {
+      "id": "f1-sub19",
+      "title": "Crear Mapa de Proyectos",
+      "description": "Desarrollar una vista de mapa con React Leaflet que muestre todos los proyectos como marcadores. Al hacer clic en un marcador, mostrar información resumida del proyecto con enlace al detalle. Filtros por estado y tipo.",
+      "status": "done",
+      "dependencies": ["f1-sub13"]
+    },
+    {
+      "id": "f1-sub20",
+      "title": "Implementar Gestión de Fotos",
+      "description": "Crear componentes para subir fotos del proyecto (antes/durante/después) con drag & drop, previsualización y clasificación por tipo. Galería para visualizar las fotos existentes.",
+      "status": "done",
+      "dependencies": ["f1-sub15"]
+    },
+    {
+      "id": "f1-sub21",
+      "title": "Escribir Tests del Frontend",
+      "description": "Desarrollar tests de componentes con React Testing Library y tests de integración para los flujos principales (crear proyecto, ver detalle, actualizar). Mockear las llamadas a la API.",
+      "status": "done",
+      "dependencies": ["f1-sub20"]
+    }
+  ]
+}

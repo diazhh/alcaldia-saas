@@ -1,0 +1,124 @@
+{
+  "id": "fase-7-flota",
+  "title": "FASE 7: MÓDULO DE GESTIÓN DE FLOTA",
+  "description": "Controla todos los vehículos municipales para garantizar su operatividad, mantenimiento oportuno y optimización de su uso.",
+  "details": [
+    "Crear un inventario maestro de todos los vehículos de la alcaldía con su información técnica y legal.",
+    "Implementar un sistema de bitácora de viaje para registrar el uso de cada vehículo (conductor, kilometraje, destino).",
+    "Desarrollar un módulo de control de combustible para registrar y analizar el consumo y rendimiento.",
+    "Establecer un sistema de alertas automáticas para el mantenimiento preventivo basado en kilometraje o tiempo.",
+    "Gestionar el mantenimiento correctivo (reparaciones), desde el reporte de la falla hasta la entrega del vehículo reparado.",
+    "Controlar el inventario de neumáticos y repuestos.",
+    "Calcular el Costo Total de Propiedad (TCO) por cada vehículo."
+  ],
+  "dependencies": ["fase-0-core"],
+  "status": "done",
+  "acceptance_criteria": [
+    "Cada vehículo tiene una ficha única con toda su información y documentación digitalizada.",
+    "El sistema alerta automáticamente cuando un vehículo se acerca a su próximo mantenimiento preventivo.",
+    "Se puede consultar el rendimiento de combustible (km/litro) de cada vehículo.",
+    "El sistema registra el historial completo de reparaciones y mantenimientos de cada unidad.",
+    "Se pueden generar reportes gerenciales sobre el estado general de la flota y sus costos operativos.",
+    "La API del módulo tiene un coverage de tests superior al 70%."
+  ],
+  "subtasks": [
+    {
+      "id": "f7-sub1",
+      "title": "Diseño del Schema de Base de Datos de Flota",
+      "description": "Definir modelos para Vehicle (vehículo), TripLog (bitácora), FuelControl (combustible), Maintenance (mantenimiento), Tire (neumáticos), Insurance (seguros). Incluir historial completo.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f7-sub2",
+      "title": "Ejecutar Migración de Base de Datos",
+      "description": "Ejecutar 'prisma migrate dev' para crear las tablas de gestión de flota.",
+      "status": "done",
+      "dependencies": ["f7-sub1"]
+    },
+    {
+      "id": "f7-sub3",
+      "title": "Implementar API de Inventario de Vehículos",
+      "description": "Desarrollar CRUD completo para vehículos: datos técnicos, documentación, asignaciones, depreciación, historial.",
+      "status": "done",
+      "dependencies": ["f7-sub2"]
+    },
+    {
+      "id": "f7-sub4",
+      "title": "Crear API de Bitácora de Viaje",
+      "description": "Implementar registro de cada uso del vehículo: conductor, kilometraje inicial/final, destino, motivo, observaciones. Cálculo automático de kms recorridos.",
+      "status": "done",
+      "dependencies": ["f7-sub3"]
+    },
+    {
+      "id": "f7-sub5",
+      "title": "Desarrollar API de Control de Combustible",
+      "description": "Implementar emisión de vales, registro de cargas, cálculo de rendimiento km/litro, alertas de bajo rendimiento, proyección de gasto.",
+      "status": "done",
+      "dependencies": ["f7-sub3"]
+    },
+    {
+      "id": "f7-sub6",
+      "title": "Implementar Sistema de Mantenimiento Preventivo",
+      "description": "Desarrollar programación automática según kilometraje o tiempo, alertas anticipadas, checklists, registro de servicios realizados, cálculo de próximo mantenimiento.",
+      "status": "done",
+      "dependencies": ["f7-sub3"]
+    },
+    {
+      "id": "f7-sub7",
+      "title": "Crear API de Mantenimiento Correctivo",
+      "description": "Implementar flujo de reparaciones: reporte de falla, diagnóstico, presupuesto, aprobación, reparación, entrega. Control de repuestos utilizados.",
+      "status": "done",
+      "dependencies": ["f7-sub3"]
+    },
+    {
+      "id": "f7-sub8",
+      "title": "Desarrollar Cálculo de TCO",
+      "description": "Implementar cálculo del Costo Total de Propiedad por vehículo: combustible, mantenimiento, seguros, impuestos, depreciación. Costo por kilómetro.",
+      "status": "done",
+      "dependencies": ["f7-sub5", "f7-sub6", "f7-sub7"]
+    },
+    {
+      "id": "f7-sub9",
+      "title": "Escribir Tests del Backend de Flota",
+      "description": "Desarrollar tests unitarios y de integración. Objetivo: >70% coverage.",
+      "status": "done",
+      "dependencies": ["f7-sub8"]
+    },
+    {
+      "id": "f7-sub10",
+      "title": "Crear Módulo de Gestión de Vehículos",
+      "description": "Desarrollar interfaz para gestionar inventario de vehículos, consultar fichas, actualizar datos, cargar documentos.",
+      "status": "done",
+      "dependencies": []
+    },
+    {
+      "id": "f7-sub11",
+      "title": "Implementar Módulo de Bitácora",
+      "description": "Crear interfaz para registrar viajes, consultar historial, generar reportes de uso por vehículo o conductor.",
+      "status": "done",
+      "dependencies": ["f7-sub10"]
+    },
+    {
+      "id": "f7-sub12",
+      "title": "Desarrollar Dashboard de Flota",
+      "description": "Crear dashboard con indicadores: vehículos operativos vs total, mantenimientos vencidos, consumo de combustible, vehículos con mayor costo, alertas.",
+      "status": "done",
+      "dependencies": ["f7-sub10"]
+    },
+    {
+      "id": "f7-sub13",
+      "title": "Crear Módulo de Mantenimiento",
+      "description": "Desarrollar interfaz para programar mantenimientos, registrar servicios, gestionar reparaciones, consultar historial.",
+      "status": "done",
+      "dependencies": ["f7-sub10"]
+    },
+    {
+      "id": "f7-sub14",
+      "title": "Escribir Tests del Frontend de Flota",
+      "description": "Desarrollar tests de componentes y flujos principales (registrar viaje, programar mantenimiento, consultar costos).",
+      "status": "done",
+      "dependencies": ["f7-sub13"]
+    }
+  ]
+}

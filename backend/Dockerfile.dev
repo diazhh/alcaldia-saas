@@ -1,0 +1,26 @@
+# Backend Dockerfile para desarrollo
+FROM node:18-alpine
+
+# Instalar dependencias necesarias para Prisma
+RUN apk add --no-cache libc6-compat openssl
+
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+
+# Instalar todas las dependencias (incluyendo dev)
+RUN npm install
+
+# Copiar código fuente
+COPY . .
+
+# Exponer puerto
+EXPOSE 3001
+
+# Variables de entorno por defecto
+ENV NODE_ENV=development
+ENV PORT=3001
+
+# Comando para desarrollo con hot reload
+CMD ["npm", "run", "dev"]

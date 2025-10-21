@@ -1,0 +1,5678 @@
+// Prisma Schema para Sistema Integral de Gestión Municipal
+// Generado: 2025-10-10
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTENTICACIÓN Y USUARIOS
+// ============================================
+
+/// Modelo de Usuario del sistema
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hash de la contraseña con bcrypt
+  firstName String
+  lastName  String
+  role      Role     @default(EMPLEADO)
+  isActive  Boolean  @default(true)
+  
+  // Información adicional
+  phone     String?
+  avatar    String?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relaciones
+  departments UserDepartment[] // Relación muchos a muchos con departamentos
+  managedProjects Project[] @relation("ProjectManager") // Proyectos que gestiona
+  
+  @@map("users")
+  @@index([email])
+  @@index([role])
+}
+
+/// Roles del sistema
+enum Role {
+  SUPER_ADMIN   // Acceso total al sistema
+  ADMIN         // Administrador general
+  DIRECTOR      // Director de departamento
+  COORDINADOR   // Coordinador de área
+  EMPLEADO      // Empleado regular
+  CIUDADANO     // Ciudadano (para módulo de participación)
+}
+
+// ============================================
+// ESTRUCTURA ORGANIZACIONAL (FASE 0.5)
+// ============================================
+
+/// Modelo de Departamento con jerarquía auto-referenciada
+model Department {
+  id          String         @id @default(uuid())
+  code        String         @unique // Código único del departamento (ej: DIR-FIN, COORD-CONT)
+  name        String         // Nombre del departamento
+  description String?        // Descripción del departamento
+  type        DepartmentType // Tipo de departamento
+  
+  // Jerarquía (auto-referencia)
+  parentId    String?        // ID del departamento padre (null para raíz)
+  parent      Department?    @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children    Department[]   @relation("DepartmentHierarchy")
+  
+  // Jefe del departamento
+  headUserId  String?        // Usuario que es jefe del departamento
+  
+  // Información adicional
+  phone       String?
+  email       String?
+  location    String?        // Ubicación física
+  maxStaff    Int?           // Límite máximo de personal
+  isActive    Boolean        @default(true)
+  
+  // Timestamps
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  // Relaciones
+  users       UserDepartment[] // Usuarios asignados a este departamento
+  permissions DepartmentPermission[] // Permisos específicos del departamento
+  
+  @@map("departments")
+  @@index([code])
+  @@index([parentId])
+  @@index([type])
+  @@index([isActive])
+}
+
+/// Relación muchos a muchos entre usuarios y departamentos
+model UserDepartment {
+  id           String          @id @default(uuid())
+  userId       String
+  departmentId String
+  role         DepartmentRole  @default(MEMBER) // Rol del usuario en este departamento
+  isPrimary    Boolean         @default(false)  // Si es el departamento principal del usuario
+  
+  // Timestamps
+  assignedAt   DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  
+  // Relaciones
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department   Department      @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, departmentId]) // Un usuario no puede estar duplicado en el mismo departamento
+  @@map("user_departments")
+  @@index([userId])
+  @@index([departmentId])
+  @@index([role])
+}
+
+/// Permisos específicos por departamento y módulo
+model DepartmentPermission {
+  id           String     @id @default(uuid())
+  departmentId String
+  module       String     // Nombre del módulo (ej: "proyectos", "finanzas")
+  action       String     // Acción permitida (ej: "create", "read", "update", "delete")
+  resource     String?    // Recurso específico (opcional, para permisos granulares)
+  
+  // Timestamps
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  // Relaciones
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  
+  @@unique([departmentId, module, action, resource]) // Evitar permisos duplicados
+  @@map("department_permissions")
+  @@index([departmentId])
+  @@index([module])
+}
+
+/// Tipos de departamento
+enum DepartmentType {
+  DIRECCION      // Dirección (nivel más alto)
+  COORDINACION   // Coordinación
+  DEPARTAMENTO   // Departamento
+  UNIDAD         // Unidad
+  SECCION        // Sección
+  OFICINA        // Oficina
+}
+
+/// Roles dentro de un departamento
+enum DepartmentRole {
+  HEAD           // Jefe del departamento
+  SUPERVISOR     // Supervisor
+  COORDINATOR    // Coordinador
+  MEMBER         // Miembro regular
+  ASSISTANT      // Asistente
+}
+
+// ============================================
+// GESTIÓN DE PROYECTOS (FASE 1)
+// ============================================
+
+/// Modelo principal de Proyecto
+model Project {
+  id            String        @id @default(uuid())
+  code          String        @unique // Código único del proyecto (ej: PRO-2025-001)
+  name          String        // Nombre del proyecto
+  description   String?       @db.Text // Descripción detallada
+  
+  // Información financiera
+  budget        Decimal       @db.Decimal(15,2) // Presupuesto total
+  
+  // Estado y prioridad
+  status        ProjectStatus @default(PLANNING)
+  priority      Priority      @default(MEDIUM)
+  
+  // Fechas
+  startDate     DateTime      // Fecha de inicio planificada
+  endDate       DateTime      // Fecha de fin planificada
+  actualStartDate DateTime?   // Fecha real de inicio
+  actualEndDate   DateTime?   // Fecha real de finalización
+  
+  // Ubicación
+  location      String        // Dirección o descripción de ubicación
+  latitude      Float?        // Coordenada GPS latitud
+  longitude     Float?        // Coordenada GPS longitud
+  
+  // Clasificación
+  sector        String        // Sector del municipio (ej: Centro, Norte, Sur)
+  category      String        // Categoría (ej: Vialidad, Salud, Educación)
+  beneficiaries Int?          // Número estimado de beneficiarios
+  
+  // Responsable
+  managerId     String        // Usuario responsable del proyecto
+  departmentId  String?       // Departamento responsable
+  
+  // Información adicional
+  objectives    String?       @db.Text // Objetivos del proyecto
+  scope         String?       @db.Text // Alcance del proyecto
+  
+  // Timestamps
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relaciones
+  manager       User          @relation("ProjectManager", fields: [managerId], references: [id], onDelete: Restrict)
+  milestones    Milestone[]   // Hitos del proyecto
+  expenses      ProjectExpense[] // Gastos del proyecto
+  photos        ProjectPhoto[]   // Fotos del proyecto
+  
+  @@map("projects")
+  @@index([status])
+  @@index([sector])
+  @@index([category])
+  @@index([managerId])
+  @@index([startDate])
+}
+
+/// Hitos o Milestones del proyecto
+model Milestone {
+  id          String          @id @default(uuid())
+  projectId   String
+  name        String          // Nombre del hito
+  description String?         @db.Text // Descripción del hito
+  dueDate     DateTime        // Fecha límite
+  completedAt DateTime?       // Fecha de completado
+  progress    Int             @default(0) // Porcentaje de progreso (0-100)
+  status      MilestoneStatus @default(PENDING)
+  order       Int             @default(0) // Orden del hito en el proyecto
+  
+  // Timestamps
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  // Relaciones
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("milestones")
+  @@index([projectId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+/// Gastos asociados a proyectos
+model ProjectExpense {
+  id          String   @id @default(uuid())
+  projectId   String
+  concept     String   // Concepto del gasto
+  description String?  @db.Text // Descripción detallada
+  amount      Decimal  @db.Decimal(15,2) // Monto del gasto
+  date        DateTime // Fecha del gasto
+  category    String   // Categoría del gasto (ej: Materiales, Mano de obra)
+  invoice     String?  // Número de factura o comprobante
+  supplier    String?  // Proveedor
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relaciones
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("project_expenses")
+  @@index([projectId])
+  @@index([date])
+  @@index([category])
+}
+
+/// Fotos de proyectos
+model ProjectPhoto {
+  id        String    @id @default(uuid())
+  projectId String
+  url       String    // URL o path de la imagen
+  caption   String?   // Descripción de la foto
+  type      PhotoType // Tipo de foto (antes/durante/después)
+  takenAt   DateTime  // Fecha en que se tomó la foto
+  
+  // Timestamps
+  createdAt DateTime  @default(now())
+  
+  // Relaciones
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("project_photos")
+  @@index([projectId])
+  @@index([type])
+}
+
+// ============================================
+// ENUMS PARA PROYECTOS
+// ============================================
+
+/// Estados de un proyecto
+enum ProjectStatus {
+  PLANNING      // En planificación
+  APPROVED      // Aprobado, pendiente de inicio
+  IN_PROGRESS   // En ejecución
+  PAUSED        // Pausado temporalmente
+  COMPLETED     // Completado
+  CANCELLED     // Cancelado
+}
+
+/// Prioridad del proyecto
+enum Priority {
+  LOW           // Baja
+  MEDIUM        // Media
+  HIGH          // Alta
+  CRITICAL      // Crítica
+}
+
+/// Estados de un hito
+enum MilestoneStatus {
+  PENDING       // Pendiente
+  IN_PROGRESS   // En progreso
+  COMPLETED     // Completado
+  DELAYED       // Retrasado
+}
+
+/// Tipos de foto
+enum PhotoType {
+  BEFORE        // Antes de iniciar
+  DURING        // Durante la ejecución
+  AFTER         // Después de completar
+  INSPECTION    // Inspección
+}
+
+// ============================================
+// GESTIÓN FINANCIERA (FASE 2)
+// ============================================
+
+/// Presupuesto anual del municipio
+model Budget {
+  id              String        @id @default(uuid())
+  year            Int           @unique // Año fiscal
+  totalAmount     Decimal       @db.Decimal(15,2) // Monto total del presupuesto
+  status          BudgetStatus  @default(DRAFT)
+  
+  // Ingresos estimados
+  estimatedIncome Decimal       @db.Decimal(15,2) // Ingresos estimados
+  incomeSource    String?       @db.Text // Fuentes de ingreso (situado, tributos, etc.)
+  
+  // Información de aprobación
+  approvedBy      String?       // Usuario que aprobó
+  approvedAt      DateTime?     // Fecha de aprobación
+  
+  // Notas y observaciones
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  items           BudgetItem[]  // Partidas presupuestarias
+  modifications   BudgetModification[] // Modificaciones presupuestarias
+  
+  @@map("budgets")
+  @@index([year])
+  @@index([status])
+}
+
+/// Partidas presupuestarias (clasificador ONAPRE)
+model BudgetItem {
+  id              String        @id @default(uuid())
+  budgetId        String        // Presupuesto al que pertenece
+  
+  // Clasificación ONAPRE
+  code            String        // Código de la partida (ej: 4.01.01.02)
+  name            String        // Nombre de la partida
+  description     String?       @db.Text
+  
+  // Montos
+  allocatedAmount Decimal       @db.Decimal(15,2) // Monto asignado
+  committedAmount Decimal       @default(0) @db.Decimal(15,2) // Monto comprometido
+  accruedAmount   Decimal       @default(0) @db.Decimal(15,2) // Monto causado
+  paidAmount      Decimal       @default(0) @db.Decimal(15,2) // Monto pagado
+  availableAmount Decimal       @db.Decimal(15,2) // Monto disponible (calculado)
+  
+  // Clasificación adicional
+  departmentId    String?       // Departamento responsable
+  category        String?       // Categoría (gastos corrientes, inversión, etc.)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  budget          Budget        @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  transactions    Transaction[] // Transacciones asociadas
+  
+  @@unique([budgetId, code]) // Un código de partida único por presupuesto
+  @@map("budget_items")
+  @@index([budgetId])
+  @@index([code])
+  @@index([departmentId])
+}
+
+/// Modificaciones presupuestarias (créditos adicionales, traspasos)
+model BudgetModification {
+  id              String                 @id @default(uuid())
+  budgetId        String
+  type            BudgetModificationType
+  
+  // Información de la modificación
+  reference       String                 // Número de referencia
+  description     String                 @db.Text
+  amount          Decimal                @db.Decimal(15,2)
+  
+  // Justificación y aprobación
+  justification   String                 @db.Text
+  approvedBy      String?
+  approvedAt      DateTime?
+  status          ModificationStatus     @default(PENDING)
+  
+  // Timestamps
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  
+  // Relaciones
+  budget          Budget                 @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  
+  @@map("budget_modifications")
+  @@index([budgetId])
+  @@index([status])
+}
+
+/// Transacciones financieras (ciclo del gasto)
+model Transaction {
+  id              String            @id @default(uuid())
+  
+  // Información básica
+  reference       String            @unique // Número de referencia único
+  type            TransactionType   // Tipo de transacción
+  status          ExpenseStatus     @default(COMPROMISO) // Estado del ciclo del gasto
+  
+  // Montos
+  amount          Decimal           @db.Decimal(15,2)
+  
+  // Relación con presupuesto
+  budgetItemId    String?           // Partida presupuestaria
+  
+  // Información del gasto
+  concept         String            // Concepto del gasto
+  description     String?           @db.Text
+  beneficiary     String            // Beneficiario (proveedor, empleado, etc.)
+  beneficiaryId   String?           // ID del beneficiario si aplica
+  
+  // Documentación
+  invoiceNumber   String?           // Número de factura
+  contractNumber  String?           // Número de contrato
+  purchaseOrder   String?           // Orden de compra
+  
+  // Fechas del ciclo
+  committedAt     DateTime?         // Fecha de compromiso
+  accruedAt       DateTime?         // Fecha de causado
+  paidAt          DateTime?         // Fecha de pago
+  
+  // Información de pago
+  paymentId       String?           @unique // Relación con pago
+  
+  // Usuario responsable
+  createdBy       String            // Usuario que creó la transacción
+  approvedBy      String?           // Usuario que aprobó
+  
+  // Timestamps
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  // Relaciones
+  budgetItem      BudgetItem?       @relation(fields: [budgetItemId], references: [id], onDelete: Restrict)
+  payment         Payment?          @relation(fields: [paymentId], references: [id])
+  accountingEntries AccountingEntry[] // Asientos contables generados
+  
+  @@map("transactions")
+  @@index([reference])
+  @@index([status])
+  @@index([type])
+  @@index([budgetItemId])
+  @@index([createdAt])
+}
+
+/// Cuentas bancarias
+model BankAccount {
+  id              String        @id @default(uuid())
+  
+  // Información de la cuenta
+  bankName        String        // Nombre del banco
+  accountNumber   String        @unique // Número de cuenta
+  accountType     AccountType   // Tipo de cuenta
+  currency        String        @default("VES") // Moneda (VES, USD, etc.)
+  
+  // Saldo
+  balance         Decimal       @default(0) @db.Decimal(15,2) // Saldo actual
+  
+  // Información adicional
+  description     String?
+  isActive        Boolean       @default(true)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  payments        Payment[]     // Pagos realizados desde esta cuenta
+  incomes         Income[]      // Ingresos recibidos en esta cuenta
+  
+  @@map("bank_accounts")
+  @@index([accountNumber])
+  @@index([isActive])
+}
+
+/// Pagos realizados
+model Payment {
+  id              String        @id @default(uuid())
+  
+  // Información del pago
+  reference       String        @unique // Número de referencia del pago
+  amount          Decimal       @db.Decimal(15,2)
+  paymentMethod   PaymentMethod // Método de pago
+  
+  // Cuenta bancaria
+  bankAccountId   String?       // Cuenta desde la que se paga
+  
+  // Beneficiario
+  beneficiary     String        // Nombre del beneficiario
+  beneficiaryAccount String?    // Cuenta del beneficiario
+  beneficiaryBank String?       // Banco del beneficiario
+  
+  // Información adicional
+  concept         String        // Concepto del pago
+  notes           String?       @db.Text
+  
+  // Fechas
+  paymentDate     DateTime      // Fecha del pago
+  processedAt     DateTime?     // Fecha de procesamiento
+  
+  // Estado
+  status          PaymentStatus @default(PENDING)
+  
+  // Usuario responsable
+  createdBy       String
+  approvedBy      String?
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  bankAccount     BankAccount?  @relation(fields: [bankAccountId], references: [id])
+  transaction     Transaction?  // Transacción asociada
+  
+  @@map("payments")
+  @@index([reference])
+  @@index([status])
+  @@index([paymentDate])
+  @@index([bankAccountId])
+}
+
+/// Ingresos (situado, tributos, transferencias)
+model Income {
+  id              String        @id @default(uuid())
+  
+  // Información del ingreso
+  reference       String        @unique // Número de referencia
+  type            IncomeType    // Tipo de ingreso
+  amount          Decimal       @db.Decimal(15,2)
+  
+  // Cuenta bancaria
+  bankAccountId   String        // Cuenta donde se recibe
+  
+  // Información adicional
+  concept         String
+  description     String?       @db.Text
+  source          String        // Fuente del ingreso
+  
+  // Fechas
+  incomeDate      DateTime      // Fecha del ingreso
+  registeredAt    DateTime      @default(now())
+  
+  // Usuario responsable
+  registeredBy    String
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  bankAccount     BankAccount   @relation(fields: [bankAccountId], references: [id])
+  accountingEntries AccountingEntry[] // Asientos contables generados
+  
+  @@map("incomes")
+  @@index([reference])
+  @@index([type])
+  @@index([incomeDate])
+  @@index([bankAccountId])
+}
+
+/// Asientos contables (Plan de Cuentas Nacional)
+model AccountingEntry {
+  id              String        @id @default(uuid())
+  
+  // Información del asiento
+  entryNumber     String        @unique // Número de asiento
+  date            DateTime      // Fecha del asiento
+  description     String        // Descripción
+  
+  // Relaciones con transacciones
+  transactionId   String?       // Transacción que generó el asiento
+  incomeId        String?       // Ingreso que generó el asiento
+  
+  // Información adicional
+  reference       String?       // Referencia adicional
+  notes           String?       @db.Text
+  
+  // Usuario responsable
+  createdBy       String
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  transaction     Transaction?  @relation(fields: [transactionId], references: [id])
+  income          Income?       @relation(fields: [incomeId], references: [id])
+  details         AccountingEntryDetail[] // Detalles del asiento (debe/haber)
+  
+  @@map("accounting_entries")
+  @@index([entryNumber])
+  @@index([date])
+  @@index([transactionId])
+  @@index([incomeId])
+}
+
+/// Detalle de asientos contables (debe y haber)
+model AccountingEntryDetail {
+  id              String          @id @default(uuid())
+  entryId         String          // Asiento al que pertenece
+  
+  // Cuenta contable
+  accountCode     String          // Código de la cuenta (Plan de Cuentas)
+  accountName     String          // Nombre de la cuenta
+  
+  // Debe y Haber
+  debit           Decimal         @default(0) @db.Decimal(15,2) // Debe
+  credit          Decimal         @default(0) @db.Decimal(15,2) // Haber
+  
+  // Información adicional
+  description     String?
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  
+  // Relaciones
+  entry           AccountingEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  
+  @@map("accounting_entry_details")
+  @@index([entryId])
+  @@index([accountCode])
+}
+
+// ============================================
+// ENUMS PARA FINANZAS
+// ============================================
+
+/// Estados del presupuesto
+enum BudgetStatus {
+  DRAFT         // Borrador
+  SUBMITTED     // Presentado al concejo
+  APPROVED      // Aprobado
+  ACTIVE        // Activo (en ejecución)
+  CLOSED        // Cerrado
+}
+
+/// Tipos de modificación presupuestaria
+enum BudgetModificationType {
+  CREDITO_ADICIONAL  // Crédito adicional
+  TRASPASO           // Traspaso entre partidas
+  RECTIFICACION      // Rectificación
+  REDUCCION          // Reducción
+}
+
+/// Estado de modificación presupuestaria
+enum ModificationStatus {
+  PENDING    // Pendiente
+  APPROVED   // Aprobada
+  REJECTED   // Rechazada
+}
+
+/// Tipos de transacción
+enum TransactionType {
+  GASTO         // Gasto
+  INGRESO       // Ingreso
+  TRANSFERENCIA // Transferencia
+  AJUSTE        // Ajuste
+}
+
+/// Estados del ciclo del gasto
+enum ExpenseStatus {
+  COMPROMISO    // Compromiso (reserva presupuesto)
+  CAUSADO       // Causado (genera cuenta por pagar)
+  PAGADO        // Pagado (descarga de tesorería)
+  ANULADO       // Anulado
+}
+
+/// Tipos de cuenta bancaria
+enum AccountType {
+  CORRIENTE     // Cuenta corriente
+  AHORRO        // Cuenta de ahorro
+  ESPECIAL      // Cuenta especial
+}
+
+/// Métodos de pago
+enum PaymentMethod {
+  TRANSFERENCIA // Transferencia bancaria
+  CHEQUE        // Cheque
+  EFECTIVO      // Efectivo
+  DOMICILIACION // Domiciliación bancaria
+}
+
+/// Estados de pago
+enum PaymentStatus {
+  PENDING       // Pendiente
+  APPROVED      // Aprobado
+  PROCESSED     // Procesado
+  COMPLETED     // Completado
+  REJECTED      // Rechazado
+  CANCELLED     // Cancelado
+}
+
+/// Tipos de ingreso
+enum IncomeType {
+  SITUADO       // Situado constitucional
+  TRIBUTOS      // Tributos municipales
+  TRANSFERENCIA // Transferencias
+  MULTAS        // Multas y sanciones
+  TASAS         // Tasas por servicios
+  OTROS         // Otros ingresos
+}
+
+// ============================================
+// RECURSOS HUMANOS (FASE 3)
+// ============================================
+
+/// Cargos o posiciones en la organización
+model Position {
+  id              String    @id @default(uuid())
+  code            String    @unique // Código del cargo (ej: DIR-001, COORD-002)
+  name            String    // Nombre del cargo (ej: Director de Finanzas)
+  description     String?   @db.Text
+  
+  // Clasificación
+  level           String    // Nivel jerárquico (Directivo, Coordinador, Técnico, Operativo)
+  category        String    // Categoría (Empleado, Obrero, Alto Nivel)
+  
+  // Información salarial
+  baseSalary      Decimal   @db.Decimal(15,2) // Salario base del cargo
+  salaryGrade     String?   // Grado salarial según tabulador
+  
+  // Departamento
+  departmentId    String?   // Departamento al que pertenece el cargo
+  
+  // Requisitos
+  requirements    String?   @db.Text // Requisitos del cargo (educación, experiencia)
+  responsibilities String?  @db.Text // Responsabilidades del cargo
+  
+  // Estado
+  isActive        Boolean   @default(true)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones
+  employees       Employee[] // Empleados que ocupan este cargo
+  
+  @@map("positions")
+  @@index([code])
+  @@index([departmentId])
+  @@index([isActive])
+}
+
+/// Empleados del municipio
+model Employee {
+  id                String          @id @default(uuid())
+  
+  // Número de empleado (generado automáticamente)
+  employeeNumber    String          @unique // Ej: EMP-2025-0001
+  
+  // Datos personales
+  firstName         String
+  lastName          String
+  idNumber          String          @unique // Cédula de identidad
+  rif               String?         // RIF
+  birthDate         DateTime
+  birthPlace        String?
+  gender            Gender
+  maritalStatus     MaritalStatus
+  bloodType         String?
+  
+  // Contacto
+  phone             String
+  emergencyContact  String?
+  emergencyPhone    String?
+  email             String?
+  personalEmail     String?
+  address           String?         @db.Text
+  
+  // Foto
+  photo             String?         // URL de la foto
+  
+  // Datos laborales
+  positionId        String          // Cargo actual
+  departmentId      String?         // Departamento asignado
+  hireDate          DateTime        // Fecha de ingreso
+  contractType      ContractType    // Tipo de contrato
+  employmentType    EmploymentType  // Tipo de personal
+  status            EmployeeStatus  @default(ACTIVE)
+  
+  // Información salarial
+  currentSalary     Decimal         @db.Decimal(15,2) // Salario actual
+  bankAccount       String?         // Número de cuenta bancaria
+  bankName          String?         // Nombre del banco
+  
+  // Jefe inmediato
+  supervisorId      String?         // ID del supervisor
+  
+  // Datos académicos
+  educationLevel    EducationLevel?
+  degree            String?         // Título obtenido
+  institution       String?         // Institución educativa
+  graduationYear    Int?
+  
+  // Usuario del sistema (si tiene acceso)
+  userId            String?         @unique // Relación con User
+  
+  // Fechas de egreso (si aplica)
+  terminationDate   DateTime?       // Fecha de terminación
+  terminationReason String?         @db.Text // Razón de terminación
+  
+  // Timestamps
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  // Relaciones
+  position          Position        @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  supervisor        Employee?       @relation("EmployeeSupervisor", fields: [supervisorId], references: [id])
+  subordinates      Employee[]      @relation("EmployeeSupervisor")
+  documents         EmployeeDocument[] // Documentos del expediente
+  attendances       Attendance[]    // Registros de asistencia
+  vacationRequests  VacationRequest[] // Solicitudes de vacaciones
+  leaves            Leave[]         // Permisos y licencias
+  payrollDetails    PayrollDetail[] // Detalles de nómina
+  evaluations       PerformanceEvaluation[] // Evaluaciones de desempeño
+  trainings         EmployeeTraining[] // Capacitaciones
+  severancePayments SeverancePayment[] // Prestaciones sociales
+  
+  @@map("employees")
+  @@index([employeeNumber])
+  @@index([idNumber])
+  @@index([positionId])
+  @@index([departmentId])
+  @@index([status])
+  @@index([hireDate])
+}
+
+/// Documentos del expediente digital
+model EmployeeDocument {
+  id          String        @id @default(uuid())
+  employeeId  String
+  
+  // Información del documento
+  type        DocumentType  // Tipo de documento
+  name        String        // Nombre del documento
+  description String?
+  fileUrl     String        // URL del archivo
+  fileSize    Int?          // Tamaño en bytes
+  mimeType    String?       // Tipo MIME
+  
+  // Fechas
+  uploadDate  DateTime      @default(now())
+  expiryDate  DateTime?     // Fecha de vencimiento (para documentos que expiran)
+  
+  // Usuario que subió
+  uploadedBy  String
+  
+  // Timestamps
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  // Relaciones
+  employee    Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  @@map("employee_documents")
+  @@index([employeeId])
+  @@index([type])
+}
+
+/// Nómina (período de pago)
+model Payroll {
+  id              String        @id @default(uuid())
+  
+  // Información del período
+  reference       String        @unique // Referencia única (ej: NOM-2025-01-Q1)
+  year            Int
+  month           Int
+  period          PayrollPeriod // Quincenal o mensual
+  periodNumber    Int           // Número de período (1 o 2 para quincenal)
+  
+  // Fechas
+  startDate       DateTime      // Fecha inicio del período
+  endDate         DateTime      // Fecha fin del período
+  paymentDate     DateTime      // Fecha de pago
+  
+  // Estado
+  status          PayrollStatus @default(DRAFT)
+  
+  // Totales
+  totalGross      Decimal       @default(0) @db.Decimal(15,2) // Total asignaciones
+  totalDeductions Decimal       @default(0) @db.Decimal(15,2) // Total deducciones
+  totalNet        Decimal       @default(0) @db.Decimal(15,2) // Total neto a pagar
+  totalEmployer   Decimal       @default(0) @db.Decimal(15,2) // Total aportes patronales
+  
+  // Información de aprobación
+  approvedBy      String?
+  approvedAt      DateTime?
+  
+  // Notas
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  details         PayrollDetail[] // Detalles por empleado
+  
+  @@unique([year, month, period, periodNumber]) // Un período único
+  @@map("payrolls")
+  @@index([reference])
+  @@index([status])
+  @@index([year, month])
+}
+
+/// Conceptos de nómina (asignaciones y deducciones)
+model PayrollConcept {
+  id              String        @id @default(uuid())
+  
+  // Información del concepto
+  code            String        @unique // Código del concepto (ej: SUEL-BASE, DED-IVSS)
+  name            String        // Nombre del concepto
+  description     String?
+  type            ConceptType   // Asignación o Deducción
+  
+  // Cálculo
+  calculationType CalculationType // Fijo, Porcentaje, Fórmula
+  value           Decimal?      @db.Decimal(15,2) // Valor fijo o porcentaje
+  formula         String?       @db.Text // Fórmula de cálculo (si aplica)
+  
+  // Configuración
+  isActive        Boolean       @default(true)
+  isTaxable       Boolean       @default(true) // Si aplica para ISLR
+  affectsSSI      Boolean       @default(true) // Si afecta base de IVSS
+  isEmployer      Boolean       @default(false) // Si es aporte patronal
+  
+  // Orden de aplicación
+  order           Int           @default(0)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  payrollDetails  PayrollDetailConcept[] // Aplicación en nóminas
+  
+  @@map("payroll_concepts")
+  @@index([code])
+  @@index([type])
+  @@index([isActive])
+}
+
+/// Detalle de nómina por empleado
+model PayrollDetail {
+  id              String        @id @default(uuid())
+  payrollId       String
+  employeeId      String
+  
+  // Información del empleado en ese momento
+  employeeNumber  String
+  employeeName    String
+  position        String
+  department      String?
+  
+  // Días trabajados
+  workedDays      Int           @default(0)
+  absentDays      Int           @default(0)
+  vacationDays    Int           @default(0)
+  
+  // Totales
+  grossSalary     Decimal       @db.Decimal(15,2) // Total asignaciones
+  totalDeductions Decimal       @db.Decimal(15,2) // Total deducciones
+  netSalary       Decimal       @db.Decimal(15,2) // Neto a pagar
+  employerCost    Decimal       @db.Decimal(15,2) // Costo patronal
+  
+  // Estado
+  status          PayrollDetailStatus @default(PENDING)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  payroll         Payroll       @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  concepts        PayrollDetailConcept[] // Conceptos aplicados
+  
+  @@unique([payrollId, employeeId]) // Un empleado por nómina
+  @@map("payroll_details")
+  @@index([payrollId])
+  @@index([employeeId])
+}
+
+/// Conceptos aplicados en el detalle de nómina
+model PayrollDetailConcept {
+  id              String        @id @default(uuid())
+  payrollDetailId String
+  conceptId       String
+  
+  // Información del concepto
+  conceptCode     String
+  conceptName     String
+  conceptType     ConceptType
+  
+  // Cálculo
+  baseAmount      Decimal?      @db.Decimal(15,2) // Monto base para el cálculo
+  rate            Decimal?      @db.Decimal(10,4) // Tasa o porcentaje
+  amount          Decimal       @db.Decimal(15,2) // Monto calculado
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  
+  // Relaciones
+  payrollDetail   PayrollDetail @relation(fields: [payrollDetailId], references: [id], onDelete: Cascade)
+  concept         PayrollConcept @relation(fields: [conceptId], references: [id], onDelete: Restrict)
+  
+  @@map("payroll_detail_concepts")
+  @@index([payrollDetailId])
+  @@index([conceptId])
+}
+
+/// Control de asistencia
+model Attendance {
+  id          String          @id @default(uuid())
+  employeeId  String
+  
+  // Fecha y hora
+  date        DateTime        @db.Date // Fecha del registro
+  checkIn     DateTime?       // Hora de entrada
+  checkOut    DateTime?       // Hora de salida
+  
+  // Tipo de registro
+  type        AttendanceType  @default(REGULAR)
+  
+  // Cálculo de horas
+  workedHours Decimal?        @db.Decimal(5,2) // Horas trabajadas
+  lateMinutes Int             @default(0) // Minutos de retardo
+  
+  // Estado
+  status      AttendanceStatus @default(PRESENT)
+  
+  // Justificación
+  isJustified Boolean         @default(false)
+  justification String?       @db.Text
+  justifiedBy String?         // Usuario que justificó
+  justifiedAt DateTime?
+  
+  // Notas
+  notes       String?         @db.Text
+  
+  // Timestamps
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  // Relaciones
+  employee    Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  @@unique([employeeId, date]) // Un registro por empleado por día
+  @@map("attendances")
+  @@index([employeeId])
+  @@index([date])
+  @@index([status])
+}
+
+/// Solicitudes de vacaciones
+model VacationRequest {
+  id              String              @id @default(uuid())
+  employeeId      String
+  
+  // Información de la solicitud
+  startDate       DateTime            @db.Date
+  endDate         DateTime            @db.Date
+  requestedDays   Int                 // Días solicitados
+  
+  // Estado
+  status          VacationStatus      @default(PENDING)
+  
+  // Aprobación
+  reviewedBy      String?             // Usuario que revisó
+  reviewedAt      DateTime?
+  reviewComments  String?             @db.Text
+  
+  // Información adicional
+  reason          String?             @db.Text
+  contactPhone    String?             // Teléfono de contacto durante vacaciones
+  
+  // Timestamps
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  // Relaciones
+  employee        Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  @@map("vacation_requests")
+  @@index([employeeId])
+  @@index([status])
+  @@index([startDate])
+}
+
+/// Permisos y licencias
+model Leave {
+  id              String        @id @default(uuid())
+  employeeId      String
+  
+  // Tipo de permiso
+  type            LeaveType
+  
+  // Fechas
+  startDate       DateTime      @db.Date
+  endDate         DateTime      @db.Date
+  days            Int           // Días del permiso
+  
+  // Estado
+  status          LeaveStatus   @default(PENDING)
+  
+  // Información adicional
+  reason          String        @db.Text
+  isPaid          Boolean       @default(true) // Si es remunerado
+  
+  // Documentación (para reposos médicos)
+  documentUrl     String?       // URL del documento de soporte
+  
+  // Aprobación
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  reviewComments  String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  @@map("leaves")
+  @@index([employeeId])
+  @@index([type])
+  @@index([status])
+  @@index([startDate])
+}
+
+/// Evaluaciones de desempeño
+model PerformanceEvaluation {
+  id              String              @id @default(uuid())
+  employeeId      String
+  
+  // Período de evaluación
+  year            Int
+  period          EvaluationPeriod    // Semestral o Anual
+  startDate       DateTime            @db.Date
+  endDate         DateTime            @db.Date
+  
+  // Evaluador
+  evaluatorId     String              // ID del supervisor que evalúa
+  evaluatorName   String
+  
+  // Calificaciones (escala 1-5)
+  objectivesScore Decimal             @db.Decimal(3,2) // Cumplimiento de objetivos
+  competenciesScore Decimal           @db.Decimal(3,2) // Competencias
+  attitudeScore   Decimal             @db.Decimal(3,2) // Actitud y valores
+  disciplineScore Decimal             @db.Decimal(3,2) // Disciplina y asistencia
+  
+  // Calificación final
+  finalScore      Decimal             @db.Decimal(3,2) // Promedio ponderado
+  rating          PerformanceRating   // Clasificación final
+  
+  // Comentarios
+  strengths       String?             @db.Text // Fortalezas
+  weaknesses      String?             @db.Text // Áreas de mejora
+  goals           String?             @db.Text // Objetivos para próximo período
+  employeeComments String?            @db.Text // Comentarios del empleado
+  
+  // Estado
+  status          EvaluationStatus    @default(DRAFT)
+  
+  // Fechas
+  completedAt     DateTime?
+  acknowledgedAt  DateTime?           // Fecha en que el empleado reconoce la evaluación
+  
+  // Timestamps
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  // Relaciones
+  employee        Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  @@unique([employeeId, year, period]) // Una evaluación por período
+  @@map("performance_evaluations")
+  @@index([employeeId])
+  @@index([year])
+  @@index([status])
+}
+
+/// Capacitaciones
+model Training {
+  id              String        @id @default(uuid())
+  
+  // Información de la capacitación
+  name            String
+  description     String?       @db.Text
+  institution     String        // Institución que imparte
+  instructor      String?       // Instructor/facilitador
+  
+  // Tipo y categoría
+  type            TrainingType
+  category        String?       // Categoría (Técnico, Gerencial, etc.)
+  
+  // Fechas y duración
+  startDate       DateTime      @db.Date
+  endDate         DateTime      @db.Date
+  hours           Int           // Horas de duración
+  
+  // Ubicación
+  location        String?       // Presencial o virtual
+  
+  // Cupos
+  maxParticipants Int?
+  
+  // Estado
+  status          TrainingStatus @default(PLANNED)
+  
+  // Costo
+  cost            Decimal?      @db.Decimal(15,2)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  participants    EmployeeTraining[] // Empleados participantes
+  
+  @@map("trainings")
+  @@index([startDate])
+  @@index([status])
+}
+
+/// Relación empleado-capacitación
+model EmployeeTraining {
+  id              String        @id @default(uuid())
+  employeeId      String
+  trainingId      String
+  
+  // Estado de participación
+  status          ParticipationStatus @default(ENROLLED)
+  
+  // Evaluación
+  grade           Decimal?      @db.Decimal(5,2) // Calificación obtenida
+  passed          Boolean?      // Si aprobó
+  
+  // Certificado
+  certificateUrl  String?       // URL del certificado
+  certificateDate DateTime?     @db.Date
+  
+  // Feedback
+  feedback        String?       @db.Text // Evaluación del curso por el empleado
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  training        Training      @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  
+  @@unique([employeeId, trainingId]) // Un empleado por capacitación
+  @@map("employee_trainings")
+  @@index([employeeId])
+  @@index([trainingId])
+}
+
+/// Prestaciones sociales
+model SeverancePayment {
+  id              String        @id @default(uuid())
+  employeeId      String
+  
+  // Período
+  year            Int
+  month           Int
+  
+  // Cálculo
+  baseSalary      Decimal       @db.Decimal(15,2) // Salario base del mes
+  daysAccrued     Decimal       @db.Decimal(10,4) // Días acumulados
+  amount          Decimal       @db.Decimal(15,2) // Monto acumulado
+  interest        Decimal       @default(0) @db.Decimal(15,2) // Intereses
+  totalAmount     Decimal       @db.Decimal(15,2) // Total con intereses
+  
+  // Tipo
+  type            SeveranceType @default(MONTHLY) // Mensual o Liquidación
+  
+  // Información adicional
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  @@unique([employeeId, year, month, type]) // Un registro por mes por tipo
+  @@map("severance_payments")
+  @@index([employeeId])
+  @@index([year, month])
+}
+
+// ============================================
+// ENUMS PARA RECURSOS HUMANOS
+// ============================================
+
+enum Gender {
+  MALE          // Masculino
+  FEMALE        // Femenino
+  OTHER         // Otro
+}
+
+enum MaritalStatus {
+  SINGLE        // Soltero
+  MARRIED       // Casado
+  DIVORCED      // Divorciado
+  WIDOWED       // Viudo
+  COMMON_LAW    // Concubinato
+}
+
+enum ContractType {
+  PERMANENT     // Fijo
+  TEMPORARY     // Contratado
+  INTERN        // Pasante
+  SEASONAL      // Eventual
+}
+
+enum EmploymentType {
+  EMPLOYEE      // Empleado
+  WORKER        // Obrero
+  HIGH_LEVEL    // Alto nivel
+  CONTRACT      // Contratado
+}
+
+enum EmployeeStatus {
+  ACTIVE        // Activo
+  INACTIVE      // Inactivo
+  SUSPENDED     // Suspendido
+  ON_LEAVE      // De permiso
+  RETIRED       // Jubilado
+  TERMINATED    // Despedido
+}
+
+enum EducationLevel {
+  PRIMARY       // Primaria
+  SECONDARY     // Bachiller
+  TECHNICAL     // TSU
+  UNIVERSITY    // Universitario
+  POSTGRADUATE  // Postgrado
+  MASTER        // Maestría
+  DOCTORATE     // Doctorado
+}
+
+enum DocumentType {
+  ID_CARD       // Cédula
+  RIF           // RIF
+  RESUME        // Curriculum
+  DIPLOMA       // Título
+  CERTIFICATE   // Certificado
+  CONTRACT      // Contrato
+  MEDICAL_EXAM  // Examen médico
+  BACKGROUND_CHECK // Antecedentes penales
+  REFERENCE     // Referencia
+  OTHER         // Otro
+}
+
+enum PayrollPeriod {
+  BIWEEKLY      // Quincenal
+  MONTHLY       // Mensual
+}
+
+enum PayrollStatus {
+  DRAFT         // Borrador
+  CALCULATED    // Calculada
+  APPROVED      // Aprobada
+  PAID          // Pagada
+  CLOSED        // Cerrada
+}
+
+enum ConceptType {
+  ASSIGNMENT    // Asignación (ingreso)
+  DEDUCTION     // Deducción
+  EMPLOYER      // Aporte patronal
+}
+
+enum CalculationType {
+  FIXED         // Monto fijo
+  PERCENTAGE    // Porcentaje
+  FORMULA       // Fórmula personalizada
+}
+
+enum PayrollDetailStatus {
+  PENDING       // Pendiente
+  CALCULATED    // Calculado
+  APPROVED      // Aprobado
+  PAID          // Pagado
+}
+
+enum AttendanceType {
+  REGULAR       // Regular
+  OVERTIME      // Horas extras
+  NIGHT_SHIFT   // Turno nocturno
+  WEEKEND       // Fin de semana
+  HOLIDAY       // Día feriado
+}
+
+enum AttendanceStatus {
+  PRESENT       // Presente
+  ABSENT        // Ausente
+  LATE          // Retardo
+  VACATION      // Vacaciones
+  LEAVE         // Permiso
+  SICK_LEAVE    // Reposo médico
+  JUSTIFIED     // Justificado
+}
+
+enum VacationStatus {
+  PENDING       // Pendiente
+  APPROVED      // Aprobada
+  REJECTED      // Rechazada
+  CANCELLED     // Cancelada
+  COMPLETED     // Completada
+}
+
+enum LeaveType {
+  MEDICAL       // Médico
+  PERSONAL      // Personal
+  MATERNITY     // Maternidad
+  PATERNITY     // Paternidad
+  STUDY         // Estudio
+  BEREAVEMENT   // Duelo
+  MARRIAGE      // Matrimonio
+  UNPAID        // Sin goce de sueldo
+  OTHER         // Otro
+}
+
+enum LeaveStatus {
+  PENDING       // Pendiente
+  APPROVED      // Aprobado
+  REJECTED      // Rechazado
+  CANCELLED     // Cancelado
+}
+
+enum EvaluationPeriod {
+  SEMESTER      // Semestral
+  ANNUAL        // Anual
+}
+
+enum PerformanceRating {
+  DEFICIENT     // Deficiente (1)
+  REGULAR       // Regular (2)
+  GOOD          // Bueno (3)
+  VERY_GOOD     // Muy Bueno (4)
+  EXCELLENT     // Excelente (5)
+}
+
+enum EvaluationStatus {
+  DRAFT         // Borrador
+  COMPLETED     // Completada
+  ACKNOWLEDGED  // Reconocida por empleado
+  CLOSED        // Cerrada
+}
+
+enum TrainingType {
+  INTERNAL      // Interno
+  EXTERNAL      // Externo
+  ONLINE        // En línea
+  WORKSHOP      // Taller
+  SEMINAR       // Seminario
+  CONFERENCE    // Conferencia
+}
+
+enum TrainingStatus {
+  PLANNED       // Planificada
+  IN_PROGRESS   // En progreso
+  COMPLETED     // Completada
+  CANCELLED     // Cancelada
+}
+
+enum ParticipationStatus {
+  ENROLLED      // Inscrito
+  ATTENDING     // Asistiendo
+  COMPLETED     // Completado
+  DROPPED       // Retirado
+  ABSENT        // Ausente
+}
+
+enum SeveranceType {
+  MONTHLY       // Aprovisionamiento mensual
+  ADVANCE       // Anticipo
+  SETTLEMENT    // Liquidación final
+}
+
+// ============================================
+// GESTIÓN TRIBUTARIA (FASE 4)
+// ============================================
+
+/// Contribuyentes (personas naturales y jurídicas)
+model Taxpayer {
+  id              String        @id @default(uuid())
+  
+  // Identificación
+  taxId           String        @unique // RIF o CI
+  taxpayerType    TaxpayerType  // Persona natural o jurídica
+  
+  // Datos personales/empresariales
+  firstName       String?       // Para personas naturales
+  lastName        String?       // Para personas naturales
+  businessName    String?       // Para personas jurídicas
+  tradeName       String?       // Nombre comercial
+  
+  // Contacto
+  email           String?
+  phone           String?
+  mobile          String?
+  address         String?       @db.Text
+  
+  // Ubicación
+  parish          String?       // Parroquia
+  sector          String?       // Sector
+  
+  // Estado
+  status          TaxpayerStatus @default(ACTIVE)
+  
+  // Información adicional
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  businesses      Business[]    // Establecimientos comerciales
+  properties      Property[]    // Inmuebles
+  vehicles        Vehicle[]     // Vehículos
+  taxBills        TaxBill[]     // Facturas tributarias
+  payments        TaxPayment[]  // Pagos realizados
+  solvencies      Solvency[]    // Solvencias emitidas
+  debtCollections DebtCollection[] // Gestiones de cobranza
+  
+  @@map("taxpayers")
+  @@index([taxId])
+  @@index([taxpayerType])
+  @@index([status])
+}
+
+/// Establecimientos comerciales (para Impuesto de Actividades Económicas)
+model Business {
+  id              String        @id @default(uuid())
+  taxpayerId      String
+  
+  // Información del negocio
+  licenseNumber   String        @unique // Número de licencia/patente
+  businessName    String        // Nombre del negocio
+  tradeName       String?       // Nombre comercial
+  
+  // Actividad económica
+  activityCode    String        // Código CIIU
+  activityName    String        // Descripción de la actividad
+  category        String        // Categoría según ordenanza
+  
+  // Ubicación
+  address         String        @db.Text
+  parish          String
+  sector          String?
+  latitude        Float?
+  longitude       Float?
+  
+  // Información fiscal
+  annualIncome    Decimal?      @db.Decimal(15,2) // Ingresos brutos anuales
+  taxRate         Decimal       @db.Decimal(5,4) // Alícuota aplicable
+  
+  // Fechas
+  openingDate     DateTime      @db.Date // Fecha de apertura
+  licenseDate     DateTime      @db.Date // Fecha de emisión de licencia
+  expiryDate      DateTime      @db.Date // Fecha de vencimiento
+  
+  // Estado
+  status          BusinessStatus @default(ACTIVE)
+  
+  // Información adicional
+  employees       Int?          // Número de empleados
+  area            Decimal?      @db.Decimal(10,2) // Área en m²
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  taxpayer        Taxpayer      @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  inspections     Inspection[]  // Inspecciones fiscales
+  taxBills        TaxBill[]     // Facturas generadas
+  
+  @@map("businesses")
+  @@index([taxpayerId])
+  @@index([licenseNumber])
+  @@index([status])
+  @@index([activityCode])
+}
+
+/// Inmuebles (para Impuesto sobre Inmuebles Urbanos y Catastro)
+model Property {
+  id              String        @id @default(uuid())
+  taxpayerId      String
+  
+  // Identificación catastral
+  cadastralCode   String        @unique // Código catastral
+  
+  // Ubicación
+  address         String        @db.Text
+  parish          String
+  sector          String?
+  latitude        Float?
+  longitude       Float?
+  
+  // Características físicas
+  landArea        Decimal       @db.Decimal(10,2) // Área de terreno en m²
+  buildingArea    Decimal?      @db.Decimal(10,2) // Área de construcción en m²
+  floors          Int?          // Número de plantas
+  rooms           Int?          // Número de habitaciones
+  
+  // Uso y tipo
+  propertyUse     PropertyUse   // Uso del inmueble
+  propertyType    PropertyType  // Tipo de inmueble
+  
+  // Valoración
+  landValue       Decimal       @db.Decimal(15,2) // Valor del terreno
+  buildingValue   Decimal       @db.Decimal(15,2) // Valor de la construcción
+  totalValue      Decimal       @db.Decimal(15,2) // Valor catastral total
+  taxRate         Decimal       @db.Decimal(5,4) // Alícuota aplicable
+  
+  // Año de construcción
+  constructionYear Int?
+  
+  // Exoneraciones
+  isExempt        Boolean       @default(false)
+  exemptionReason String?       @db.Text
+  exemptionExpiry DateTime?     @db.Date
+  
+  // Estado
+  status          PropertyStatus @default(ACTIVE)
+  
+  // ============================================
+  // CAMPOS ADICIONALES PARA CATASTRO (FASE 5)
+  // ============================================
+  
+  // Linderos y medidas
+  frontBoundary   String?       @db.Text // Lindero frontal
+  rearBoundary    String?       @db.Text // Lindero posterior
+  leftBoundary    String?       @db.Text // Lindero izquierdo
+  rightBoundary   String?       @db.Text // Lindero derecho
+  
+  // Características detalladas
+  bathrooms       Int?          // Número de baños
+  parkingSpaces   Int?          // Espacios de estacionamiento
+  
+  // Servicios disponibles
+  hasWater        Boolean       @default(false) // Agua potable
+  hasElectricity  Boolean       @default(false) // Electricidad
+  hasSewerage     Boolean       @default(false) // Cloacas
+  hasGas          Boolean       @default(false) // Gas
+  
+  // Estado de conservación
+  conservationState ConservationState? // Estado de conservación
+  
+  // Zonificación
+  zoneCode        String?       // Código de zona urbana
+  
+  // Documentación
+  deedNumber      String?       // Número de protocolización
+  deedDate        DateTime?     @db.Date // Fecha de protocolización
+  registryOffice  String?       // Oficina de registro
+  
+  // Fotografías
+  frontPhoto      String?       // URL foto fachada
+  
+  // Información adicional
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  taxpayer        Taxpayer      @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  taxBills        TaxBill[]     // Facturas generadas
+  owners          PropertyOwner[] // Propietarios históricos
+  photos          PropertyPhoto[] // Fotos adicionales
+  constructionPermits ConstructionPermit[] // Permisos de construcción
+  urbanInspections UrbanInspection[] // Inspecciones urbanas
+  
+  @@map("properties")
+  @@index([taxpayerId])
+  @@index([cadastralCode])
+  @@index([status])
+  @@index([propertyUse])
+  @@index([zoneCode])
+}
+
+/// Vehículos (para Impuesto sobre Vehículos)
+model Vehicle {
+  id              String        @id @default(uuid())
+  taxpayerId      String
+  
+  // Identificación del vehículo
+  plate           String        @unique // Placa
+  serialNumber    String?       // Número de serial
+  
+  // Información del vehículo
+  brand           String        // Marca
+  model           String        // Modelo
+  year            Int           // Año
+  color           String?
+  vehicleType     VehicleType   // Tipo de vehículo
+  
+  // Valoración
+  assessedValue   Decimal       @db.Decimal(15,2) // Valor fiscal
+  taxRate         Decimal       @db.Decimal(5,4) // Alícuota aplicable
+  
+  // Estado
+  status          VehicleStatus @default(ACTIVE)
+  
+  // Información adicional
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  taxpayer        Taxpayer      @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  taxBills        TaxBill[]     // Facturas generadas
+  
+  @@map("vehicles")
+  @@index([taxpayerId])
+  @@index([plate])
+  @@index([status])
+}
+
+/// Facturas tributarias
+model TaxBill {
+  id              String        @id @default(uuid())
+  
+  // Número de factura
+  billNumber      String        @unique // Número único de factura
+  
+  // Contribuyente
+  taxpayerId      String
+  
+  // Tipo de impuesto/tasa
+  taxType         TaxType       // Tipo de tributo
+  
+  // Referencias a los objetos tributables
+  businessId      String?       // Si es impuesto de actividades económicas
+  propertyId      String?       // Si es impuesto inmobiliario
+  vehicleId       String?       // Si es impuesto de vehículos
+  
+  // Período fiscal
+  fiscalYear      Int
+  fiscalPeriod    String?       // Trimestre, mes, etc.
+  
+  // Montos
+  baseAmount      Decimal       @db.Decimal(15,2) // Base imponible
+  taxRate         Decimal       @db.Decimal(5,4) // Alícuota
+  taxAmount       Decimal       @db.Decimal(15,2) // Monto del impuesto
+  surcharges      Decimal       @default(0) @db.Decimal(15,2) // Recargos
+  discounts       Decimal       @default(0) @db.Decimal(15,2) // Descuentos
+  totalAmount     Decimal       @db.Decimal(15,2) // Total a pagar
+  paidAmount      Decimal       @default(0) @db.Decimal(15,2) // Monto pagado
+  balanceAmount   Decimal       @db.Decimal(15,2) // Saldo pendiente
+  
+  // Fechas
+  issueDate       DateTime      @db.Date // Fecha de emisión
+  dueDate         DateTime      @db.Date // Fecha de vencimiento
+  
+  // Estado
+  status          BillStatus    @default(PENDING)
+  
+  // Código de pago
+  paymentCode     String?       @unique // Código para pago en línea
+  
+  // Información adicional
+  concept         String        // Concepto de la factura
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  taxpayer        Taxpayer      @relation(fields: [taxpayerId], references: [id], onDelete: Restrict)
+  business        Business?     @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  property        Property?     @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  vehicle         Vehicle?      @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  payments        TaxPayment[]  // Pagos aplicados a esta factura
+  
+  @@map("tax_bills")
+  @@index([billNumber])
+  @@index([taxpayerId])
+  @@index([taxType])
+  @@index([status])
+  @@index([fiscalYear])
+  @@index([dueDate])
+}
+
+/// Pagos tributarios
+model TaxPayment {
+  id              String        @id @default(uuid())
+  
+  // Número de recibo
+  receiptNumber   String        @unique // Número de recibo
+  
+  // Contribuyente
+  taxpayerId      String
+  
+  // Factura(s) pagada(s)
+  taxBillId       String?       // Factura principal
+  
+  // Información del pago
+  amount          Decimal       @db.Decimal(15,2) // Monto pagado
+  paymentMethod   TaxPaymentMethod // Método de pago
+  paymentDate     DateTime      @db.Date // Fecha de pago
+  
+  // Información bancaria
+  bankName        String?
+  referenceNumber String?       // Número de referencia bancaria
+  
+  // Estado
+  status          PaymentStatus @default(COMPLETED)
+  
+  // Usuario que registró (si es presencial)
+  registeredBy    String?
+  
+  // Información adicional
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  taxpayer        Taxpayer      @relation(fields: [taxpayerId], references: [id], onDelete: Restrict)
+  taxBill         TaxBill?      @relation(fields: [taxBillId], references: [id], onDelete: Restrict)
+  
+  @@map("tax_payments")
+  @@index([receiptNumber])
+  @@index([taxpayerId])
+  @@index([taxBillId])
+  @@index([paymentDate])
+  @@index([status])
+}
+
+/// Solvencias municipales
+model Solvency {
+  id              String        @id @default(uuid())
+  
+  // Número de solvencia
+  solvencyNumber  String        @unique // Número único
+  
+  // Contribuyente
+  taxpayerId      String
+  
+  // Tipo de solvencia
+  solvencyType    SolvencyType  // Tipo de solvencia
+  
+  // Fechas
+  issueDate       DateTime      @db.Date // Fecha de emisión
+  expiryDate      DateTime      @db.Date // Fecha de vencimiento
+  
+  // Código QR para verificación
+  qrCode          String        @unique
+  
+  // Estado
+  status          SolvencyStatus @default(ACTIVE)
+  
+  // Usuario que emitió
+  issuedBy        String
+  
+  // Información adicional
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  taxpayer        Taxpayer      @relation(fields: [taxpayerId], references: [id], onDelete: Restrict)
+  
+  @@map("solvencies")
+  @@index([solvencyNumber])
+  @@index([taxpayerId])
+  @@index([qrCode])
+  @@index([status])
+  @@index([expiryDate])
+}
+
+/// Gestión de cobranza
+model DebtCollection {
+  id              String        @id @default(uuid())
+  
+  // Contribuyente moroso
+  taxpayerId      String
+  
+  // Información de la deuda
+  totalDebt       Decimal       @db.Decimal(15,2) // Deuda total
+  oldestDebtDate  DateTime      @db.Date // Fecha de la deuda más antigua
+  debtAge         Int           // Antigüedad en días
+  
+  // Clasificación
+  priority        CollectionPriority // Prioridad de cobranza
+  stage           CollectionStage    // Etapa de cobranza
+  
+  // Notificaciones enviadas
+  notificationsSent Int         @default(0)
+  lastNotificationDate DateTime? @db.Date
+  
+  // Gestión
+  assignedTo      String?       // Usuario asignado
+  
+  // Convenio de pago
+  hasPaymentPlan  Boolean       @default(false)
+  paymentPlanDate DateTime?     @db.Date
+  installments    Int?          // Número de cuotas
+  
+  // Estado
+  status          CollectionStatus @default(ACTIVE)
+  
+  // Notas y seguimiento
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  taxpayer        Taxpayer      @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
+  actions         CollectionAction[] // Acciones de cobranza
+  
+  @@map("debt_collections")
+  @@index([taxpayerId])
+  @@index([status])
+  @@index([priority])
+  @@index([stage])
+}
+
+/// Acciones de cobranza
+model CollectionAction {
+  id              String        @id @default(uuid())
+  debtCollectionId String
+  
+  // Tipo de acción
+  actionType      CollectionActionType
+  
+  // Fecha de la acción
+  actionDate      DateTime      @db.Date
+  
+  // Descripción
+  description     String        @db.Text
+  
+  // Usuario que realizó la acción
+  performedBy     String
+  
+  // Resultado
+  result          String?       @db.Text
+  
+  // Próxima acción
+  nextActionDate  DateTime?     @db.Date
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  
+  // Relaciones
+  debtCollection  DebtCollection @relation(fields: [debtCollectionId], references: [id], onDelete: Cascade)
+  
+  @@map("collection_actions")
+  @@index([debtCollectionId])
+  @@index([actionDate])
+}
+
+/// Inspecciones fiscales
+model Inspection {
+  id              String        @id @default(uuid())
+  businessId      String
+  
+  // Información de la inspección
+  inspectionNumber String       @unique
+  inspectionDate  DateTime      @db.Date
+  inspectionType  InspectionType
+  
+  // Inspector
+  inspectorId     String
+  inspectorName   String
+  
+  // Resultados
+  findings        String?       @db.Text // Hallazgos
+  violations      String?       @db.Text // Infracciones encontradas
+  recommendations String?       @db.Text // Recomendaciones
+  
+  // Multas o sanciones
+  hasFine         Boolean       @default(false)
+  fineAmount      Decimal?      @db.Decimal(15,2)
+  
+  // Estado
+  status          InspectionStatus @default(SCHEDULED)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  business        Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  @@map("inspections")
+  @@index([businessId])
+  @@index([inspectionDate])
+  @@index([status])
+}
+
+// ============================================
+// MÓDULO DE CATASTRO (FASE 5)
+// ============================================
+
+/// Propietarios históricos de inmuebles
+model PropertyOwner {
+  id              String        @id @default(uuid())
+  propertyId      String
+  
+  // Información del propietario
+  ownerName       String        // Nombre del propietario
+  ownerIdNumber   String        // Cédula o RIF
+  ownerType       TaxpayerType  // Natural o Jurídica
+  
+  // Período de propiedad
+  startDate       DateTime      @db.Date // Fecha de inicio
+  endDate         DateTime?     @db.Date // Fecha de fin (null si es actual)
+  isCurrent       Boolean       @default(true) // Es propietario actual
+  
+  // Documento de propiedad
+  deedNumber      String?       // Número de documento
+  deedDate        DateTime?     @db.Date
+  
+  // Información adicional
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  @@map("property_owners")
+  @@index([propertyId])
+  @@index([ownerIdNumber])
+  @@index([isCurrent])
+}
+
+/// Fotos adicionales de inmuebles
+model PropertyPhoto {
+  id              String        @id @default(uuid())
+  propertyId      String
+  
+  // Información de la foto
+  url             String        // URL o path de la imagen
+  description     String?       // Descripción de la foto
+  photoType       PropertyPhotoType // Tipo de foto
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  
+  // Relaciones
+  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  @@map("property_photos")
+  @@index([propertyId])
+}
+
+/// Variables urbanas por zona
+model UrbanVariable {
+  id              String        @id @default(uuid())
+  
+  // Identificación de la zona
+  zoneCode        String        @unique // Código de zona
+  zoneName        String        // Nombre de la zona
+  zoneType        ZoneType      // Tipo de zona
+  
+  // Retiros (en metros)
+  frontSetback    Decimal?      @db.Decimal(5,2) // Retiro frontal
+  rearSetback     Decimal?      @db.Decimal(5,2) // Retiro posterior
+  leftSetback     Decimal?      @db.Decimal(5,2) // Retiro lateral izquierdo
+  rightSetback    Decimal?      @db.Decimal(5,2) // Retiro lateral derecho
+  
+  // Altura y densidad
+  maxHeight       Decimal?      @db.Decimal(5,2) // Altura máxima en metros
+  maxFloors       Int?          // Número máximo de plantas
+  buildingDensity Decimal?      @db.Decimal(5,2) // Densidad de construcción (%)
+  maxCoverage     Decimal?      @db.Decimal(5,2) // Porcentaje máximo de construcción
+  
+  // Estacionamientos
+  parkingRequired Boolean       @default(false) // Requiere estacionamiento
+  parkingRatio    String?       // Ratio de estacionamiento (ej: "1 por cada 50m²")
+  
+  // Usos permitidos
+  allowedUses     String        @db.Text // JSON array de usos permitidos
+  
+  // Normativa
+  regulations     String?       @db.Text // Normativas específicas de la zona
+  
+  // Estado
+  isActive        Boolean       @default(true)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@map("urban_variables")
+  @@index([zoneCode])
+  @@index([zoneType])
+  @@index([isActive])
+}
+
+/// Permisos de construcción
+model ConstructionPermit {
+  id              String        @id @default(uuid())
+  
+  // Número de permiso
+  permitNumber    String        @unique // Número único del permiso
+  
+  // Inmueble
+  propertyId      String
+  
+  // Solicitante
+  applicantName   String        // Nombre del solicitante
+  applicantId     String        // Cédula o RIF
+  applicantPhone  String?
+  applicantEmail  String?
+  
+  // Tipo de permiso
+  permitType      PermitType    // Tipo de permiso
+  
+  // Descripción del proyecto
+  projectDescription String     @db.Text
+  constructionArea Decimal      @db.Decimal(10,2) // Área a construir en m²
+  estimatedCost   Decimal?      @db.Decimal(15,2) // Costo estimado
+  
+  // Documentos adjuntos
+  architecturalPlans String?    // URL de planos arquitectónicos
+  structuralPlans String?       // URL de planos estructurales
+  electricalPlans String?       // URL de planos eléctricos
+  plumbingPlans   String?       // URL de planos sanitarios
+  propertyDeed    String?       // URL de documento de propiedad
+  otherDocuments  String?       @db.Text // JSON array de otros documentos
+  
+  // Revisión técnica
+  reviewerId      String?       // Usuario que revisa
+  reviewDate      DateTime?     @db.Date
+  reviewNotes     String?       @db.Text // Observaciones de la revisión
+  complianceCheck Boolean       @default(false) // Cumple con variables urbanas
+  
+  // Aprobación
+  approvedBy      String?       // Usuario que aprueba
+  approvalDate    DateTime?     @db.Date
+  approvalNotes   String?       @db.Text
+  
+  // Tasas
+  reviewFee       Decimal?      @db.Decimal(15,2) // Tasa de revisión
+  permitFee       Decimal       @db.Decimal(15,2) // Tasa del permiso
+  totalFee        Decimal       @db.Decimal(15,2) // Total a pagar
+  isPaid          Boolean       @default(false)
+  paymentDate     DateTime?     @db.Date
+  paymentReference String?      // Referencia de pago
+  
+  // Fechas
+  applicationDate DateTime      @db.Date // Fecha de solicitud
+  expiryDate      DateTime?     @db.Date // Fecha de vencimiento del permiso
+  
+  // Estado
+  status          PermitStatus  @default(SUBMITTED)
+  
+  // Control de obra
+  constructionStartDate DateTime? @db.Date
+  constructionEndDate   DateTime? @db.Date
+  
+  // Información adicional
+  notes           String?       @db.Text
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  inspections     PermitInspection[] // Inspecciones durante construcción
+  
+  @@map("construction_permits")
+  @@index([permitNumber])
+  @@index([propertyId])
+  @@index([status])
+  @@index([applicationDate])
+}
+
+/// Inspecciones de permisos de construcción
+model PermitInspection {
+  id              String        @id @default(uuid())
+  permitId        String
+  
+  // Información de la inspección
+  inspectionNumber String       @unique
+  inspectionDate  DateTime      @db.Date
+  inspectionType  ConstructionInspectionType
+  
+  // Inspector
+  inspectorId     String
+  inspectorName   String
+  
+  // Resultados
+  findings        String?       @db.Text // Hallazgos
+  compliance      Boolean       @default(true) // Cumple con lo aprobado
+  violations      String?       @db.Text // Incumplimientos encontrados
+  recommendations String?       @db.Text // Recomendaciones
+  
+  // Fotos de la inspección
+  photos          String?       @db.Text // JSON array de URLs de fotos
+  
+  // Acciones requeridas
+  requiresAction  Boolean       @default(false)
+  actionRequired  String?       @db.Text
+  actionDeadline  DateTime?     @db.Date
+  
+  // Estado
+  status          InspectionStatus @default(COMPLETED)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  permit          ConstructionPermit @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  
+  @@map("permit_inspections")
+  @@index([permitId])
+  @@index([inspectionDate])
+  @@index([status])
+}
+
+/// Inspecciones urbanas (control urbano)
+model UrbanInspection {
+  id              String        @id @default(uuid())
+  
+  // Número de inspección
+  inspectionNumber String       @unique
+  
+  // Inmueble inspeccionado
+  propertyId      String?       // Puede ser null si es una denuncia sin inmueble registrado
+  address         String        @db.Text // Dirección del lugar inspeccionado
+  
+  // Tipo de inspección
+  inspectionType  UrbanInspectionType
+  
+  // Origen
+  origin          InspectionOrigin // Origen de la inspección
+  complaintId     String?       // ID de denuncia si aplica
+  
+  // Denunciante (si es por denuncia)
+  complainantName String?
+  complainantPhone String?
+  complainantEmail String?
+  
+  // Fecha de inspección
+  scheduledDate   DateTime?     @db.Date // Fecha programada
+  inspectionDate  DateTime?     @db.Date // Fecha real de inspección
+  
+  // Inspector
+  inspectorId     String?
+  inspectorName   String?
+  
+  // Hallazgos
+  description     String        @db.Text // Descripción de lo encontrado
+  hasViolation    Boolean       @default(false) // Tiene infracciones
+  violationType   String?       // Tipo de infracción
+  violationDetails String?      @db.Text // Detalles de la infracción
+  
+  // Fotos
+  photos          String?       @db.Text // JSON array de URLs de fotos
+  
+  // Notificaciones
+  notificationSent Boolean      @default(false)
+  notificationDate DateTime?    @db.Date
+  notificationMethod String?    // Método de notificación
+  
+  // Sanciones
+  hasSanction     Boolean       @default(false)
+  sanctionType    String?       // Tipo de sanción
+  sanctionAmount  Decimal?      @db.Decimal(15,2) // Monto de multa
+  sanctionDetails String?       @db.Text
+  
+  // Seguimiento
+  requiresFollowUp Boolean      @default(false)
+  followUpDate    DateTime?     @db.Date
+  followUpNotes   String?       @db.Text
+  
+  // Resolución
+  resolutionDate  DateTime?     @db.Date
+  resolutionNotes String?       @db.Text
+  
+  // Estado
+  status          UrbanInspectionStatus @default(SCHEDULED)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relaciones
+  property        Property?     @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  @@map("urban_inspections")
+  @@index([inspectionNumber])
+  @@index([propertyId])
+  @@index([status])
+  @@index([inspectionDate])
+}
+
+// ============================================
+// ENUMS PARA CATASTRO
+// ============================================
+
+enum ConservationState {
+  EXCELLENT     // Excelente
+  GOOD          // Bueno
+  REGULAR       // Regular
+  POOR          // Malo
+  RUINOUS       // Ruinoso
+}
+
+enum PropertyPhotoType {
+  FRONT         // Fachada
+  REAR          // Posterior
+  INTERIOR      // Interior
+  AERIAL        // Aérea
+  OTHER         // Otra
+}
+
+enum ZoneType {
+  RESIDENTIAL   // Residencial
+  COMMERCIAL    // Comercial
+  INDUSTRIAL    // Industrial
+  MIXED         // Mixto
+  PROTECTED     // Protegida
+  RURAL         // Rural
+  PUBLIC        // Uso público
+}
+
+enum PermitType {
+  NEW_CONSTRUCTION    // Construcción nueva
+  REMODELING          // Remodelación
+  EXPANSION           // Ampliación
+  DEMOLITION          // Demolición
+  REGULARIZATION      // Regularización
+  REPAIR              // Reparación
+  OTHER               // Otro
+}
+
+enum PermitStatus {
+  SUBMITTED           // Presentada
+  UNDER_REVIEW        // En revisión
+  CORRECTIONS_REQUIRED // Requiere correcciones
+  APPROVED            // Aprobada
+  REJECTED            // Rechazada
+  IN_CONSTRUCTION     // En construcción
+  COMPLETED           // Obra terminada
+  EXPIRED             // Vencida
+  CANCELLED           // Cancelada
+}
+
+enum ConstructionInspectionType {
+  FOUNDATION          // Fundación
+  STRUCTURE           // Estructura
+  MASONRY             // Mampostería
+  INSTALLATIONS       // Instalaciones
+  FINISHES            // Acabados
+  FINAL               // Final
+  FOLLOW_UP           // Seguimiento
+}
+
+enum UrbanInspectionType {
+  ILLEGAL_CONSTRUCTION // Construcción ilegal
+  LAND_INVASION        // Invasión de terreno
+  ZONING_VIOLATION     // Violación de zonificación
+  ENVIRONMENTAL        // Ambiental
+  SAFETY               // Seguridad
+  GENERAL              // General
+  OTHER                // Otro
+}
+
+enum InspectionOrigin {
+  COMPLAINT            // Denuncia ciudadana
+  ROUTINE              // Inspección de rutina
+  FOLLOW_UP            // Seguimiento
+  REQUEST              // Solicitud
+}
+
+enum UrbanInspectionStatus {
+  SCHEDULED            // Programada
+  IN_PROGRESS          // En progreso
+  COMPLETED            // Completada
+  NOTIFIED             // Notificada
+  SANCTIONED           // Sancionada
+  RESOLVED             // Resuelta
+  CANCELLED            // Cancelada
+}
+
+// ============================================
+// ENUMS PARA TRIBUTARIO
+// ============================================
+
+enum TaxpayerType {
+  NATURAL       // Persona natural
+  LEGAL         // Persona jurídica
+}
+
+enum TaxpayerStatus {
+  ACTIVE        // Activo
+  INACTIVE      // Inactivo
+  SUSPENDED     // Suspendido
+}
+
+enum BusinessStatus {
+  ACTIVE        // Activo
+  INACTIVE      // Inactivo
+  SUSPENDED     // Suspendido
+  CLOSED        // Cerrado
+}
+
+enum PropertyUse {
+  RESIDENTIAL   // Residencial
+  COMMERCIAL    // Comercial
+  INDUSTRIAL    // Industrial
+  MIXED         // Mixto
+  VACANT        // Baldío
+}
+
+enum PropertyType {
+  HOUSE         // Casa
+  APARTMENT     // Apartamento
+  BUILDING      // Edificio
+  LAND          // Terreno
+  WAREHOUSE     // Galpón
+  OFFICE        // Oficina
+  LOCAL         // Local comercial
+}
+
+enum PropertyStatus {
+  ACTIVE        // Activo
+  INACTIVE      // Inactivo
+}
+
+enum VehicleType {
+  CAR           // Automóvil
+  TRUCK         // Camión
+  MOTORCYCLE    // Motocicleta
+  BUS           // Autobús
+  VAN           // Camioneta
+  OTHER         // Otro
+}
+
+enum VehicleStatus {
+  ACTIVE        // Activo
+  INACTIVE      // Inactivo
+  SOLD          // Vendido
+}
+
+enum TaxType {
+  BUSINESS_TAX      // Impuesto de Actividades Económicas
+  PROPERTY_TAX      // Impuesto sobre Inmuebles
+  VEHICLE_TAX       // Impuesto sobre Vehículos
+  URBAN_CLEANING    // Tasa de aseo urbano
+  ADMINISTRATIVE    // Tasas administrativas
+  SPACE_USE         // Uso de espacios públicos
+  CEMETERY          // Servicios de cementerio
+  PUBLIC_EVENTS     // Espectáculos públicos
+  OTHER             // Otros
+}
+
+enum BillStatus {
+  PENDING       // Pendiente
+  PARTIAL       // Parcialmente pagada
+  PAID          // Pagada
+  OVERDUE       // Vencida
+  CANCELLED     // Anulada
+}
+
+enum TaxPaymentMethod {
+  CASH          // Efectivo
+  TRANSFER      // Transferencia
+  MOBILE_PAYMENT // Pago móvil
+  POS           // Punto de venta
+  CHECK         // Cheque
+  ONLINE        // Pago en línea
+}
+
+enum SolvencyType {
+  GENERAL       // Solvencia general
+  BUSINESS      // Solvencia de patente
+  PROPERTY      // Solvencia inmobiliaria
+  VEHICLE       // Solvencia de vehículo
+}
+
+enum SolvencyStatus {
+  ACTIVE        // Activa
+  EXPIRED       // Vencida
+  REVOKED       // Revocada
+}
+
+enum CollectionPriority {
+  LOW           // Baja
+  MEDIUM        // Media
+  HIGH          // Alta
+  URGENT        // Urgente
+}
+
+enum CollectionStage {
+  REMINDER      // Recordatorio amigable
+  NOTICE        // Aviso de mora
+  FORMAL        // Intimación formal
+  LEGAL         // Medidas legales
+}
+
+enum CollectionStatus {
+  ACTIVE        // Activa
+  RESOLVED      // Resuelta
+  PAYMENT_PLAN  // Con convenio de pago
+  LEGAL_ACTION  // En acción legal
+  CLOSED        // Cerrada
+}
+
+enum CollectionActionType {
+  PHONE_CALL    // Llamada telefónica
+  EMAIL         // Correo electrónico
+  SMS           // Mensaje de texto
+  LETTER        // Carta física
+  VISIT         // Visita presencial
+  LEGAL_NOTICE  // Notificación legal
+  PAYMENT_PLAN  // Convenio de pago
+  OTHER         // Otro
+}
+
+enum InspectionType {
+  ROUTINE       // Rutinaria
+  COMPLAINT     // Por denuncia
+  RENEWAL       // Renovación de licencia
+  FOLLOW_UP     // Seguimiento
+}
+
+enum InspectionStatus {
+  SCHEDULED     // Programada
+  IN_PROGRESS   // En progreso
+  COMPLETED     // Completada
+  CANCELLED     // Cancelada
+}
+
+// ============================================
+// PARTICIPACIÓN CIUDADANA (FASE 6)
+// ============================================
+
+/// Reportes ciudadanos (Sistema 311)
+model CitizenReport {
+  id              String              @id @default(uuid())
+  
+  // Número de ticket único
+  ticketNumber    String              @unique // RP-2025-00123
+  
+  // Tipo de problema
+  type            ReportType
+  customType      String?             // Si type es OTHER
+  
+  // Descripción del problema
+  title           String
+  description     String              @db.Text
+  
+  // Ubicación
+  location        String              // Dirección o descripción
+  latitude        Float?              // Coordenada GPS
+  longitude       Float?              // Coordenada GPS
+  sector          String?             // Sector/Parroquia
+  
+  // Ciudadano reportante
+  reporterName    String?             // Nombre (opcional para seguimiento)
+  reporterEmail   String?             // Email para notificaciones
+  reporterPhone   String?             // Teléfono de contacto
+  reporterUserId  String?             // Si es usuario registrado
+  
+  // Estado y prioridad
+  status          ReportStatus        @default(RECEIVED)
+  priority        ReportPriority      @default(MEDIUM)
+  
+  // Asignación
+  departmentId    String?             // Departamento responsable
+  assignedTo      String?             // Usuario asignado
+  assignedAt      DateTime?           // Fecha de asignación
+  
+  // Fechas del ciclo de vida
+  receivedAt      DateTime            @default(now())
+  reviewedAt      DateTime?           // En revisión
+  inProgressAt    DateTime?           // En proceso
+  resolvedAt      DateTime?           // Resuelto
+  closedAt        DateTime?           // Cerrado
+  
+  // Resolución
+  resolutionNotes String?             @db.Text // Notas de resolución
+  resolutionPhotos String?            @db.Text // URLs de fotos después (JSON array)
+  
+  // Calificación del servicio
+  rating          Int?                // 1-5 estrellas
+  ratingComment   String?             @db.Text
+  ratedAt         DateTime?
+  
+  // Información adicional
+  isAnonymous     Boolean             @default(false)
+  isPublic        Boolean             @default(true) // Si aparece en mapa público
+  
+  // Timestamps
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  // Relaciones
+  photos          ReportPhoto[]       // Fotos del problema
+  comments        ReportComment[]     // Comentarios y actualizaciones
+  notifications   ReportNotification[] // Notificaciones enviadas
+  
+  @@map("citizen_reports")
+  @@index([ticketNumber])
+  @@index([type])
+  @@index([status])
+  @@index([priority])
+  @@index([departmentId])
+  @@index([assignedTo])
+  @@index([receivedAt])
+  @@index([sector])
+}
+
+/// Fotos de reportes ciudadanos
+model ReportPhoto {
+  id        String        @id @default(uuid())
+  reportId  String
+  url       String        // URL de la imagen
+  caption   String?       // Descripción
+  type      ReportPhotoType @default(BEFORE) // Antes o después
+  
+  // Timestamps
+  createdAt DateTime      @default(now())
+  
+  // Relaciones
+  report    CitizenReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  @@map("report_photos")
+  @@index([reportId])
+}
+
+/// Comentarios en reportes
+model ReportComment {
+  id        String        @id @default(uuid())
+  reportId  String
+  
+  // Autor del comentario
+  authorId  String?       // Usuario del sistema
+  authorName String?      // Nombre si es ciudadano sin cuenta
+  isInternal Boolean      @default(false) // Si es comentario interno (no visible al ciudadano)
+  
+  // Contenido
+  comment   String        @db.Text
+  
+  // Timestamps
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  
+  // Relaciones
+  report    CitizenReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  @@map("report_comments")
+  @@index([reportId])
+  @@index([authorId])
+}
+
+/// Notificaciones enviadas por cambios de estado
+model ReportNotification {
+  id          String        @id @default(uuid())
+  reportId    String
+  
+  // Tipo de notificación
+  type        NotificationType
+  channel     NotificationChannel // Email, SMS, etc.
+  
+  // Destinatario
+  recipient   String        // Email o teléfono
+  
+  // Contenido
+  subject     String?
+  message     String        @db.Text
+  
+  // Estado
+  status      NotificationStatus @default(PENDING)
+  sentAt      DateTime?
+  error       String?       @db.Text // Error si falla el envío
+  
+  // Timestamps
+  createdAt   DateTime      @default(now())
+  
+  // Relaciones
+  report      CitizenReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  @@map("report_notifications")
+  @@index([reportId])
+  @@index([status])
+}
+
+/// Presupuesto Participativo - Convocatorias
+model ParticipatoryBudget {
+  id              String              @id @default(uuid())
+  
+  // Información básica
+  title           String
+  description     String              @db.Text
+  year            Int                 // Año fiscal
+  
+  // Presupuesto disponible
+  totalBudget     Decimal             @db.Decimal(15,2)
+  allocatedBudget Decimal             @default(0) @db.Decimal(15,2) // Presupuesto asignado a proyectos ganadores
+  
+  // Fechas del proceso
+  proposalStartDate   DateTime        // Inicio de recepción de propuestas
+  proposalEndDate     DateTime        // Fin de recepción de propuestas
+  evaluationStartDate DateTime        // Inicio de evaluación técnica
+  evaluationEndDate   DateTime        // Fin de evaluación técnica
+  votingStartDate     DateTime        // Inicio de votación
+  votingEndDate       DateTime        // Fin de votación
+  resultsDate         DateTime?       // Fecha de publicación de resultados
+  
+  // Estado
+  status          BudgetStatus        @default(DRAFT)
+  
+  // Configuración
+  allowMultipleVotes Boolean          @default(false) // Si un ciudadano puede votar por varios proyectos
+  maxVotesPerCitizen Int              @default(1)
+  requiresRegistration Boolean        @default(true) // Si requiere registro para votar
+  
+  // Información adicional
+  rules           String?             @db.Text // Reglas del proceso
+  sectors         String?             @db.Text // Sectores elegibles (JSON array)
+  
+  // Timestamps
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  // Relaciones
+  proposals       BudgetProposal[]    // Propuestas presentadas
+  
+  @@map("participatory_budgets")
+  @@index([year])
+  @@index([status])
+}
+
+/// Propuestas de proyectos comunitarios
+model BudgetProposal {
+  id              String              @id @default(uuid())
+  budgetId        String              // Convocatoria a la que pertenece
+  
+  // Número de propuesta
+  proposalNumber  String              @unique // PP-2025-001
+  
+  // Información del proyecto
+  title           String
+  description     String              @db.Text
+  objectives      String              @db.Text
+  beneficiaries   Int?                // Número estimado de beneficiarios
+  
+  // Ubicación
+  location        String
+  sector          String              // Sector/Parroquia
+  latitude        Float?
+  longitude       Float?
+  
+  // Presupuesto
+  estimatedCost   Decimal             @db.Decimal(15,2) // Costo estimado por la comunidad
+  technicalCost   Decimal?            @db.Decimal(15,2) // Costo evaluado técnicamente
+  
+  // Proponente (comunidad)
+  proposerName    String              // Nombre del representante
+  proposerEmail   String
+  proposerPhone   String
+  organizationName String?            // Nombre de la organización comunitaria
+  
+  // Evaluación técnica
+  status          ProposalStatus      @default(SUBMITTED)
+  isFeasible      Boolean?            // Si es viable técnicamente
+  technicalNotes  String?             @db.Text // Observaciones técnicas
+  evaluatedBy     String?             // Usuario que evaluó
+  evaluatedAt     DateTime?
+  
+  // Votación
+  votesCount      Int                 @default(0) // Total de votos recibidos
+  isWinner        Boolean             @default(false) // Si ganó la votación
+  rank            Int?                // Posición en el ranking
+  
+  // Ejecución (si ganó)
+  projectId       String?             // ID del proyecto creado para ejecutar
+  executionStatus ProjectExecutionStatus? // Estado de ejecución
+  
+  // Documentos de soporte
+  supportDocuments String?            @db.Text // URLs de documentos (JSON array)
+  photos          String?             @db.Text // URLs de fotos (JSON array)
+  
+  // Timestamps
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  // Relaciones
+  budget          ParticipatoryBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  votes           ProposalVote[]      // Votos recibidos
+  
+  @@map("budget_proposals")
+  @@index([budgetId])
+  @@index([proposalNumber])
+  @@index([status])
+  @@index([sector])
+  @@index([votesCount])
+}
+
+/// Votos en propuestas de presupuesto participativo
+model ProposalVote {
+  id          String          @id @default(uuid())
+  proposalId  String
+  
+  // Votante
+  voterIdNumber String        // Cédula del votante
+  voterName   String?
+  voterEmail  String?
+  
+  // Información del voto
+  votedAt     DateTime        @default(now())
+  ipAddress   String?         // IP desde donde votó
+  
+  // Relaciones
+  proposal    BudgetProposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  
+  @@unique([proposalId, voterIdNumber]) // Un ciudadano solo puede votar una vez por propuesta
+  @@map("proposal_votes")
+  @@index([proposalId])
+  @@index([voterIdNumber])
+}
+
+/// Portal de Transparencia - Documentos publicados
+model TransparencyDocument {
+  id          String              @id @default(uuid())
+  
+  // Información del documento
+  title       String
+  description String?             @db.Text
+  category    TransparencyCategory // Categoría del documento
+  subcategory String?             // Subcategoría específica
+  
+  // Archivo
+  fileUrl     String              // URL del archivo
+  fileName    String              // Nombre del archivo
+  fileSize    Int?                // Tamaño en bytes
+  mimeType    String?             // Tipo MIME
+  
+  // Período que cubre
+  year        Int?
+  month       Int?
+  quarter     Int?                // Trimestre (1-4)
+  
+  // Información adicional
+  summary     String?             @db.Text // Resumen ejecutivo
+  tags        String?             @db.Text // Etiquetas (JSON array)
+  
+  // Publicación
+  publishedBy String              // Usuario que publicó
+  publishedAt DateTime            @default(now())
+  isActive    Boolean             @default(true)
+  
+  // Estadísticas
+  downloadCount Int               @default(0) // Número de descargas
+  viewCount   Int                 @default(0) // Número de visualizaciones
+  
+  // Timestamps
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  
+  @@map("transparency_documents")
+  @@index([category])
+  @@index([year, month])
+  @@index([publishedAt])
+  @@index([isActive])
+}
+
+// ============================================
+// ENUMS PARA PARTICIPACIÓN CIUDADANA
+// ============================================
+
+/// Tipos de reporte ciudadano
+enum ReportType {
+  POTHOLE           // Bache en calle
+  STREET_LIGHT      // Alumbrado público
+  GARBAGE           // Acumulación de basura
+  WATER_LEAK        // Fuga de agua
+  FALLEN_TREE       // Árbol caído
+  TRAFFIC_LIGHT     // Semáforo dañado
+  SEWER             // Alcantarilla tapada
+  PEST              // Plagas
+  NOISE             // Ruido excesivo
+  DEAD_ANIMAL       // Animal muerto
+  ROAD_SIGN         // Señalización vial
+  SIDEWALK          // Acera dañada
+  PARK_MAINTENANCE  // Mantenimiento de parque
+  OTHER             // Otro
+}
+
+/// Estados del reporte
+enum ReportStatus {
+  RECEIVED      // Recibido
+  IN_REVIEW     // En revisión
+  ASSIGNED      // Asignado
+  IN_PROGRESS   // En proceso
+  RESOLVED      // Resuelto
+  CLOSED        // Cerrado
+  REOPENED      // Reabierto
+  REJECTED      // Rechazado
+}
+
+/// Prioridad del reporte
+enum ReportPriority {
+  LOW           // Baja (30 días)
+  MEDIUM        // Media (15 días)
+  HIGH          // Alta (7 días)
+  CRITICAL      // Crítica (48 horas)
+}
+
+/// Tipo de foto de reporte
+enum ReportPhotoType {
+  BEFORE        // Antes (problema)
+  AFTER         // Después (solución)
+}
+
+/// Tipos de notificación
+enum NotificationType {
+  REPORT_RECEIVED       // Reporte recibido
+  REPORT_ASSIGNED       // Reporte asignado
+  REPORT_IN_PROGRESS    // En proceso
+  REPORT_RESOLVED       // Resuelto
+  REPORT_CLOSED         // Cerrado
+  REPORT_REOPENED       // Reabierto
+  REPORT_COMMENT        // Nuevo comentario
+}
+
+/// Canal de notificación
+enum NotificationChannel {
+  EMAIL         // Correo electrónico
+  SMS           // Mensaje de texto
+  PUSH          // Notificación push
+  WHATSAPP      // WhatsApp
+}
+
+/// Estado de notificación
+enum NotificationStatus {
+  PENDING       // Pendiente
+  SENT          // Enviada
+  FAILED        // Fallida
+  DELIVERED     // Entregada
+}
+
+/// Estados de propuesta
+enum ProposalStatus {
+  SUBMITTED     // Presentada
+  UNDER_REVIEW  // En revisión
+  APPROVED      // Aprobada (viable)
+  REJECTED      // Rechazada (no viable)
+  IN_VOTING     // En votación
+  WINNER        // Ganadora
+  IN_EXECUTION  // En ejecución
+  COMPLETED     // Completada
+}
+
+/// Estado de ejecución de proyecto ganador
+enum ProjectExecutionStatus {
+  PENDING       // Pendiente de inicio
+  PLANNING      // En planificación
+  IN_PROGRESS   // En ejecución
+  COMPLETED     // Completado
+  CANCELLED     // Cancelado
+}
+
+/// Categorías de documentos de transparencia
+enum TransparencyCategory {
+  BUDGET                // Presupuesto
+  BUDGET_EXECUTION      // Ejecución presupuestaria
+  PAYROLL               // Nómina
+  CONTRACTS             // Contratos y licitaciones
+  ORDINANCES            // Ordenanzas municipales
+  COUNCIL_MINUTES       // Actas del Concejo
+  ASSETS                // Bienes municipales
+  ANNUAL_PLAN           // Plan Operativo Anual
+  FINANCIAL_STATEMENTS  // Estados financieros
+  DECLARATIONS          // Declaraciones juradas
+  PROJECTS              // Proyectos
+  REPORTS               // Informes de gestión
+  OTHER                 // Otros
+}
+
+// ============================================
+// GESTIÓN DE FLOTA (FASE 7)
+// ============================================
+
+/// Vehículos de la flota municipal
+model FleetVehicle {
+  id                String            @id @default(uuid())
+  
+  // Identificación
+  code              String            @unique // Código interno (ej: VEH-2025-001)
+  plate             String            @unique // Placa del vehículo
+  
+  // Información técnica
+  type              FleetVehicleType  // Tipo de vehículo
+  brand             String            // Marca
+  model             String            // Modelo
+  year              Int               // Año de fabricación
+  color             String
+  vin               String?           @unique // Número de serial de carrocería
+  engineSerial      String?           // Número de serial del motor
+  engineCapacity    String?           // Cilindraje
+  fuelType          FuelType          // Tipo de combustible
+  capacity          String?           // Capacidad (pasajeros o carga)
+  
+  // Documentación
+  registrationCert  String?           // Certificado de registro (URL)
+  ownershipTitle    String?           // Título de propiedad (URL)
+  
+  // Valores
+  acquisitionValue  Decimal           @db.Decimal(15,2) // Valor de adquisición
+  currentValue      Decimal           @db.Decimal(15,2) // Valor actual (con depreciación)
+  acquisitionDate   DateTime          // Fecha de adquisición
+  
+  // Estado y asignación
+  status            FleetVehicleStatus @default(OPERATIONAL)
+  assignedTo        String?           // Dependencia asignada
+  departmentId      String?           // Departamento asignado
+  
+  // Kilometraje
+  currentMileage    Int               @default(0) // Kilometraje actual
+  
+  // Foto
+  photo             String?           // URL de la foto del vehículo
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relaciones
+  tripLogs          TripLog[]         // Bitácora de viajes
+  fuelControls      FuelControl[]     // Control de combustible
+  maintenances      Maintenance[]     // Mantenimientos
+  insurances        FleetInsurance[]  // Seguros
+  tires             Tire[]            // Neumáticos
+  
+  @@map("fleet_vehicles")
+  @@index([plate])
+  @@index([status])
+  @@index([type])
+  @@index([departmentId])
+}
+
+/// Bitácora de viajes
+model TripLog {
+  id                String    @id @default(uuid())
+  vehicleId         String
+  
+  // Información del viaje
+  driverName        String    // Nombre del conductor
+  driverLicense     String?   // Número de licencia
+  
+  // Kilometraje
+  startMileage      Int       // Kilometraje inicial
+  endMileage        Int?      // Kilometraje final
+  distance          Int?      // Distancia recorrida (calculado)
+  
+  // Fechas
+  departureDate     DateTime  // Fecha y hora de salida
+  returnDate        DateTime? // Fecha y hora de retorno
+  
+  // Destino
+  destination       String    // Destino del viaje
+  purpose           String    // Motivo del viaje
+  
+  // Observaciones
+  observations      String?   @db.Text // Observaciones del viaje
+  
+  // Firma digital
+  signature         String?   // Firma digital del conductor
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relaciones
+  vehicle           FleetVehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  
+  @@map("trip_logs")
+  @@index([vehicleId])
+  @@index([departureDate])
+}
+
+/// Control de combustible
+model FuelControl {
+  id                String        @id @default(uuid())
+  vehicleId         String
+  
+  // Información del vale
+  voucherNumber     String        @unique // Número de vale
+  authorizedLiters  Decimal       @db.Decimal(10,2) // Litros autorizados
+  gasStation        String        // Estación de servicio
+  
+  // Carga efectiva
+  loadDate          DateTime      // Fecha y hora de carga
+  loadedLiters      Decimal       @db.Decimal(10,2) // Litros cargados
+  cost              Decimal?      @db.Decimal(15,2) // Costo (si es pagado)
+  mileageAtLoad     Int           // Kilometraje al momento de carga
+  
+  // Rendimiento
+  efficiency        Decimal?      @db.Decimal(10,2) // km/litro (calculado)
+  
+  // Observaciones
+  notes             String?       @db.Text
+  
+  // Timestamps
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relaciones
+  vehicle           FleetVehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  
+  @@map("fuel_controls")
+  @@index([vehicleId])
+  @@index([loadDate])
+  @@index([voucherNumber])
+}
+
+/// Mantenimientos (preventivos y correctivos)
+model Maintenance {
+  id                String            @id @default(uuid())
+  vehicleId         String
+  
+  // Tipo de mantenimiento
+  type              MaintenanceType   // Preventivo o Correctivo
+  status            MaintenanceStatus @default(SCHEDULED)
+  
+  // Información general
+  description       String            // Descripción del mantenimiento
+  scheduledDate     DateTime          // Fecha programada
+  completedDate     DateTime?         // Fecha de completado
+  
+  // Kilometraje
+  scheduledMileage  Int?              // Kilometraje programado
+  actualMileage     Int?              // Kilometraje real al realizar
+  
+  // Taller
+  workshop          String?           // Taller (interno o externo)
+  mechanic          String?           // Mecánico responsable
+  
+  // Trabajos realizados
+  workPerformed     String?           @db.Text // Trabajos realizados
+  partsUsed         String?           @db.Text // Repuestos utilizados (JSON)
+  
+  // Costo
+  laborCost         Decimal           @default(0) @db.Decimal(15,2) // Costo de mano de obra
+  partsCost         Decimal           @default(0) @db.Decimal(15,2) // Costo de repuestos
+  totalCost         Decimal           @default(0) @db.Decimal(15,2) // Costo total
+  
+  // Próximo mantenimiento (solo para preventivo)
+  nextMileage       Int?              // Próximo kilometraje
+  nextDate          DateTime?         // Próxima fecha
+  
+  // Observaciones
+  notes             String?           @db.Text
+  
+  // Usuario responsable
+  createdBy         String
+  approvedBy        String?
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relaciones
+  vehicle           FleetVehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  
+  @@map("maintenances")
+  @@index([vehicleId])
+  @@index([type])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+/// Neumáticos
+model Tire {
+  id                String    @id @default(uuid())
+  vehicleId         String
+  
+  // Información del neumático
+  brand             String    // Marca
+  size              String    // Medida (ej: 205/55R16)
+  position          String    // Posición (delantero izq/der, trasero izq/der)
+  
+  // Fechas
+  installationDate  DateTime  // Fecha de instalación
+  removalDate       DateTime? // Fecha de retiro
+  
+  // Estado
+  status            TireStatus @default(INSTALLED)
+  
+  // Control
+  expectedLifeKm    Int?      // Vida útil esperada en km
+  actualLifeKm      Int?      // Vida útil real en km
+  
+  // Costo
+  cost              Decimal   @db.Decimal(15,2) // Costo del neumático
+  
+  // Observaciones
+  notes             String?   @db.Text
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relaciones
+  vehicle           FleetVehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  
+  @@map("tires")
+  @@index([vehicleId])
+  @@index([status])
+}
+
+/// Seguros de vehículos de flota
+model FleetInsurance {
+  id                String            @id @default(uuid())
+  vehicleId         String
+  
+  // Información de la póliza
+  policyNumber      String            @unique // Número de póliza
+  insurer           String            // Aseguradora
+  coverage          String            @db.Text // Cobertura contratada
+  
+  // Fechas
+  startDate         DateTime          // Fecha de inicio
+  endDate           DateTime          // Fecha de vencimiento
+  
+  // Costo
+  premium           Decimal           @db.Decimal(15,2) // Prima pagada
+  
+  // Estado
+  status            InsuranceStatus   @default(ACTIVE)
+  
+  // Siniestros
+  claims            InsuranceClaim[]  // Siniestros asociados
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relaciones
+  vehicle           FleetVehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  
+  @@map("fleet_insurances")
+  @@index([vehicleId])
+  @@index([endDate])
+  @@index([status])
+}
+
+/// Siniestros/Accidentes
+model InsuranceClaim {
+  id                String          @id @default(uuid())
+  insuranceId       String
+  
+  // Información del siniestro
+  claimNumber       String          @unique // Número de reclamo
+  incidentDate      DateTime        // Fecha del incidente
+  location          String          // Lugar del incidente
+  description       String          @db.Text // Descripción del incidente
+  
+  // Conductor involucrado
+  driverName        String
+  driverLicense     String?
+  
+  // Daños
+  materialDamage    String?         @db.Text // Daños materiales
+  personalInjury    String?         @db.Text // Lesiones personales
+  
+  // Proceso con seguradora
+  reportedDate      DateTime?       // Fecha de reporte a seguradora
+  status            ClaimStatus     @default(REPORTED)
+  
+  // Costos
+  estimatedCost     Decimal?        @db.Decimal(15,2) // Costo estimado
+  coveredAmount     Decimal?        @db.Decimal(15,2) // Monto cubierto
+  deductible        Decimal?        @db.Decimal(15,2) // Deducible
+  
+  // Resolución
+  resolvedDate      DateTime?       // Fecha de resolución
+  resolution        String?         @db.Text // Resolución del caso
+  
+  // Timestamps
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  // Relaciones
+  insurance         FleetInsurance @relation(fields: [insuranceId], references: [id], onDelete: Cascade)
+  
+  @@map("fleet_insurance_claims")
+  @@index([insuranceId])
+  @@index([incidentDate])
+  @@index([status])
+}
+
+// ============================================
+// ENUMS PARA GESTIÓN DE FLOTA
+// ============================================
+
+/// Tipos de vehículo de flota
+enum FleetVehicleType {
+  GARBAGE_TRUCK     // Camión recolector
+  AMBULANCE         // Ambulancia
+  PATROL            // Patrulla
+  PICKUP            // Camioneta
+  CAR               // Automóvil
+  DUMP_TRUCK        // Volqueta
+  BUS               // Autobús
+  MOTORCYCLE        // Motocicleta
+  HEAVY_MACHINERY   // Maquinaria pesada
+  OTHER             // Otro
+}
+
+/// Tipos de combustible
+enum FuelType {
+  GASOLINE          // Gasolina
+  DIESEL            // Diésel
+  GAS               // Gas
+  ELECTRIC          // Eléctrico
+  HYBRID            // Híbrido
+}
+
+/// Estados del vehículo de flota
+enum FleetVehicleStatus {
+  OPERATIONAL       // Operativo
+  IN_REPAIR         // En reparación
+  OUT_OF_SERVICE    // Fuera de servicio
+  TOTALED           // Siniestrado
+  DECOMMISSIONED    // Dado de baja
+}
+
+/// Tipos de mantenimiento
+enum MaintenanceType {
+  PREVENTIVE        // Preventivo
+  CORRECTIVE        // Correctivo
+}
+
+/// Estados de mantenimiento
+enum MaintenanceStatus {
+  SCHEDULED         // Programado
+  IN_PROGRESS       // En proceso
+  COMPLETED         // Completado
+  CANCELLED         // Cancelado
+}
+
+/// Estados de neumático
+enum TireStatus {
+  INSTALLED         // Instalado
+  IN_STORAGE        // En almacén
+  DISCARDED         // Descartado
+}
+
+/// Estados de seguro
+enum InsuranceStatus {
+  ACTIVE            // Activa
+  EXPIRED           // Vencida
+  CANCELLED         // Cancelada
+}
+
+/// Estados de siniestro
+enum ClaimStatus {
+  REPORTED          // Reportado
+  UNDER_REVIEW      // En revisión
+  APPROVED          // Aprobado
+  REJECTED          // Rechazado
+  SETTLED           // Liquidado
+  CLOSED            // Cerrado
+}
+
+// ============================================
+// INVENTARIO Y BIENES MUNICIPALES (FASE 8)
+// ============================================
+
+/// Bienes del municipio (inmuebles y muebles)
+model Asset {
+  id                String        @id @default(uuid())
+  
+  // Código único del bien (etiqueta, código de barras, QR)
+  code              String        @unique // Ej: BM-2025-0001
+  
+  // Clasificación
+  type              AssetType     // Tipo de bien
+  category          String        // Categoría específica (ej: Mobiliario, Equipos de oficina)
+  subcategory       String?       // Subcategoría
+  
+  // Información básica
+  name              String        // Nombre/descripción del bien
+  description       String?       @db.Text // Descripción detallada
+  brand             String?       // Marca
+  model             String?       // Modelo
+  serialNumber      String?       // Número de serie
+  
+  // Valores
+  acquisitionValue  Decimal       @db.Decimal(15,2) // Valor de adquisición
+  currentValue      Decimal       @db.Decimal(15,2) // Valor actual (con depreciación)
+  
+  // Depreciación
+  depreciationMethod String       @default("LINEA_RECTA") // Método de depreciación
+  usefulLife        Int?          // Vida útil en meses
+  monthlyDepreciation Decimal?    @db.Decimal(15,2) // Depreciación mensual
+  accumulatedDepreciation Decimal @default(0) @db.Decimal(15,2) // Depreciación acumulada
+  
+  // Adquisición
+  acquisitionDate   DateTime      // Fecha de adquisición
+  supplier          String?       // Proveedor
+  invoiceNumber     String?       // Número de factura
+  purchaseOrder     String?       // Orden de compra
+  
+  // Estado y ubicación
+  status            AssetStatus   @default(OPERATIVO)
+  condition         AssetCondition @default(BUENO) // Estado físico
+  
+  // Ubicación y custodia
+  departmentId      String?       // Departamento asignado
+  location          String?       // Ubicación física específica (edificio, piso, oficina)
+  custodianId       String?       // Funcionario custodio
+  custodianName     String?       // Nombre del custodio
+  assignedAt        DateTime?     // Fecha de asignación
+  
+  // Documentación
+  warranty          String?       // Información de garantía
+  warrantyExpiry    DateTime?     // Fecha de vencimiento de garantía
+  insurancePolicy   String?       // Póliza de seguro
+  insuranceExpiry   DateTime?     // Vencimiento del seguro
+  
+  // Fotos
+  photos            String[]      // URLs de fotos del bien
+  
+  // Información adicional
+  notes             String?       @db.Text
+  
+  // Para bienes inmuebles
+  address           String?       // Dirección
+  area              Decimal?      @db.Decimal(10,2) // Área en m²
+  propertyDocument  String?       // Documento de propiedad
+  cadastralCode     String?       // Código catastral
+  
+  // Timestamps
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relaciones
+  movements         AssetMovement[] // Historial de movimientos
+  maintenances      AssetMaintenance[] // Mantenimientos
+  
+  @@map("assets")
+  @@index([code])
+  @@index([type])
+  @@index([status])
+  @@index([departmentId])
+  @@index([custodianId])
+}
+
+/// Movimientos de bienes
+model AssetMovement {
+  id                String            @id @default(uuid())
+  assetId           String
+  
+  // Tipo de movimiento
+  type              MovementType
+  
+  // Origen y destino
+  fromDepartmentId  String?           // Departamento origen
+  fromDepartment    String?           // Nombre del departamento origen
+  fromCustodianId   String?           // Custodio origen
+  fromCustodian     String?           // Nombre del custodio origen
+  fromLocation      String?           // Ubicación origen
+  
+  toDepartmentId    String?           // Departamento destino
+  toDepartment      String?           // Nombre del departamento destino
+  toCustodianId     String?           // Custodio destino
+  toCustodian       String?           // Nombre del custodio destino
+  toLocation        String?           // Ubicación destino
+  
+  // Información del movimiento
+  reason            String            // Razón del movimiento
+  description       String?           @db.Text
+  
+  // Fechas
+  movementDate      DateTime          // Fecha del movimiento
+  expectedReturn    DateTime?         // Fecha esperada de retorno (para préstamos)
+  actualReturn      DateTime?         // Fecha real de retorno
+  
+  // Estado
+  status            MovementStatus    @default(PENDING)
+  
+  // Acta digital
+  actNumber         String?           // Número de acta
+  actDocument       String?           // URL del documento de acta
+  
+  // Firmas
+  requestedBy       String            // Usuario que solicita
+  approvedBy        String?           // Usuario que aprueba
+  receivedBy        String?           // Usuario que recibe
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relaciones
+  asset             Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  @@map("asset_movements")
+  @@index([assetId])
+  @@index([type])
+  @@index([status])
+  @@index([movementDate])
+}
+
+/// Mantenimiento de bienes
+model AssetMaintenance {
+  id                String                  @id @default(uuid())
+  assetId           String
+  
+  // Tipo de mantenimiento
+  type              AssetMaintenanceType
+  
+  // Información del mantenimiento
+  description       String                  @db.Text
+  cost              Decimal                 @db.Decimal(15,2)
+  
+  // Proveedor/Taller
+  provider          String?                 // Proveedor o taller
+  invoiceNumber     String?                 // Número de factura
+  
+  // Fechas
+  scheduledDate     DateTime?               // Fecha programada
+  startDate         DateTime?               // Fecha de inicio
+  completionDate    DateTime?               // Fecha de finalización
+  
+  // Estado
+  status            AssetMaintenanceStatus  @default(SCHEDULED)
+  
+  // Responsable
+  performedBy       String?           // Quién realizó el mantenimiento
+  authorizedBy      String?           // Quién autorizó
+  
+  // Notas
+  notes             String?           @db.Text
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relaciones
+  asset             Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  @@map("asset_maintenances")
+  @@index([assetId])
+  @@index([type])
+  @@index([status])
+}
+
+/// Inventario de almacén (bienes fungibles)
+model InventoryItem {
+  id                String            @id @default(uuid())
+  
+  // Código del artículo
+  code              String            @unique // Ej: INV-2025-0001
+  
+  // Información básica
+  name              String            // Nombre del artículo
+  description       String?           @db.Text
+  category          String            // Categoría (ej: Papelería, Limpieza, Insumos)
+  subcategory       String?
+  
+  // Unidad de medida
+  unit              String            // Unidad (ej: Unidad, Caja, Resma, Litro)
+  
+  // Stock
+  currentStock      Int               @default(0) // Stock actual
+  minStock          Int               @default(0) // Stock mínimo (punto de reorden)
+  maxStock          Int?              // Stock máximo
+  
+  // Valoración
+  unitCost          Decimal           @db.Decimal(15,2) // Costo unitario
+  totalValue        Decimal           @db.Decimal(15,2) // Valor total del stock
+  
+  // Ubicación
+  warehouseLocation String?           // Ubicación en almacén
+  
+  // Proveedor habitual
+  preferredSupplier String?
+  
+  // Estado
+  isActive          Boolean           @default(true)
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relaciones
+  entries           InventoryEntry[]  // Entradas de inventario
+  exits             InventoryExit[]   // Salidas de inventario
+  
+  @@map("inventory_items")
+  @@index([code])
+  @@index([category])
+  @@index([isActive])
+}
+
+/// Entradas de inventario
+model InventoryEntry {
+  id                String            @id @default(uuid())
+  itemId            String
+  
+  // Información de la entrada
+  reference         String            @unique // Número de referencia
+  quantity          Int               // Cantidad que entra
+  unitCost          Decimal           @db.Decimal(15,2) // Costo unitario
+  totalCost         Decimal           @db.Decimal(15,2) // Costo total
+  
+  // Origen
+  source            EntrySource       // Origen de la entrada
+  supplier          String?           // Proveedor
+  invoiceNumber     String?           // Número de factura
+  purchaseOrder     String?           // Orden de compra
+  
+  // Fecha
+  entryDate         DateTime          // Fecha de entrada
+  
+  // Responsable
+  receivedBy        String            // Usuario que recibe
+  
+  // Notas
+  notes             String?           @db.Text
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relaciones
+  item              InventoryItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  
+  @@map("inventory_entries")
+  @@index([itemId])
+  @@index([entryDate])
+  @@index([reference])
+}
+
+/// Salidas de inventario
+model InventoryExit {
+  id                String            @id @default(uuid())
+  itemId            String
+  
+  // Información de la salida
+  reference         String            @unique // Número de referencia
+  quantity          Int               // Cantidad que sale
+  unitCost          Decimal           @db.Decimal(15,2) // Costo unitario
+  totalCost         Decimal           @db.Decimal(15,2) // Costo total
+  
+  // Destino
+  departmentId      String?           // Departamento solicitante
+  department        String?           // Nombre del departamento
+  requestedBy       String            // Usuario que solicita
+  purpose           String            // Propósito de la salida
+  
+  // Fecha
+  exitDate          DateTime          // Fecha de salida
+  
+  // Aprobación
+  approvedBy        String?           // Usuario que aprueba
+  deliveredBy       String?           // Usuario que entrega
+  
+  // Notas
+  notes             String?           @db.Text
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relaciones
+  item              InventoryItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  
+  @@map("inventory_exits")
+  @@index([itemId])
+  @@index([exitDate])
+  @@index([reference])
+  @@index([departmentId])
+}
+
+/// Solicitudes de compra
+model PurchaseRequest {
+  id                String                @id @default(uuid())
+  
+  // Número de solicitud
+  requestNumber     String                @unique // Ej: SOL-2025-0001
+  
+  // Solicitante
+  departmentId      String?               // Departamento solicitante
+  department        String?               // Nombre del departamento
+  requestedBy       String                // Usuario que solicita
+  
+  // Información de la solicitud
+  priority          Priority              @default(MEDIUM)
+  justification     String                @db.Text // Justificación de la compra
+  
+  // Presupuesto
+  estimatedAmount   Decimal               @db.Decimal(15,2) // Monto estimado
+  budgetItemId      String?               // Partida presupuestaria
+  
+  // Estado
+  status            PurchaseRequestStatus @default(PENDING)
+  
+  // Fechas
+  requestDate       DateTime              @default(now())
+  requiredDate      DateTime?             // Fecha requerida
+  
+  // Aprobaciones
+  approvedByHead    String?               // Aprobado por jefe de departamento
+  approvedByBudget  String?               // Aprobado por presupuesto
+  approvedByPurchasing String?            // Aprobado por compras
+  approvedByDirector String?              // Aprobado por director
+  
+  approvedAt        DateTime?             // Fecha de aprobación final
+  rejectedAt        DateTime?             // Fecha de rechazo
+  rejectionReason   String?               @db.Text
+  
+  // Cotización y compra
+  quotationReceived Boolean               @default(false)
+  quotationAmount   Decimal?              @db.Decimal(15,2)
+  quotationSupplier String?
+  
+  purchaseOrderNumber String?             // Número de orden de compra generada
+  purchaseOrderDate DateTime?             // Fecha de orden de compra
+  
+  // Recepción
+  receivedDate      DateTime?             // Fecha de recepción
+  receivedBy        String?               // Usuario que recibe
+  
+  // Notas
+  notes             String?               @db.Text
+  
+  // Timestamps
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  
+  // Relaciones
+  items             PurchaseRequestItem[] // Items solicitados
+  
+  @@map("purchase_requests")
+  @@index([requestNumber])
+  @@index([status])
+  @@index([departmentId])
+  @@index([requestDate])
+}
+
+/// Items de solicitud de compra
+model PurchaseRequestItem {
+  id                String            @id @default(uuid())
+  requestId         String
+  
+  // Información del item
+  description       String            // Descripción del item
+  quantity          Int               // Cantidad solicitada
+  unit              String            // Unidad de medida
+  estimatedUnitPrice Decimal          @db.Decimal(15,2) // Precio unitario estimado
+  estimatedTotal    Decimal           @db.Decimal(15,2) // Total estimado
+  
+  // Especificaciones
+  specifications    String?           @db.Text // Especificaciones técnicas
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  // Relaciones
+  request           PurchaseRequest   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  @@map("purchase_request_items")
+  @@index([requestId])
+}
+
+// ============================================
+// ENUMS PARA INVENTARIO Y BIENES
+// ============================================
+
+/// Tipos de bien
+enum AssetType {
+  INMUEBLE          // Bienes inmuebles (edificios, terrenos)
+  MUEBLE            // Bienes muebles (mobiliario, equipos)
+  MAQUINARIA        // Maquinaria y equipos especiales
+  VEHICULO          // Vehículos (gestionados en módulo de flota)
+  INTANGIBLE        // Bienes intangibles (software, licencias)
+}
+
+/// Estados de bien
+enum AssetStatus {
+  OPERATIVO         // Operativo
+  EN_REPARACION     // En reparación
+  FUERA_SERVICIO    // Fuera de servicio
+  EN_PRESTAMO       // En préstamo
+  DADO_BAJA         // Dado de baja
+  PERDIDO           // Perdido/Extraviado
+}
+
+/// Condición física del bien
+enum AssetCondition {
+  EXCELENTE         // Excelente
+  BUENO             // Bueno
+  REGULAR           // Regular
+  MALO              // Malo
+  OBSOLETO          // Obsoleto
+  INSERVIBLE        // Inservible
+}
+
+/// Tipos de movimiento
+enum MovementType {
+  ASIGNACION_INICIAL    // Asignación inicial
+  TRASPASO              // Traspaso entre departamentos
+  PRESTAMO              // Préstamo temporal
+  DEVOLUCION            // Devolución de préstamo
+  REPARACION            // Envío a reparación
+  RETORNO_REPARACION    // Retorno de reparación
+  BAJA                  // Baja del inventario
+  DONACION              // Donación
+}
+
+/// Estados de movimiento
+enum MovementStatus {
+  PENDING           // Pendiente
+  APPROVED          // Aprobado
+  IN_TRANSIT        // En tránsito
+  COMPLETED         // Completado
+  REJECTED          // Rechazado
+  CANCELLED         // Cancelado
+}
+
+/// Tipos de mantenimiento de bienes
+enum AssetMaintenanceType {
+  PREVENTIVO        // Mantenimiento preventivo
+  CORRECTIVO        // Mantenimiento correctivo
+  CALIBRACION       // Calibración
+  ACTUALIZACION     // Actualización
+}
+
+/// Estados de mantenimiento de bienes
+enum AssetMaintenanceStatus {
+  SCHEDULED         // Programado
+  IN_PROGRESS       // En progreso
+  COMPLETED         // Completado
+  CANCELLED         // Cancelado
+}
+
+/// Origen de entrada de inventario
+enum EntrySource {
+  COMPRA            // Compra
+  DONACION          // Donación
+  TRANSFERENCIA     // Transferencia
+  DEVOLUCION        // Devolución
+  AJUSTE            // Ajuste de inventario
+}
+
+/// Estados de solicitud de compra
+enum PurchaseRequestStatus {
+  PENDING           // Pendiente
+  APPROVED_HEAD     // Aprobado por jefe
+  APPROVED_BUDGET   // Aprobado por presupuesto
+  APPROVED_PURCHASING // Aprobado por compras
+  APPROVED          // Aprobado completamente
+  IN_QUOTATION      // En cotización
+  ORDERED           // Ordenado
+  RECEIVED          // Recibido
+  REJECTED          // Rechazado
+  CANCELLED         // Cancelado
+}
+
+// ============================================
+// GESTIÓN DOCUMENTAL Y ARCHIVO (FASE 9)
+// ============================================
+
+/// Documento base - Modelo principal para todos los documentos
+model Document {
+  id              String          @id @default(uuid())
+  
+  // Numeración única
+  documentNumber  String          @unique // Número único del documento
+  
+  // Información básica
+  title           String          // Título del documento
+  description     String?         @db.Text
+  type            DocumentTypeEnum // Tipo de documento
+  category        String?         // Categoría adicional
+  
+  // Archivo digital
+  fileUrl         String?         // URL del archivo principal
+  fileName        String?         // Nombre del archivo
+  fileSize        Int?            // Tamaño en bytes
+  mimeType        String?         // Tipo MIME
+  
+  // Metadatos
+  keywords        String?         @db.Text // Palabras clave para búsqueda (JSON array)
+  tags            String?         @db.Text // Etiquetas (JSON array)
+  
+  // Fechas
+  documentDate    DateTime        // Fecha del documento
+  registeredAt    DateTime        @default(now()) // Fecha de registro en sistema
+  
+  // Clasificación y archivo
+  departmentId    String?         // Departamento responsable
+  folderId        String?         // Carpeta/expediente al que pertenece
+  
+  // Control de acceso
+  isPublic        Boolean         @default(false) // Si es público
+  isConfidential  Boolean         @default(false) // Si es confidencial
+  accessLevel     AccessLevel     @default(INTERNAL) // Nivel de acceso
+  
+  // OCR y búsqueda
+  ocrText         String?         @db.Text // Texto extraído por OCR
+  searchVector    String?         // Vector de búsqueda (para full-text search)
+  
+  // Estado
+  status          DocumentStatus  @default(DRAFT)
+  isArchived      Boolean         @default(false)
+  
+  // Usuario creador
+  createdBy       String          // Usuario que creó el documento
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relaciones
+  versions        DocumentVersion[] // Versiones del documento
+  signatures      ElectronicSignature[] // Firmas electrónicas
+  folder          DigitalFile?    @relation(fields: [folderId], references: [id])
+  workflowInstances WorkflowInstance[] // Workflows asociados
+  
+  @@map("documents")
+  @@index([documentNumber])
+  @@index([type])
+  @@index([status])
+  @@index([departmentId])
+  @@index([folderId])
+  @@index([documentDate])
+  @@index([isArchived])
+}
+
+/// Correspondencia de entrada y salida
+model Correspondence {
+  id              String              @id @default(uuid())
+  
+  // Numeración
+  reference       String              @unique // ME-2025-001234 o MS-2025-000456
+  type            CorrespondenceType  // ENTRADA o SALIDA
+  
+  // Información del remitente/destinatario
+  senderName      String              // Nombre del remitente
+  senderIdNumber  String?             // Cédula del remitente
+  senderPhone     String?
+  senderEmail     String?
+  senderAddress   String?             @db.Text
+  
+  // Para correspondencia de salida
+  recipientName   String?             // Destinatario externo
+  recipientAddress String?            @db.Text
+  
+  // Información del documento
+  subject         String              // Asunto
+  summary         String?             @db.Text // Resumen breve
+  documentType    String              // Solicitud, denuncia, recurso, petición, reclamo
+  
+  // Departamento destino (para entrada)
+  destinationDept String?             // Departamento al que va dirigido
+  
+  // Información física
+  folios          Int                 @default(1) // Número de folios
+  hasAttachments  Boolean             @default(false)
+  attachmentsList String?             @db.Text // Lista de anexos
+  
+  // Prioridad y urgencia
+  priority        CorrespondencePriority @default(NORMAL)
+  
+  // Fechas
+  receivedDate    DateTime?           // Fecha de recepción (entrada)
+  sentDate        DateTime?           // Fecha de envío (salida)
+  responseDeadline DateTime?          // Plazo de respuesta
+  
+  // Distribución y entrega
+  deliveryMethod  DeliveryMethod?     // Método de entrega
+  trackingNumber  String?             // Número de guía (courier)
+  deliveredAt     DateTime?           // Fecha de entrega efectiva
+  receivedBy      String?             // Quien recibió
+  
+  // QR para rastreo
+  qrCode          String?             // Código QR para rastreo online
+  
+  // Digitalización
+  scannedFileUrl  String?             // URL del documento escaneado
+  envelopePhotoUrl String?            // Foto del sobre (si aplica)
+  
+  // Respuesta (si aplica)
+  responseToRef   String?             // Referencia al documento que responde
+  responseDocId   String?             // ID del documento de respuesta
+  
+  // Estado
+  status          CorrespondenceStatus @default(RECEIVED)
+  
+  // Usuario que registró
+  registeredBy    String
+  
+  // Timestamps
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("correspondences")
+  @@index([reference])
+  @@index([type])
+  @@index([status])
+  @@index([destinationDept])
+  @@index([receivedDate])
+  @@index([sentDate])
+}
+
+/// Oficios y comunicaciones internas
+model InternalMemo {
+  id              String          @id @default(uuid())
+  
+  // Numeración automática por dependencia
+  reference       String          @unique // DIR-FINANZAS-2025-045
+  
+  // Tipo de comunicación
+  type            InternalMemoType // MEMORANDO, OFICIO, CIRCULAR, PROVIDENCIA
+  
+  // Origen y destino
+  fromDepartment  String          // Departamento origen
+  toDepartment    String?         // Departamento destino (null para circulares)
+  toDepartments   String?         @db.Text // Múltiples departamentos (JSON array)
+  
+  // Contenido
+  subject         String          // Asunto
+  body            String          @db.Text // Cuerpo del documento
+  
+  // Archivo generado
+  documentUrl     String?         // URL del documento generado
+  
+  // Workflow de aprobación
+  workflowId      String?         // ID del workflow instance
+  
+  // Estado
+  status          InternalMemoStatus @default(DRAFT)
+  
+  // Fechas
+  issuedDate      DateTime?       // Fecha de emisión
+  
+  // Usuario creador
+  createdBy       String
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@map("internal_memos")
+  @@index([reference])
+  @@index([type])
+  @@index([status])
+  @@index([fromDepartment])
+  @@index([issuedDate])
+}
+
+/// Ordenanzas municipales
+model Ordinance {
+  id              String          @id @default(uuid())
+  
+  // Numeración
+  number          String          @unique // Número de ordenanza
+  year            Int             // Año de publicación
+  
+  // Información básica
+  title           String          // Título de la ordenanza
+  subject         String          // Materia que regula
+  summary         String?         @db.Text // Resumen ejecutivo
+  fullText        String          @db.Text // Texto íntegro
+  
+  // Publicación
+  publicationDate DateTime        @db.Date // Fecha de publicación
+  gazetteName     String?         // Gaceta municipal
+  gazetteNumber   String?         // Número de gaceta
+  gazetteDate     DateTime?       @db.Date
+  
+  // Estado legal
+  status          OrdinanceStatus @default(VIGENTE)
+  
+  // Relaciones con otras ordenanzas
+  reformsId       String?         // ID de ordenanza que reforma
+  reformedById    String?         // ID de ordenanza que la reformó
+  derogatedById   String?         // ID de ordenanza que la derogó
+  
+  // Concordancias
+  relatedOrdinances String?       @db.Text // IDs de ordenanzas relacionadas (JSON array)
+  
+  // Reglamentos derivados
+  regulations     String?         @db.Text // URLs de reglamentos (JSON array)
+  
+  // Archivo PDF
+  pdfUrl          String?         // URL del PDF oficial
+  
+  // Concejo que la aprobó
+  councilPeriod   String?         // Período del concejo
+  approvedBy      String?         @db.Text // Concejales que aprobaron (JSON array)
+  
+  // Búsqueda
+  keywords        String?         @db.Text // Palabras clave (JSON array)
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@map("ordinances")
+  @@index([number])
+  @@index([year])
+  @@index([status])
+  @@index([subject])
+  @@index([publicationDate])
+}
+
+/// Actas del Concejo Municipal
+model CouncilAct {
+  id              String          @id @default(uuid())
+  
+  // Numeración
+  actNumber       String          @unique // Número de acta
+  
+  // Tipo de sesión
+  sessionType     SessionType     // ORDINARIA, EXTRAORDINARIA
+  
+  // Fecha y hora
+  sessionDate     DateTime        // Fecha de la sesión
+  startTime       String          // Hora de inicio
+  endTime         String?         // Hora de fin
+  
+  // Lugar
+  location        String          // Lugar de la sesión
+  
+  // Asistencia
+  presentCouncilors String        @db.Text // Concejales presentes (JSON array)
+  absentCouncilors  String?       @db.Text // Concejales ausentes (JSON array)
+  totalPresent    Int             // Total de presentes
+  totalAbsent     Int             @default(0) // Total de ausentes
+  
+  // Orden del día
+  agenda          String          @db.Text // Orden del día (JSON array)
+  
+  // Contenido
+  pointsDiscussed String          @db.Text // Puntos tratados
+  motions         String?         @db.Text // Mociones presentadas (JSON array)
+  
+  // Votaciones
+  votations       String?         @db.Text // Votaciones realizadas (JSON array con detalles)
+  
+  // Acuerdos y resoluciones
+  agreements      String?         @db.Text // Acuerdos tomados (JSON array)
+  resolutions     String?         @db.Text // Resoluciones (JSON array)
+  
+  // Intervenciones importantes
+  interventions   String?         @db.Text // Transcripción de intervenciones (JSON array)
+  
+  // Acta firmada
+  signedActUrl    String?         // URL del acta firmada digitalizada
+  
+  // Estado
+  status          ActStatus       @default(DRAFT)
+  
+  // Aprobación del acta
+  approvedAt      DateTime?       // Fecha de aprobación del acta
+  approvedBy      String?         @db.Text // Concejales que aprobaron el acta
+  
+  // Usuario que registró
+  registeredBy    String
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@map("council_acts")
+  @@index([actNumber])
+  @@index([sessionType])
+  @@index([sessionDate])
+  @@index([status])
+}
+
+/// Expedientes digitales
+model DigitalFile {
+  id              String          @id @default(uuid())
+  
+  // Numeración
+  fileNumber      String          @unique // Número de expediente único
+  
+  // Información básica
+  title           String          // Título del expediente
+  type            FileType        // Tipo de expediente
+  subject         String          @db.Text // Asunto
+  
+  // Interesado/Solicitante
+  applicantName   String          // Nombre del interesado
+  applicantId     String?         // Cédula del interesado
+  applicantContact String?        // Contacto
+  
+  // Departamento responsable
+  departmentId    String          // Departamento responsable
+  assignedTo      String?         // Usuario asignado
+  
+  // Fechas
+  openedAt        DateTime        @default(now()) // Fecha de apertura
+  closedAt        DateTime?       // Fecha de cierre
+  
+  // Estado
+  status          FileStatus      @default(EN_TRAMITE)
+  
+  // Índice de documentos
+  documentIndex   String?         @db.Text // Índice de documentos (JSON array)
+  
+  // Anotaciones
+  notes           String?         @db.Text // Anotaciones del tramitador
+  
+  // Trazabilidad
+  movements       String?         @db.Text // Movimientos del expediente (JSON array)
+  
+  // Próximo paso
+  nextStep        String?         // Próximo paso requerido
+  nextStepDate    DateTime?       // Fecha límite del próximo paso
+  
+  // Usuario creador
+  createdBy       String
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relaciones
+  documents       Document[]      // Documentos del expediente
+  
+  @@map("digital_files")
+  @@index([fileNumber])
+  @@index([type])
+  @@index([status])
+  @@index([departmentId])
+  @@index([openedAt])
+}
+
+/// Versiones de documentos
+model DocumentVersion {
+  id              String          @id @default(uuid())
+  documentId      String          // Documento al que pertenece
+  
+  // Información de versión
+  versionNumber   Int             // Número de versión (1, 2, 3...)
+  
+  // Archivo de esta versión
+  fileUrl         String          // URL del archivo de esta versión
+  fileName        String          // Nombre del archivo
+  fileSize        Int?            // Tamaño en bytes
+  
+  // Cambios
+  changeLog       String?         @db.Text // Descripción de cambios
+  
+  // Usuario que creó esta versión
+  createdBy       String
+  
+  // Timestamp
+  createdAt       DateTime        @default(now())
+  
+  // Relaciones
+  document        Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  @@unique([documentId, versionNumber]) // Versión única por documento
+  @@map("document_versions")
+  @@index([documentId])
+  @@index([createdAt])
+}
+
+/// Firmas electrónicas/digitales
+model ElectronicSignature {
+  id              String          @id @default(uuid())
+  documentId      String          // Documento firmado
+  
+  // Información del firmante
+  signerId        String          // Usuario que firma
+  signerName      String          // Nombre del firmante
+  signerPosition  String?         // Cargo del firmante
+  
+  // Firma
+  signatureType   SignatureType   // SIMPLE o DIGITAL
+  signatureData   String?         @db.Text // Datos de la firma (certificado, hash, etc.)
+  certificateId   String?         // ID del certificado digital
+  
+  // Hash criptográfico
+  documentHash    String          // Hash del documento al momento de firmar
+  algorithm       String          @default("SHA-256") // Algoritmo de hash
+  
+  // Timestamp
+  signedAt        DateTime        @default(now()) // Fecha y hora de firma
+  timestampToken  String?         @db.Text // Token de timestamp certificado
+  
+  // Orden de firma (para firmas secuenciales)
+  signOrder       Int?            // Orden en el que debe firmar
+  
+  // Estado
+  status          SignatureStatus @default(PENDING)
+  
+  // Verificación
+  isVerified      Boolean         @default(false)
+  verifiedAt      DateTime?
+  
+  // IP y metadata
+  ipAddress       String?         // IP desde donde se firmó
+  userAgent       String?         // User agent
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relaciones
+  document        Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  @@map("electronic_signatures")
+  @@index([documentId])
+  @@index([signerId])
+  @@index([status])
+  @@index([signedAt])
+}
+
+/// Definiciones de workflows (plantillas)
+model WorkflowDefinition {
+  id              String          @id @default(uuid())
+  
+  // Información básica
+  name            String          // Nombre del workflow
+  description     String?         @db.Text
+  documentType    String          // Tipo de documento al que aplica
+  
+  // Configuración
+  steps           String          @db.Text // Pasos del workflow (JSON array)
+  isActive        Boolean         @default(true)
+  
+  // Alertas
+  alertDays       Int?            // Días para alertar estancamiento
+  
+  // Usuario creador
+  createdBy       String
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relaciones
+  instances       WorkflowInstance[] // Instancias de este workflow
+  
+  @@map("workflow_definitions")
+  @@index([documentType])
+  @@index([isActive])
+}
+
+/// Instancias de workflow (ejecuciones)
+model WorkflowInstance {
+  id              String          @id @default(uuid())
+  workflowDefId   String          // Definición del workflow
+  documentId      String?         // Documento asociado (opcional)
+  
+  // Información básica
+  title           String          // Título de la instancia
+  description     String?         @db.Text
+  
+  // Estado
+  status          WorkflowStatus  @default(IN_PROGRESS)
+  currentStepIndex Int            @default(0) // Índice del paso actual
+  
+  // Fechas
+  startedAt       DateTime        @default(now())
+  completedAt     DateTime?
+  
+  // Usuario iniciador
+  initiatedBy     String
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relaciones
+  definition      WorkflowDefinition @relation(fields: [workflowDefId], references: [id])
+  document        Document?       @relation(fields: [documentId], references: [id])
+  steps           WorkflowStep[]  // Pasos ejecutados
+  
+  @@map("workflow_instances")
+  @@index([workflowDefId])
+  @@index([documentId])
+  @@index([status])
+  @@index([startedAt])
+}
+
+/// Pasos de workflow ejecutados
+model WorkflowStep {
+  id              String          @id @default(uuid())
+  instanceId      String          // Instancia del workflow
+  
+  // Información del paso
+  stepIndex       Int             // Índice del paso en el workflow
+  stepName        String          // Nombre del paso
+  assignedTo      String          // Usuario asignado
+  
+  // Acción
+  action          WorkflowAction? // Acción tomada
+  comments        String?         @db.Text // Comentarios
+  
+  // Fechas
+  assignedAt      DateTime        @default(now())
+  completedAt     DateTime?
+  dueDate         DateTime?       // Fecha límite
+  
+  // Estado
+  status          StepStatus      @default(PENDING)
+  
+  // Delegación
+  delegatedTo     String?         // Usuario al que se delegó
+  delegatedAt     DateTime?
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relaciones
+  instance        WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  
+  @@map("workflow_steps")
+  @@index([instanceId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([dueDate])
+}
+
+/// Plantillas de documentos
+model DocumentTemplate {
+  id              String          @id @default(uuid())
+  
+  // Información básica
+  name            String          // Nombre de la plantilla
+  description     String?         @db.Text
+  type            String          // Tipo de documento
+  category        String?         // Categoría
+  
+  // Contenido de la plantilla
+  content         String          @db.Text // Contenido con placeholders
+  variables       String?         @db.Text // Variables disponibles (JSON array)
+  
+  // Archivo de plantilla
+  templateUrl     String?         // URL del archivo de plantilla
+  
+  // Configuración
+  isActive        Boolean         @default(true)
+  
+  // Usuario creador
+  createdBy       String
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@map("document_templates")
+  @@index([type])
+  @@index([isActive])
+}
+
+// ============================================
+// ENUMS PARA GESTIÓN DOCUMENTAL
+// ============================================
+
+/// Tipos de documento
+enum DocumentTypeEnum {
+  CORRESPONDENCIA   // Correspondencia
+  OFICIO            // Oficio
+  MEMORANDO         // Memorando
+  CIRCULAR          // Circular
+  PROVIDENCIA       // Providencia
+  RESOLUCION        // Resolución
+  CONTRATO          // Contrato
+  ACTA              // Acta
+  ORDENANZA         // Ordenanza
+  CERTIFICADO       // Certificado
+  CONSTANCIA        // Constancia
+  INFORME           // Informe
+  OTRO              // Otro
+}
+
+/// Estados de documento
+enum DocumentStatus {
+  DRAFT             // Borrador
+  PENDING_REVIEW    // Pendiente de revisión
+  PENDING_SIGNATURE // Pendiente de firma
+  SIGNED            // Firmado
+  APPROVED          // Aprobado
+  REJECTED          // Rechazado
+  ARCHIVED          // Archivado
+  CANCELLED         // Cancelado
+}
+
+/// Niveles de acceso
+enum AccessLevel {
+  PUBLIC            // Público
+  INTERNAL          // Interno
+  CONFIDENTIAL      // Confidencial
+  RESTRICTED        // Restringido
+}
+
+/// Tipos de correspondencia
+enum CorrespondenceType {
+  ENTRADA           // Entrada
+  SALIDA            // Salida
+}
+
+/// Prioridad de correspondencia
+enum CorrespondencePriority {
+  NORMAL            // Normal
+  URGENTE           // Urgente
+  MUY_URGENTE       // Muy urgente
+}
+
+/// Estados de correspondencia
+enum CorrespondenceStatus {
+  RECEIVED          // Recibida
+  IN_DISTRIBUTION   // En distribución
+  DELIVERED         // Entregada
+  IN_PROCESS        // En proceso
+  RESPONDED         // Respondida
+  ARCHIVED          // Archivada
+}
+
+/// Métodos de entrega
+enum DeliveryMethod {
+  PERSONAL          // Entrega personal
+  CORREO_CERTIFICADO // Correo certificado
+  EMAIL             // Email
+  COURIER           // Courier
+  INTERNO           // Interno
+}
+
+/// Tipos de memo interno
+enum InternalMemoType {
+  MEMORANDO         // Memorando
+  OFICIO            // Oficio
+  CIRCULAR          // Circular
+  PROVIDENCIA       // Providencia
+}
+
+/// Estados de memo interno
+enum InternalMemoStatus {
+  DRAFT             // Borrador
+  PENDING_APPROVAL  // Pendiente de aprobación
+  APPROVED          // Aprobado
+  REJECTED          // Rechazado
+  DISTRIBUTED       // Distribuido
+  ARCHIVED          // Archivado
+}
+
+/// Estados de ordenanza
+enum OrdinanceStatus {
+  VIGENTE           // Vigente
+  REFORMADA         // Reformada
+  DEROGADA          // Derogada
+  SUSPENDIDA        // Suspendida
+}
+
+/// Tipos de sesión
+enum SessionType {
+  ORDINARIA         // Ordinaria
+  EXTRAORDINARIA    // Extraordinaria
+}
+
+/// Estados de acta
+enum ActStatus {
+  DRAFT             // Borrador
+  PENDING_APPROVAL  // Pendiente de aprobación
+  APPROVED          // Aprobada
+  PUBLISHED         // Publicada
+}
+
+/// Tipos de expediente
+enum FileType {
+  PERMISO_CONSTRUCCION // Permiso de construcción
+  LICITACION        // Licitación
+  RECLAMO           // Reclamo administrativo
+  EXPROPIACION      // Expropiación
+  SOLICITUD_SERVICIO // Solicitud de servicio
+  INVESTIGACION     // Investigación administrativa
+  RECURSO_JERARQUICO // Recurso jerárquico
+  OTRO              // Otro
+}
+
+/// Estados de expediente
+enum FileStatus {
+  EN_TRAMITE        // En trámite
+  PARALIZADO        // Paralizado
+  RESUELTO          // Resuelto
+  ARCHIVADO         // Archivado
+  CERRADO           // Cerrado
+}
+
+/// Tipos de firma
+enum SignatureType {
+  SIMPLE            // Firma electrónica simple
+  DIGITAL           // Firma digital certificada
+}
+
+/// Estados de firma
+enum SignatureStatus {
+  PENDING           // Pendiente
+  SIGNED            // Firmado
+  REJECTED          // Rechazado
+  EXPIRED           // Expirado
+}
+
+/// Estados de workflow
+enum WorkflowStatus {
+  IN_PROGRESS       // En progreso
+  COMPLETED         // Completado
+  CANCELLED         // Cancelado
+  REJECTED          // Rechazado
+}
+
+/// Acciones de workflow
+enum WorkflowAction {
+  APPROVE           // Aprobar
+  REJECT            // Rechazar
+  REQUEST_CHANGES   // Solicitar correcciones
+  DELEGATE          // Delegar
+  COMMENT           // Comentar
+}
+
+/// Estados de paso de workflow
+enum StepStatus {
+  PENDING           // Pendiente
+  IN_PROGRESS       // En progreso
+  COMPLETED         // Completado
+  SKIPPED           // Omitido
+  REJECTED          // Rechazado
+}
+
+// ============================================
+// SERVICIOS PÚBLICOS MUNICIPALES (FASE 10)
+// ============================================
+
+// ============================================
+// A) ASEO URBANO Y GESTIÓN DE DESECHOS
+// ============================================
+
+/// Rutas de recolección de desechos
+model CollectionRoute {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  name            String
+  description     String?             @db.Text
+  sector          String
+  streets         String              @db.Text
+  collectionType  CollectionType
+  schedule        String              @db.Text
+  startTime       String?
+  routeCoordinates String?            @db.Text
+  estimatedDuration Int?
+  distanceKm      Float?
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  operations      CollectionOperation[]
+  
+  @@map("collection_routes")
+  @@index([code])
+  @@index([sector])
+}
+
+/// Operaciones diarias de recolección
+model CollectionOperation {
+  id              String              @id @default(uuid())
+  routeId         String
+  date            DateTime
+  scheduledStart  DateTime
+  actualStart     DateTime?
+  actualEnd       DateTime?
+  truckId         String?
+  driverId        String?
+  crewMembers     String?             @db.Text
+  status          OperationStatus     @default(PROGRAMADO)
+  vehicleChecked  Boolean             @default(false)
+  fuelLevel       String?
+  tonsCollected   Float?              @db.DoublePrecision
+  disposalSite    String?
+  disposalTime    DateTime?
+  incidents       String?             @db.Text
+  blockedStreets  String?             @db.Text
+  notes           String?             @db.Text
+  createdBy       String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  route           CollectionRoute     @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  
+  @@map("collection_operations")
+  @@index([routeId])
+  @@index([date])
+}
+
+/// Puntos de recolección especial
+model CollectionPoint {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  name            String
+  type            CollectionPointType
+  address         String
+  sector          String
+  latitude        Float?
+  longitude       Float?
+  containerType   String?
+  capacity        Float?
+  collectionFrequency String?
+  lastCollection  DateTime?
+  nextCollection  DateTime?
+  status          String              @default("OPERATIVO")
+  fillLevel       Int?
+  notes           String?             @db.Text
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("collection_points")
+  @@index([code])
+  @@index([sector])
+}
+
+/// Campañas de limpieza
+model CleaningCampaign {
+  id              String              @id @default(uuid())
+  name            String
+  description     String?             @db.Text
+  sector          String
+  location        String
+  latitude        Float?
+  longitude       Float?
+  date            DateTime
+  startTime       String
+  endTime         String?
+  volunteers      Int?
+  municipalCrew   Int?
+  materialsCollected Float?           @db.DoublePrecision
+  areasCleaned    String?             @db.Text
+  photosBefore    String?             @db.Text
+  photosAfter     String?             @db.Text
+  notes           String?             @db.Text
+  organizedBy     String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("cleaning_campaigns")
+  @@index([date])
+}
+
+// ============================================
+// B) ALUMBRADO PÚBLICO
+// ============================================
+
+/// Inventario de luminarias
+model Streetlight {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  address         String
+  sector          String
+  latitude        Float
+  longitude       Float
+  type            StreetlightType
+  power           Int?
+  poleHeight      Float?
+  poleType        PoleType?
+  status          StreetlightStatus   @default(FUNCIONANDO)
+  owner           String              @default("MUNICIPAL")
+  photo           String?
+  installDate     DateTime?
+  lastMaintenance DateTime?
+  notes           String?             @db.Text
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  faults          StreetlightFault[]
+  maintenances    StreetlightMaintenance[]
+  
+  @@map("streetlights")
+  @@index([code])
+  @@index([sector])
+  @@index([status])
+}
+
+/// Fallas de luminarias
+model StreetlightFault {
+  id              String              @id @default(uuid())
+  streetlightId   String
+  reportDate      DateTime            @default(now())
+  reportedBy      String?
+  reporterContact String?
+  faultType       FaultType
+  description     String?             @db.Text
+  diagnosis       String?             @db.Text
+  cause           String?
+  status          FaultStatus         @default(REPORTADO)
+  priority        Priority            @default(MEDIUM)
+  assignedTo      String?
+  assignedAt      DateTime?
+  resolvedAt      DateTime?
+  resolution      String?             @db.Text
+  actionTaken     String?             @db.Text
+  materialsUsed   String?             @db.Text
+  cost            Decimal?            @db.Decimal(15,2)
+  notes           String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  streetlight     Streetlight         @relation(fields: [streetlightId], references: [id], onDelete: Cascade)
+  
+  @@map("streetlight_faults")
+  @@index([streetlightId])
+  @@index([status])
+  @@index([reportDate])
+}
+
+/// Mantenimiento de luminarias
+model StreetlightMaintenance {
+  id              String              @id @default(uuid())
+  streetlightId   String
+  type            ServiceMaintenanceType
+  scheduledDate   DateTime
+  completedDate   DateTime?
+  status          ServiceMaintenanceStatus   @default(PROGRAMADO)
+  assignedTo      String?
+  workPerformed   String?             @db.Text
+  componentsReplaced String?          @db.Text
+  cost            Decimal?            @db.Decimal(15,2)
+  notes           String?             @db.Text
+  createdBy       String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  streetlight     Streetlight         @relation(fields: [streetlightId], references: [id], onDelete: Cascade)
+  
+  @@map("streetlight_maintenances")
+  @@index([streetlightId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+// ============================================
+// C) PARQUES, PLAZAS Y ÁREAS VERDES
+// ============================================
+
+/// Inventario de parques
+model Park {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  name            String
+  description     String?             @db.Text
+  address         String
+  sector          String
+  latitude        Float?
+  longitude       Float?
+  type            ParkType
+  area            Float?
+  equipment       String?             @db.Text
+  status          ParkStatus          @default(BUENO)
+  photos          String?             @db.Text
+  notes           String?             @db.Text
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  maintenances    ParkMaintenance[]
+  events          ParkEvent[]
+  
+  @@map("parks")
+  @@index([code])
+  @@index([sector])
+  @@index([type])
+}
+
+/// Mantenimiento de parques
+model ParkMaintenance {
+  id              String              @id @default(uuid())
+  parkId          String
+  type            ParkMaintenanceType
+  scheduledDate   DateTime
+  completedDate   DateTime?
+  status          ServiceMaintenanceStatus   @default(PROGRAMADO)
+  assignedTo      String?
+  crewMembers     String?             @db.Text
+  workPerformed   String?             @db.Text
+  materialsUsed   String?             @db.Text
+  cost            Decimal?            @db.Decimal(15,2)
+  photosBefore    String?             @db.Text
+  photosAfter     String?             @db.Text
+  notes           String?             @db.Text
+  createdBy       String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  park            Park                @relation(fields: [parkId], references: [id], onDelete: Cascade)
+  
+  @@map("park_maintenances")
+  @@index([parkId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+/// Eventos en parques
+model ParkEvent {
+  id              String              @id @default(uuid())
+  parkId          String
+  name            String
+  description     String?             @db.Text
+  type            String
+  eventDate       DateTime
+  startTime       String
+  endTime         String
+  organizer       String
+  organizerContact String?
+  permitNumber    String?
+  permitIssued    Boolean             @default(false)
+  securityRequired Boolean            @default(false)
+  cleanupRequired Boolean             @default(true)
+  status          EventStatus         @default(SOLICITADO)
+  notes           String?             @db.Text
+  createdBy       String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  park            Park                @relation(fields: [parkId], references: [id], onDelete: Cascade)
+  
+  @@map("park_events")
+  @@index([parkId])
+  @@index([eventDate])
+  @@index([status])
+}
+
+// ============================================
+// D) CEMENTERIOS MUNICIPALES
+// ============================================
+
+/// Cementerios
+model Cemetery {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  name            String
+  description     String?             @db.Text
+  address         String
+  latitude        Float?
+  longitude       Float?
+  totalNiches     Int
+  totalVaults     Int?
+  totalCrypts     Int?
+  totalGraves     Int?
+  availableNiches Int
+  availableVaults Int?
+  availableCrypts Int?
+  availableGraves Int?
+  sectors         String?             @db.Text
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  burials         Burial[]
+  
+  @@map("cemeteries")
+  @@index([code])
+}
+
+/// Inhumaciones y exhumaciones
+model Burial {
+  id              String              @id @default(uuid())
+  cemeteryId      String
+  type            BurialType
+  deceasedName    String
+  deceasedIdNumber String?
+  birthDate       DateTime?
+  deathDate       DateTime
+  deathCertificate String?
+  responsibleName String
+  responsibleIdNumber String
+  responsibleContact String
+  relationship    String?
+  spaceType       SpaceType
+  spaceNumber     String
+  sector          String?
+  burialDate      DateTime
+  burialTime      String?
+  exhumationDate  DateTime?
+  serviceCost     Decimal             @db.Decimal(15,2)
+  paymentStatus   PaymentStatus       @default(PENDING)
+  receiptNumber   String?
+  maintenanceFee  Decimal?            @db.Decimal(15,2)
+  maintenancePaidUntil DateTime?
+  contractType    CemeteryContractType        @default(TEMPORAL)
+  contractYears   Int?
+  expiryDate      DateTime?
+  status          BurialStatus        @default(ACTIVO)
+  notes           String?             @db.Text
+  registeredBy    String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  cemetery        Cemetery            @relation(fields: [cemeteryId], references: [id], onDelete: Restrict)
+  
+  @@map("burials")
+  @@index([cemeteryId])
+  @@index([deceasedName])
+  @@index([spaceNumber])
+  @@index([burialDate])
+}
+
+// ============================================
+// E) MERCADOS MUNICIPALES
+// ============================================
+
+/// Mercados
+model Market {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  name            String
+  description     String?             @db.Text
+  address         String
+  sector          String
+  latitude        Float?
+  longitude       Float?
+  totalStalls     Int
+  availableStalls Int
+  openingHours    String?
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  stalls          MarketStall[]
+  inspections     MarketInspection[]
+  
+  @@map("markets")
+  @@index([code])
+  @@index([sector])
+}
+
+/// Puestos de mercado
+model MarketStall {
+  id              String              @id @default(uuid())
+  marketId        String
+  stallNumber     String
+  location        String?
+  type            StallType
+  area            Float?
+  merchantName    String?
+  merchantIdNumber String?
+  merchantContact String?
+  contractNumber  String?
+  contractStart   DateTime?
+  contractEnd     DateTime?
+  monthlyRent     Decimal             @db.Decimal(15,2)
+  paymentStatus   String              @default("AL_DIA")
+  lastPayment     DateTime?
+  status          StallStatus         @default(DISPONIBLE)
+  notes           String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  market          Market              @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  payments        StallPayment[]
+  
+  @@unique([marketId, stallNumber])
+  @@map("market_stalls")
+  @@index([marketId])
+  @@index([status])
+}
+
+/// Pagos de alquiler
+model StallPayment {
+  id              String              @id @default(uuid())
+  stallId         String
+  reference       String              @unique
+  amount          Decimal             @db.Decimal(15,2)
+  year            Int
+  month           Int
+  paymentDate     DateTime
+  dueDate         DateTime
+  status          PaymentStatus       @default(COMPLETED)
+  notes           String?             @db.Text
+  registeredBy    String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  stall           MarketStall         @relation(fields: [stallId], references: [id], onDelete: Cascade)
+  
+  @@map("stall_payments")
+  @@index([stallId])
+  @@index([year, month])
+}
+
+/// Inspecciones sanitarias
+model MarketInspection {
+  id              String              @id @default(uuid())
+  marketId        String
+  inspectionDate  DateTime
+  inspectorName   String
+  inspectorId     String?
+  overallRating   String
+  hygiene         String?
+  foodHandling    String?
+  pestControl     String?
+  infrastructure  String?
+  findings        String?             @db.Text
+  violations      String?             @db.Text
+  correctiveActions String?           @db.Text
+  deadline        DateTime?
+  sanctionApplied Boolean             @default(false)
+  sanctionType    String?
+  sanctionDetails String?             @db.Text
+  followUpRequired Boolean            @default(false)
+  followUpDate    DateTime?
+  photos          String?             @db.Text
+  notes           String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  market          Market              @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  
+  @@map("market_inspections")
+  @@index([marketId])
+  @@index([inspectionDate])
+}
+
+// ============================================
+// F) PROTECCIÓN CIVIL Y GESTIÓN DE RIESGOS
+// ============================================
+
+/// Emergencias
+model Emergency {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  type            EmergencyType
+  address         String
+  sector          String
+  latitude        Float?
+  longitude       Float?
+  reportedAt      DateTime            @default(now())
+  respondedAt     DateTime?
+  resolvedAt      DateTime?
+  description     String              @db.Text
+  peopleAffected  Int?
+  peopleInjured   Int?
+  peopleDead      Int?
+  propertyDamage  String?             @db.Text
+  unitsDispatched String?             @db.Text
+  personnelInvolved String?           @db.Text
+  actionsPerformed String?            @db.Text
+  responseTime    Int?
+  status          EmergencyStatus     @default(REPORTADO)
+  priority        Priority            @default(HIGH)
+  photos          String?             @db.Text
+  videos          String?             @db.Text
+  notes           String?             @db.Text
+  reportedBy      String?
+  attendedBy      String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("emergencies")
+  @@index([code])
+  @@index([type])
+  @@index([status])
+  @@index([reportedAt])
+}
+
+/// Recursos de protección civil
+model CivilDefenseResource {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  name            String
+  type            ResourceType
+  description     String?             @db.Text
+  station         String
+  location        String?
+  status          String              @default("DISPONIBLE")
+  capacity        String?
+  specifications  String?             @db.Text
+  lastMaintenance DateTime?
+  nextMaintenance DateTime?
+  notes           String?             @db.Text
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("civil_defense_resources")
+  @@index([code])
+  @@index([type])
+  @@index([status])
+}
+
+/// Zonas de riesgo
+model RiskZone {
+  id              String              @id @default(uuid())
+  name            String
+  description     String?             @db.Text
+  sector          String
+  coordinates     String              @db.Text
+  riskType        RiskType
+  riskLevel       RiskLevel
+  estimatedPopulation Int?
+  vulnerableGroups String?            @db.Text
+  evacuationPlan  String?             @db.Text
+  shelters        String?             @db.Text
+  evacuationRoutes String?            @db.Text
+  mitigationMeasures String?          @db.Text
+  photos          String?             @db.Text
+  documents       String?             @db.Text
+  notes           String?             @db.Text
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("risk_zones")
+  @@index([sector])
+  @@index([riskType])
+  @@index([riskLevel])
+}
+
+// ============================================
+// G) POLICÍA MUNICIPAL
+// ============================================
+
+/// Multas de tránsito
+model TrafficFine {
+  id              String              @id @default(uuid())
+  reference       String              @unique
+  vehiclePlate    String
+  vehicleType     String?
+  driverName      String?
+  driverIdNumber  String?
+  violationType   String
+  violationCode   String?
+  description     String?             @db.Text
+  location        String
+  sector          String?
+  latitude        Float?
+  longitude       Float?
+  fineDate        DateTime
+  fineTime        String?
+  amount          Decimal             @db.Decimal(15,2)
+  officerName     String
+  officerId       String?
+  photo           String?
+  status          FineStatus          @default(PENDIENTE)
+  paymentDate     DateTime?
+  paymentReference String?
+  notes           String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("traffic_fines")
+  @@index([reference])
+  @@index([vehiclePlate])
+  @@index([status])
+  @@index([fineDate])
+}
+
+/// Accidentes de tránsito
+model TrafficAccident {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  location        String
+  sector          String?
+  latitude        Float?
+  longitude       Float?
+  accidentDate    DateTime
+  accidentTime    String
+  vehiclesInvolved String             @db.Text
+  peopleInvolved  Int?
+  injured         Int?
+  dead            Int?
+  description     String              @db.Text
+  sketch          String?
+  photos          String?             @db.Text
+  reportNumber    String?
+  officerName     String
+  officerId       String?
+  notes           String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("traffic_accidents")
+  @@index([code])
+  @@index([accidentDate])
+  @@index([sector])
+}
+
+/// Patrullaje
+model Patrol {
+  id              String              @id @default(uuid())
+  date            DateTime
+  shift           String
+  route           String
+  sector          String
+  vehicleId       String?
+  officers        String              @db.Text
+  startTime       String
+  endTime         String?
+  incidents       String?             @db.Text
+  observations    String?             @db.Text
+  createdBy       String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("patrols")
+  @@index([date])
+  @@index([sector])
+}
+
+// ============================================
+// H) CONTROL DE PLAGAS
+// ============================================
+
+/// Fumigaciones
+model Fumigation {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  sector          String
+  location        String
+  address         String?
+  latitude        Float?
+  longitude       Float?
+  scheduledDate   DateTime
+  completedDate   DateTime?
+  status          FumigationStatus    @default(PROGRAMADO)
+  plagueType      PlagueType
+  product         String?
+  quantity        Float?
+  unit            String?
+  crewMembers     String?             @db.Text
+  route           String?             @db.Text
+  areasCovered    String?             @db.Text
+  photos          String?             @db.Text
+  notes           String?             @db.Text
+  createdBy       String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("fumigations")
+  @@index([code])
+  @@index([sector])
+  @@index([scheduledDate])
+  @@index([status])
+}
+
+/// Reportes de plagas
+model PlagueReport {
+  id              String              @id @default(uuid())
+  reportDate      DateTime            @default(now())
+  reportedBy      String?
+  reporterContact String?
+  plagueType      PlagueType
+  location        String
+  sector          String
+  address         String
+  latitude        Float?
+  longitude       Float?
+  description     String?             @db.Text
+  severity        String              @default("MEDIA")
+  status          PlagueReportStatus        @default(PENDIENTE)
+  assignedTo      String?
+  visitDate       DateTime?
+  treatmentApplied String?            @db.Text
+  resolvedDate    DateTime?
+  photos          String?             @db.Text
+  notes           String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@map("plague_reports")
+  @@index([reportDate])
+  @@index([sector])
+  @@index([status])
+}
+
+// ============================================
+// ENUMS PARA SERVICIOS PÚBLICOS
+// ============================================
+
+/// Tipos de recolección
+enum CollectionType {
+  DOMICILIARIA
+  COMERCIAL
+  HOSPITALARIA
+  ESPECIAL
+}
+
+/// Estados de operación
+enum OperationStatus {
+  PROGRAMADO
+  EN_CURSO
+  COMPLETADO
+  CANCELADO
+  INCIDENTE
+}
+
+/// Tipos de punto de recolección
+enum CollectionPointType {
+  CONTENEDOR
+  MERCADO
+  FERIA
+  EVENTO
+}
+
+/// Tipos de luminaria
+enum StreetlightType {
+  LED
+  SODIO
+  MERCURIO
+  FLUORESCENTE
+  HALOGENURO
+}
+
+/// Tipos de poste
+enum PoleType {
+  CONCRETO
+  METAL
+  MADERA
+  FIBRA
+}
+
+/// Estados de luminaria
+enum StreetlightStatus {
+  FUNCIONANDO
+  DANADO
+  FALTANTE
+  MANTENIMIENTO
+}
+
+/// Tipos de falla
+enum FaultType {
+  BOMBILLO_FUNDIDO
+  BALASTO_DANADO
+  CABLEADO_CORTADO
+  VANDALISMO
+  POSTE_DANADO
+  OTRO
+}
+
+/// Estados de falla
+enum FaultStatus {
+  REPORTADO
+  ASIGNADO
+  EN_ATENCION
+  RESUELTO
+  CERRADO
+}
+
+/// Tipos de mantenimiento de servicios públicos
+enum ServiceMaintenanceType {
+  LIMPIEZA
+  REPARACION
+  REEMPLAZO
+  INSPECCION
+  PREVENTIVO
+}
+
+/// Estados de mantenimiento de servicios públicos
+enum ServiceMaintenanceStatus {
+  PROGRAMADO
+  EN_CURSO
+  COMPLETADO
+  CANCELADO
+  POSPUESTO
+}
+
+/// Tipos de parque
+enum ParkType {
+  PARQUE_RECREATIVO
+  PLAZA_SECA
+  PLAZOLETA
+  CANCHA_DEPORTIVA
+  PARQUE_INFANTIL
+  AREA_VERDE
+}
+
+/// Estados de parque
+enum ParkStatus {
+  EXCELENTE
+  BUENO
+  REGULAR
+  MALO
+}
+
+/// Tipos de mantenimiento de parque
+enum ParkMaintenanceType {
+  CORTE_GRAMA
+  PODA
+  RIEGO
+  REPARACION_JUEGOS
+  PINTURA
+  LIMPIEZA
+  BACHEO
+}
+
+/// Estados de evento
+enum EventStatus {
+  SOLICITADO
+  APROBADO
+  RECHAZADO
+  REALIZADO
+  CANCELADO
+}
+
+/// Tipos de inhumación
+enum BurialType {
+  INHUMACION
+  EXHUMACION
+}
+
+/// Tipos de espacio
+enum SpaceType {
+  NICHO
+  BOVEDA
+  CRIPTA
+  FOSA
+}
+
+/// Tipos de contrato de cementerio
+enum CemeteryContractType {
+  TEMPORAL
+  PERPETUO
+}
+
+/// Estados de inhumación
+enum BurialStatus {
+  ACTIVO
+  VENCIDO
+  EXHUMADO
+  RENOVADO
+}
+
+/// Tipos de puesto
+enum StallType {
+  CARNICERIA
+  PESCADERIA
+  VERDURAS
+  GRANOS
+  ABASTOS
+  COMIDAS
+  OTRO
+}
+
+/// Estados de puesto
+enum StallStatus {
+  DISPONIBLE
+  OCUPADO
+  MANTENIMIENTO
+  CLAUSURADO
+}
+
+/// Tipos de emergencia
+enum EmergencyType {
+  INCENDIO
+  INUNDACION
+  DESLIZAMIENTO
+  ACCIDENTE
+  COLAPSO_ESTRUCTURAL
+  RESCATE
+  OTRO
+}
+
+/// Estados de emergencia
+enum EmergencyStatus {
+  REPORTADO
+  EN_ATENCION
+  RESUELTO
+  CERRADO
+}
+
+/// Tipos de recurso
+enum ResourceType {
+  AMBULANCIA
+  CARRO_BOMBA
+  UNIDAD_RESCATE
+  EQUIPO
+  PERSONAL
+}
+
+/// Tipos de riesgo
+enum RiskType {
+  INUNDACION
+  DESLIZAMIENTO
+  INCENDIO
+  SISMICO
+  ESTRUCTURAL
+}
+
+/// Niveles de riesgo
+enum RiskLevel {
+  BAJO
+  MEDIO
+  ALTO
+  CRITICO
+}
+
+/// Estados de multa
+enum FineStatus {
+  PENDIENTE
+  PAGADA
+  IMPUGNADA
+  ANULADA
+}
+
+/// Estados de fumigación
+enum FumigationStatus {
+  PROGRAMADO
+  EN_CURSO
+  COMPLETADO
+  CANCELADO
+}
+
+/// Tipos de plaga
+enum PlagueType {
+  MOSQUITOS
+  ROEDORES
+  CUCARACHAS
+  TERMITAS
+  OTRO
+}
+
+/// Estados de reporte de plagas
+enum PlagueReportStatus {
+  PENDIENTE
+  ASIGNADO
+  EN_ATENCION
+  RESUELTO
+  CERRADO
+}
