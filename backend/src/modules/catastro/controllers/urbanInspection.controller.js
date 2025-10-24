@@ -15,7 +15,7 @@ import {
 export const getAllUrbanInspections = async (req, res, next) => {
   try {
     const result = await urbanInspectionService.getAllUrbanInspections(req.query);
-    res.json(successResponse(result, 'Inspecciones obtenidas exitosamente'));
+    return successResponse(res, result, 'Inspecciones obtenidas exitosamente');
   } catch (error) {
     next(error);
   }
@@ -27,7 +27,7 @@ export const getAllUrbanInspections = async (req, res, next) => {
 export const getUrbanInspectionById = async (req, res, next) => {
   try {
     const inspection = await urbanInspectionService.getUrbanInspectionById(req.params.id);
-    res.json(successResponse(inspection, 'Inspección obtenida exitosamente'));
+    return successResponse(res, inspection, 'Inspección obtenida exitosamente');
   } catch (error) {
     next(error);
   }
@@ -41,7 +41,7 @@ export const getUrbanInspectionByNumber = async (req, res, next) => {
     const inspection = await urbanInspectionService.getUrbanInspectionByNumber(
       req.params.inspectionNumber
     );
-    res.json(successResponse(inspection, 'Inspección obtenida exitosamente'));
+    return successResponse(res, inspection, 'Inspección obtenida exitosamente');
   } catch (error) {
     next(error);
   }
@@ -54,7 +54,7 @@ export const createUrbanInspection = async (req, res, next) => {
   try {
     const validatedData = createUrbanInspectionSchema.parse(req.body);
     const inspection = await urbanInspectionService.createUrbanInspection(validatedData);
-    res.status(201).json(successResponse(inspection, 'Inspección creada exitosamente'));
+    return successResponse(res, inspection, 'Inspección creada exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -70,7 +70,7 @@ export const updateUrbanInspection = async (req, res, next) => {
       req.params.id,
       validatedData
     );
-    res.json(successResponse(inspection, 'Inspección actualizada exitosamente'));
+    return successResponse(res, inspection, 'Inspección actualizada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -82,7 +82,7 @@ export const updateUrbanInspection = async (req, res, next) => {
 export const deleteUrbanInspection = async (req, res, next) => {
   try {
     await urbanInspectionService.deleteUrbanInspection(req.params.id);
-    res.json(successResponse(null, 'Inspección eliminada exitosamente'));
+    return successResponse(res, null, 'Inspección eliminada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -97,7 +97,7 @@ export const registerNotification = async (req, res, next) => {
       req.params.id,
       req.body
     );
-    res.json(successResponse(inspection, 'Notificación registrada exitosamente'));
+    return successResponse(res, inspection, 'Notificación registrada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -112,7 +112,7 @@ export const registerSanction = async (req, res, next) => {
       req.params.id,
       req.body
     );
-    res.json(successResponse(inspection, 'Sanción registrada exitosamente'));
+    return successResponse(res, inspection, 'Sanción registrada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -128,7 +128,7 @@ export const resolveInspection = async (req, res, next) => {
       req.params.id,
       resolutionNotes
     );
-    res.json(successResponse(inspection, 'Inspección resuelta exitosamente'));
+    return successResponse(res, inspection, 'Inspección resuelta exitosamente');
   } catch (error) {
     next(error);
   }
@@ -142,7 +142,7 @@ export const getInspectionsByProperty = async (req, res, next) => {
     const inspections = await urbanInspectionService.getInspectionsByProperty(
       req.params.propertyId
     );
-    res.json(successResponse(inspections, 'Inspecciones obtenidas exitosamente'));
+    return successResponse(res, inspections, 'Inspecciones obtenidas exitosamente');
   } catch (error) {
     next(error);
   }
@@ -154,7 +154,7 @@ export const getInspectionsByProperty = async (req, res, next) => {
 export const getUrbanInspectionStats = async (req, res, next) => {
   try {
     const stats = await urbanInspectionService.getUrbanInspectionStats();
-    res.json(successResponse(stats, 'Estadísticas obtenidas exitosamente'));
+    return successResponse(res, stats, 'Estadísticas obtenidas exitosamente');
   } catch (error) {
     next(error);
   }

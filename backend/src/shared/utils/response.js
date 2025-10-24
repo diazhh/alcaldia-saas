@@ -4,11 +4,13 @@
 
 /**
  * Respuesta exitosa
+ * @param {Object} res - Objeto de respuesta de Express
  * @param {*} data - Datos a enviar
  * @param {string} message - Mensaje opcional
+ * @param {number} statusCode - Código de estado HTTP (default: 200)
  * @param {Object} pagination - Información de paginación opcional
  */
-export const successResponse = (data, message = 'Operación exitosa', pagination = null) => {
+export const successResponse = (res, data, message = 'Operación exitosa', statusCode = 200, pagination = null) => {
   const response = {
     success: true,
     message,
@@ -19,20 +21,24 @@ export const successResponse = (data, message = 'Operación exitosa', pagination
     response.pagination = pagination;
   }
   
-  return response;
+  return res.status(statusCode).json(response);
 };
 
 /**
  * Respuesta de error
+ * @param {Object} res - Objeto de respuesta de Express
  * @param {string} message - Mensaje de error
+ * @param {number} statusCode - Código de estado HTTP (default: 400)
  * @param {*} errors - Errores adicionales
  */
-export const errorResponse = (message = 'Error en la operación', errors = null) => {
-  return {
+export const errorResponse = (res, message = 'Error en la operación', statusCode = 400, errors = null) => {
+  const response = {
     success: false,
     message,
     ...(errors && { errors }),
   };
+  
+  return res.status(statusCode).json(response);
 };
 
 /**

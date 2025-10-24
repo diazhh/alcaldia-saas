@@ -12,7 +12,7 @@ import { createPropertySchema, updatePropertySchema } from '../validations.js';
 export const getAllProperties = async (req, res, next) => {
   try {
     const result = await propertyService.getAllProperties(req.query);
-    res.json(successResponse(result, 'Propiedades obtenidas exitosamente'));
+    return successResponse(res, result, 'Propiedades obtenidas exitosamente');
   } catch (error) {
     next(error);
   }
@@ -24,7 +24,7 @@ export const getAllProperties = async (req, res, next) => {
 export const getPropertyById = async (req, res, next) => {
   try {
     const property = await propertyService.getPropertyById(req.params.id);
-    res.json(successResponse(property, 'Propiedad obtenida exitosamente'));
+    return successResponse(res, property, 'Propiedad obtenida exitosamente');
   } catch (error) {
     next(error);
   }
@@ -38,7 +38,7 @@ export const getPropertyByCadastralCode = async (req, res, next) => {
     const property = await propertyService.getPropertyByCadastralCode(
       req.params.cadastralCode
     );
-    res.json(successResponse(property, 'Propiedad obtenida exitosamente'));
+    return successResponse(res, property, 'Propiedad obtenida exitosamente');
   } catch (error) {
     next(error);
   }
@@ -51,7 +51,7 @@ export const createProperty = async (req, res, next) => {
   try {
     const validatedData = createPropertySchema.parse(req.body);
     const property = await propertyService.createProperty(validatedData);
-    res.status(201).json(successResponse(property, 'Propiedad creada exitosamente'));
+    return successResponse(res, property, 'Propiedad creada exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -64,7 +64,7 @@ export const updateProperty = async (req, res, next) => {
   try {
     const validatedData = updatePropertySchema.parse(req.body);
     const property = await propertyService.updateProperty(req.params.id, validatedData);
-    res.json(successResponse(property, 'Propiedad actualizada exitosamente'));
+    return successResponse(res, property, 'Propiedad actualizada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -76,7 +76,7 @@ export const updateProperty = async (req, res, next) => {
 export const deleteProperty = async (req, res, next) => {
   try {
     await propertyService.deleteProperty(req.params.id);
-    res.json(successResponse(null, 'Propiedad eliminada exitosamente'));
+    return successResponse(res, null, 'Propiedad eliminada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -93,7 +93,7 @@ export const searchPropertiesByLocation = async (req, res, next) => {
       parseFloat(longitude),
       parseFloat(radius) || 1
     );
-    res.json(successResponse(properties, 'Propiedades encontradas'));
+    return successResponse(res, properties, 'Propiedades encontradas');
   } catch (error) {
     next(error);
   }
@@ -105,7 +105,7 @@ export const searchPropertiesByLocation = async (req, res, next) => {
 export const getPropertyStats = async (req, res, next) => {
   try {
     const stats = await propertyService.getPropertyStats();
-    res.json(successResponse(stats, 'Estadísticas obtenidas exitosamente'));
+    return successResponse(res, stats, 'Estadísticas obtenidas exitosamente');
   } catch (error) {
     next(error);
   }

@@ -22,7 +22,17 @@ app.use(helmet());
 // CORS
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: function(origin, callback) {
+      const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',');
+      // Permitir solicitudes sin origen (como aplicaciones móviles o curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        console.log(`Origen no permitido: ${origin}`);
+        callback(null, true); // Permitir de todos modos en desarrollo
+      }
+    },
     credentials: true,
   })
 );
@@ -59,6 +69,7 @@ app.get('/', (req, res) => {
 
 // Importar rutas de módulos
 import authRoutes from './modules/auth/routes.js';
+import permissionsRoutes from './modules/permissions/permissions.routes.js';
 import adminRoutes from './modules/admin/routes.js';
 import departmentRoutes from './modules/departments/department.routes.js';
 import projectRoutes from './modules/projects/routes.js';
@@ -71,9 +82,14 @@ import fleetRoutes from './modules/fleet/routes.js';
 import assetsRoutes from './modules/assets/routes.js';
 import documentsRoutes from './modules/documents/routes.js';
 import servicesRoutes from './modules/services/index.js';
+import customRolesRoutes from './modules/custom-roles/custom-roles.routes.js';
+import authController from './modules/auth/controllers/auth.controller.js';
+import { authenticate } from './shared/middlewares/auth.middleware.js';
+import { requireAdmin } from './shared/middlewares/authorize.middleware.js';
 
 // Rutas de la API
 app.use('/api/auth', authRoutes);
+app.use('/api/permissions', permissionsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/projects', projectRoutes);
@@ -86,6 +102,10 @@ app.use('/api/fleet', fleetRoutes);
 app.use('/api/assets', assetsRoutes);
 app.use('/api/documents', documentsRoutes);
 app.use('/api/services', servicesRoutes);
+app.use('/api/custom-roles', customRolesRoutes);
+
+// Ruta de usuarios (requiere admin)
+app.get('/api/users', authenticate, requireAdmin, authController.getAllUsers);
 
 // TODO: Agregar más rutas de módulos aquí
 // etc...

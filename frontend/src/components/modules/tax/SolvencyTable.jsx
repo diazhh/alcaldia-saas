@@ -7,11 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import axios from 'axios';
-import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
 
 export default function SolvencyTable({ onView }) {
-  const { token } = useAuth();
   const [solvencies, setSolvencies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,7 +20,7 @@ export default function SolvencyTable({ onView }) {
 
   const fetchSolvencies = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/solvencies`, {
+      const response = await axios.get(`${API_BASE_URL}/api/tax/solvencies`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSolvencies(response.data);

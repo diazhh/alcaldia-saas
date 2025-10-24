@@ -13,6 +13,35 @@ const router = express.Router();
  * Todas las rutas requieren autenticación
  */
 
+// ============================================
+// RUTAS DE REPORTES Y ESTADÍSTICAS (DEBEN IR PRIMERO)
+// ============================================
+
+// Obtener estadísticas generales
+router.get('/reports/stats', authenticate, reportsController.getGeneralStats);
+
+// Obtener empleados por departamento
+router.get('/reports/employees', authenticate, reportsController.getEmployeesByDepartment);
+
+// Obtener departamentos sin jefe
+router.get('/reports/without-head', authenticate, reportsController.getDepartmentsWithoutHead);
+
+// Obtener usuarios sin departamento
+router.get('/reports/users-without-dept', authenticate, reportsController.getUsersWithoutDepartment);
+
+// Obtener distribución de personal por nivel
+router.get('/reports/staff-distribution', authenticate, reportsController.getStaffDistribution);
+
+// Obtener datos para organigrama
+router.get('/reports/org-chart', authenticate, reportsController.getOrgChartData);
+
+// Obtener directorio telefónico
+router.get('/reports/phone-directory', authenticate, reportsController.getPhoneDirectory);
+
+// ============================================
+// RUTAS DE DEPARTAMENTOS
+// ============================================
+
 // Obtener árbol jerárquico de departamentos
 router.get('/tree', authenticate, departmentController.getTree);
 
@@ -31,6 +60,12 @@ router.get('/:id/path', authenticate, departmentController.getPath);
 // Obtener estadísticas de jerarquía
 router.get('/:id/stats', authenticate, departmentController.getHierarchyStats);
 
+// Obtener hijos directos (children)
+router.get('/:id/children', authenticate, departmentController.getChildren);
+
+// Obtener personal del departamento (staff)
+router.get('/:id/staff', authenticate, departmentController.getStaff);
+
 // Obtener un departamento por ID
 router.get('/:id', authenticate, departmentController.getById);
 
@@ -42,6 +77,9 @@ router.put('/:id', authenticate, authorize(['SUPER_ADMIN', 'ADMIN']), department
 
 // Eliminar un departamento (solo SUPER_ADMIN)
 router.delete('/:id', authenticate, authorize(['SUPER_ADMIN']), departmentController.delete);
+
+// Mover departamento en jerarquía (solo ADMIN y SUPER_ADMIN)
+router.post('/:id/move', authenticate, authorize(['SUPER_ADMIN', 'ADMIN']), departmentController.move);
 
 // ============================================
 // RUTAS DE ASIGNACIÓN DE USUARIOS
@@ -130,30 +168,5 @@ router.delete(
   authorize(['SUPER_ADMIN', 'ADMIN']),
   permissionController.removePermission
 );
-
-// ============================================
-// RUTAS DE REPORTES Y ESTADÍSTICAS
-// ============================================
-
-// Obtener estadísticas generales
-router.get('/reports/stats', authenticate, reportsController.getGeneralStats);
-
-// Obtener empleados por departamento
-router.get('/reports/employees', authenticate, reportsController.getEmployeesByDepartment);
-
-// Obtener departamentos sin jefe
-router.get('/reports/without-head', authenticate, reportsController.getDepartmentsWithoutHead);
-
-// Obtener usuarios sin departamento
-router.get('/reports/users-without-dept', authenticate, reportsController.getUsersWithoutDepartment);
-
-// Obtener distribución de personal por nivel
-router.get('/reports/staff-distribution', authenticate, reportsController.getStaffDistribution);
-
-// Obtener datos para organigrama
-router.get('/reports/org-chart', authenticate, reportsController.getOrgChartData);
-
-// Obtener directorio telefónico
-router.get('/reports/phone-directory', authenticate, reportsController.getPhoneDirectory);
 
 export default router;

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import axios from 'axios';
+import { API_BASE_URL } from '@/constants';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function BusinessDialog({ open, onClose, business }) {
@@ -70,7 +71,7 @@ export default function BusinessDialog({ open, onClose, business }) {
   const fetchTaxpayers = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/taxpayers`,
+        `${API_BASE_URL}/api/tax/taxpayers`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -93,7 +94,7 @@ export default function BusinessDialog({ open, onClose, business }) {
 
       if (business) {
         await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/tax/businesses/${business.id}`,
+          `${API_BASE_URL}/api/tax/businesses/${business.id}`,
           payload,
           {
             headers: { Authorization: `Bearer ${token}` }
@@ -101,7 +102,7 @@ export default function BusinessDialog({ open, onClose, business }) {
         );
       } else {
         await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/tax/businesses`,
+          `${API_BASE_URL}/api/tax/businesses`,
           payload,
           {
             headers: { Authorization: `Bearer ${token}` }

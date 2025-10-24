@@ -7,11 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import axios from 'axios';
-import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
 
 export default function VehicleTable({ onEdit }) {
-  const { token } = useAuth();
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,10 +21,9 @@ export default function VehicleTable({ onEdit }) {
 
   const fetchVehicles = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/vehicles`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setVehicles(response.data);
+      setLoading(true);
+      const response = await api.get('/tax/vehicles');
+      setVehicles(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
     } finally {
@@ -36,9 +33,7 @@ export default function VehicleTable({ onEdit }) {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/vehicles/${deleteId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/tax/vehicles/${deleteId}`);
       setVehicles(vehicles.filter(v => v.id !== deleteId));
       setDeleteId(null);
     } catch (error) {

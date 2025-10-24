@@ -6,6 +6,43 @@
 import { z } from 'zod';
 
 // ============================================
+// VALIDACIONES PARA MODIFICACIONES PRESUPUESTARIAS
+// ============================================
+
+/**
+ * Schema para crear una modificación presupuestaria
+ */
+export const createBudgetModificationSchema = z.object({
+  budgetId: z.string().uuid(),
+  type: z.enum(['CREDITO_ADICIONAL', 'TRASPASO', 'RECTIFICACION', 'REDUCCION']),
+  reference: z.string().min(1).max(100),
+  description: z.string().min(10),
+  amount: z.number().positive(),
+  justification: z.string().min(20),
+  fromBudgetItemId: z.string().uuid().optional(),
+  toBudgetItemId: z.string().uuid().optional(),
+}).refine(
+  (data) => {
+    // Para traspasos, ambas partidas son requeridas
+    if (data.type === 'TRASPASO') {
+      return data.fromBudgetItemId && data.toBudgetItemId;
+    }
+    return true;
+  },
+  {
+    message: 'Para traspasos se requieren partidas origen y destino',
+    path: ['fromBudgetItemId'],
+  }
+);
+
+/**
+ * Schema para rechazar una modificación
+ */
+export const rejectModificationSchema = z.object({
+  reason: z.string().min(10),
+});
+
+// ============================================
 // VALIDACIONES PARA PRESUPUESTO
 // ============================================
 
@@ -64,30 +101,6 @@ export const updateBudgetItemSchema = z.object({
   allocatedAmount: z.number().positive().optional(),
   departmentId: z.string().uuid().optional(),
   category: z.string().optional(),
-});
-
-// ============================================
-// VALIDACIONES PARA MODIFICACIONES PRESUPUESTARIAS
-// ============================================
-
-/**
- * Schema para crear una modificación presupuestaria
- */
-export const createBudgetModificationSchema = z.object({
-  budgetId: z.string().uuid(),
-  type: z.enum(['CREDITO_ADICIONAL', 'TRASPASO', 'RECTIFICACION', 'REDUCCION']),
-  reference: z.string().min(1).max(100),
-  description: z.string().min(1),
-  amount: z.number().positive(),
-  justification: z.string().min(10),
-});
-
-/**
- * Schema para aprobar/rechazar una modificación presupuestaria
- */
-export const updateModificationStatusSchema = z.object({
-  status: z.enum(['APPROVED', 'REJECTED']),
-  approvedBy: z.string().uuid(),
 });
 
 // ============================================
@@ -234,4 +247,93 @@ export const generateReportSchema = z.object({
 export const checkBudgetAvailabilitySchema = z.object({
   budgetItemId: z.string().uuid(),
   amount: z.number().positive(),
+});
+
+// ============================================
+// VALIDACIONES PARA CONCILIACIÓN BANCARIA
+// ============================================
+
+/**
+ * Schema para crear una conciliación bancaria
+ */
+export const createReconciliationSchema = z.object({
+  bankAccountId: z.string().uuid(),
+  reconciliationDate: z.string().datetime().or(z.date()),
+  periodStart: z.string().datetime().or(z.date()),
+  periodEnd: z.string().datetime().or(z.date()),
+  statementBalance: z.number(),
+  notes: z.string().optional(),
+  attachmentUrl: z.string().url().optional(),
+});
+
+/**
+ * Schema para agregar partida a conciliación
+ */
+export const addReconciliationItemSchema = z.object({
+  type: z.enum(['BANK_ONLY', 'BOOK_ONLY', 'IN_TRANSIT', 'ADJUSTMENT', 'ERROR', 'MATCHED']),
+  date: z.string().datetime().or(z.date()),
+  reference: z.string().min(1).max(100),
+  description: z.string().min(1),
+  amount: z.number(),
+  transactionId: z.string().uuid().optional(),
+  paymentId: z.string().uuid().optional(),
+  incomeId: z.string().uuid().optional(),
+  notes: z.string().optional(),
+});
+
+/**
+ * Schema para rechazar conciliación
+ */
+export const rejectReconciliationSchema = z.object({
+  reason: z.string().min(10),
+});
+
+// ============================================
+// VALIDACIONES PARA PROGRAMACIÓN DE PAGOS
+// ============================================
+
+/**
+ * Schema para crear una programación de pago
+ */
+export const createPaymentScheduleSchema = z.object({
+  transactionId: z.string().uuid(),
+  scheduledDate: z.string().datetime().or(z.date()),
+  priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).default('MEDIUM'),
+  notes: z.string().optional(),
+  batchId: z.string().optional(),
+  batchNumber: z.string().optional(),
+});
+
+/**
+ * Schema para procesar pago programado
+ */
+export const processPaymentScheduleSchema = z.object({
+  reference: z.string().min(1).max(100),
+  paymentDate: z.string().datetime().or(z.date()),
+  paymentMethod: z.enum(['TRANSFERENCIA', 'CHEQUE', 'EFECTIVO', 'DOMICILIACION']),
+  bankAccountId: z.string().uuid(),
+  checkNumber: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+/**
+ * Schema para rechazar/cancelar programación
+ */
+export const rejectPaymentScheduleSchema = z.object({
+  reason: z.string().min(10),
+});
+
+/**
+ * Schema para actualizar fecha programada
+ */
+export const updateScheduledDateSchema = z.object({
+  scheduledDate: z.string().datetime().or(z.date()),
+});
+
+/**
+ * Schema para crear lote de pagos
+ */
+export const createPaymentBatchSchema = z.object({
+  scheduleIds: z.array(z.string().uuid()).min(1),
+  batchNumber: z.string().min(1).max(50),
 });

@@ -365,6 +365,11 @@ class DepartmentService {
       throw new AppError('Departamento no encontrado', 404);
     }
 
+    // Si no tiene padre, retornar array vacío
+    if (!department.parentId) {
+      return [];
+    }
+
     // Query recursivo para obtener ancestros
     const ancestors = await prisma.$queryRaw`
       WITH RECURSIVE ancestors AS (
@@ -415,9 +420,9 @@ class DepartmentService {
         UNION ALL
         
         -- Caso recursivo: obtener los hijos de cada descendiente
-        SELECT d.id, d.code, d.name, d.type, d.parent_id, d.is_active, desc.level + 1
+        SELECT d.id, d.code, d.name, d.type, d.parent_id, d.is_active, dt.level + 1
         FROM departments d
-        INNER JOIN descendants desc ON d.parent_id = desc.id
+        INNER JOIN descendants dt ON d.parent_id = dt.id
       )
       SELECT 
         id, 
@@ -524,6 +529,144 @@ class DepartmentService {
         directChildren: descendants.filter((d) => d.level === 1).length,
       },
     };
+  }
+
+  /**
+   * Obtener hijos directos de un departamento
+   * @param {string} departmentId - ID del departamento
+   * @returns {Promise<Array>} Lista de hijos directos
+   */
+  async getChildren(departmentId) {
+    // Verificar que el departamento existe
+    const department = await prisma.department.findUnique({
+      where: { id: departmentId },
+    });
+
+    if (!department) {
+      throw new AppError('Departamento no encontrado', 404);
+    }
+
+    // Obtener hijos directos
+    const children = await prisma.department.findMany({
+      where: { parentId: departmentId },
+      include: {
+        _count: {
+          select: {
+            children: true,
+            users: true,
+          },
+        },
+      },
+      orderBy: { code: 'asc' },
+    });
+
+    return children;
+  }
+
+  /**
+   * Obtener personal de un departamento
+   * @param {string} departmentId - ID del departamento
+   * @returns {Promise<Array>} Lista de usuarios del departamento
+   */
+  async getStaff(departmentId) {
+    // Verificar que el departamento existe
+    const department = await prisma.department.findUnique({
+      where: { id: departmentId },
+    });
+
+    if (!department) {
+      throw new AppError('Departamento no encontrado', 404);
+    }
+
+    // Obtener usuarios del departamento
+    const staff = await prisma.userDepartment.findMany({
+      where: { departmentId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            phone: true,
+            avatar: true,
+            isActive: true,
+          },
+        },
+      },
+      orderBy: {
+        user: {
+          lastName: 'asc',
+        },
+      },
+    });
+
+    return staff;
+  }
+
+  /**
+   * Mover un departamento a un nuevo padre
+   * @param {string} departmentId - ID del departamento a mover
+   * @param {string|null} newParentId - ID del nuevo padre (null para raíz)
+   * @returns {Promise<Object>} Departamento actualizado
+   */
+  async moveDepartment(departmentId, newParentId) {
+    // Verificar que el departamento existe
+    const department = await prisma.department.findUnique({
+      where: { id: departmentId },
+    });
+
+    if (!department) {
+      throw new AppError('Departamento no encontrado', 404);
+    }
+
+    // Si tiene nuevo padre, verificar que existe y no crea ciclo
+    if (newParentId) {
+      const newParent = await prisma.department.findUnique({
+        where: { id: newParentId },
+      });
+
+      if (!newParent) {
+        throw new AppError('El departamento padre no existe', 404);
+      }
+
+      // Verificar que no se crea un ciclo
+      const isDescendant = await this.isDescendant(departmentId, newParentId);
+      if (isDescendant) {
+        throw new AppError('No se puede mover un departamento a uno de sus descendientes', 400);
+      }
+
+      // Verificar jerarquía de tipos
+      const typeHierarchy = ['DIRECCION', 'COORDINACION', 'DEPARTAMENTO', 'UNIDAD', 'SECCION', 'OFICINA'];
+      const parentTypeIndex = typeHierarchy.indexOf(newParent.type);
+      const childTypeIndex = typeHierarchy.indexOf(department.type);
+
+      if (childTypeIndex <= parentTypeIndex) {
+        throw new AppError(
+          `Un ${department.type} no puede ser hijo de un ${newParent.type}. La jerarquía debe ser: DIRECCION > COORDINACION > DEPARTAMENTO > UNIDAD > SECCION > OFICINA`,
+          400
+        );
+      }
+    }
+
+    // Mover el departamento
+    const updated = await prisma.department.update({
+      where: { id: departmentId },
+      data: { parentId: newParentId },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            type: true,
+          },
+        },
+      },
+    });
+
+    return updated;
   }
 }
 

@@ -303,8 +303,10 @@ export const getProjectStats = async () => {
     byStatus,
     bySector,
     byCategory,
-    totalBudget,
-    totalExpenses,
+    byPriority,
+    totalBudgetData,
+    totalExpensesData,
+    topByBudget,
   ] = await Promise.all([
     // Total de proyectos
     prisma.project.count(),
@@ -312,19 +314,36 @@ export const getProjectStats = async () => {
     // Proyectos por estado
     prisma.project.groupBy({
       by: ['status'],
-      _count: true,
+      _count: {
+        _all: true,
+      },
     }),
     
-    // Proyectos por sector
+    // Proyectos por sector con presupuesto total
     prisma.project.groupBy({
       by: ['sector'],
-      _count: true,
+      _count: {
+        _all: true,
+      },
+      _sum: {
+        budget: true,
+      },
     }),
     
     // Proyectos por categoría
     prisma.project.groupBy({
       by: ['category'],
-      _count: true,
+      _count: {
+        _all: true,
+      },
+    }),
+    
+    // Proyectos por prioridad
+    prisma.project.groupBy({
+      by: ['priority'],
+      _count: {
+        _all: true,
+      },
     }),
     
     // Presupuesto total
@@ -340,23 +359,54 @@ export const getProjectStats = async () => {
         amount: true,
       },
     }),
+    
+    // Top 5 proyectos por presupuesto
+    prisma.project.findMany({
+      take: 5,
+      orderBy: {
+        budget: 'desc',
+      },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        budget: true,
+        status: true,
+        sector: true,
+        category: true,
+      },
+    }),
   ]);
   
   return {
     total,
-    byStatus: byStatus.reduce((acc, item) => {
-      acc[item.status] = item._count;
-      return acc;
-    }, {}),
-    bySector: bySector.reduce((acc, item) => {
-      acc[item.sector] = item._count;
-      return acc;
-    }, {}),
-    byCategory: byCategory.reduce((acc, item) => {
-      acc[item.category] = item._count;
-      return acc;
-    }, {}),
-    totalBudget: parseFloat(totalBudget._sum.budget || 0),
-    totalExpenses: parseFloat(totalExpenses._sum.amount || 0),
+    byStatus: byStatus.map(item => ({
+      status: item.status,
+      count: item._count._all,
+    })),
+    bySector: bySector.map(item => ({
+      sector: item.sector,
+      count: item._count._all,
+      totalBudget: parseFloat(item._sum.budget || 0),
+    })),
+    byCategory: byCategory.map(item => ({
+      category: item.category,
+      count: item._count._all,
+    })),
+    byPriority: byPriority.map(item => ({
+      priority: item.priority,
+      count: item._count._all,
+    })),
+    totalBudget: parseFloat(totalBudgetData._sum.budget || 0),
+    totalExpenses: parseFloat(totalExpensesData._sum.amount || 0),
+    topByBudget: topByBudget.map(project => ({
+      id: project.id,
+      name: project.name,
+      code: project.code,
+      budget: parseFloat(project.budget),
+      status: project.status,
+      sector: project.sector,
+      category: project.category,
+    })),
   };
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Search, Menu, User, Settings, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -11,26 +11,36 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export function Navbar({ user, onMenuToggle }) {
+  const router = useRouter();
+  const { logout } = useAuth();
+
   const userInitials = user
     ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`
     : 'U';
 
+  const handleLogout = async () => {
+    await logout();
+  };
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 sm:gap-4 border-b bg-white px-4 sm:px-6 shadow-sm">
       {/* Mobile Menu Toggle */}
       <button
         onClick={onMenuToggle}
         className="lg:hidden rounded-lg p-2 hover:bg-gray-100 transition-colors"
+        aria-label="Abrir menú"
       >
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Search Bar */}
-      <div className="flex-1 max-w-xl">
-        <div className="relative">
+      {/* Search Bar - Hidden on small mobile, visible on md+ */}
+      <div className="hidden md:flex flex-1 max-w-xl">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             type="search"
@@ -40,8 +50,11 @@ export function Navbar({ user, onMenuToggle }) {
         </div>
       </div>
 
+      {/* Spacer for mobile */}
+      <div className="flex-1 md:hidden" />
+
       {/* Right Section */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -111,13 +124,23 @@ export function Navbar({ user, onMenuToggle }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/perfil">Mi Perfil</Link>
+              <Link href="/perfil" className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                Mi Perfil
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/configuracion">Configuración</Link>
+              <Link href="/configuracion" className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                Configuración
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-danger cursor-pointer">
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
               Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -24,11 +24,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import axios from 'axios';
-import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
 
 export default function BusinessTable({ onEdit }) {
-  const { token } = useAuth();
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,13 +38,9 @@ export default function BusinessTable({ onEdit }) {
 
   const fetchBusinesses = async () => {
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/businesses`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      setBusinesses(response.data);
+      setLoading(true);
+      const response = await api.get('/tax/businesses');
+      setBusinesses(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching businesses:', error);
     } finally {
@@ -56,12 +50,7 @@ export default function BusinessTable({ onEdit }) {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/businesses/${deleteId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      await api.delete(`/tax/businesses/${deleteId}`);
       setBusinesses(businesses.filter(b => b.id !== deleteId));
       setDeleteId(null);
     } catch (error) {

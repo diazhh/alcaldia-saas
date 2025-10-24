@@ -34,8 +34,12 @@ export function useEmployees(filters = {}) {
       if (filters.positionId) params.append('positionId', filters.positionId);
       if (filters.search) params.append('search', filters.search);
       
-      const { data } = await api.get(`/hr/employees?${params.toString()}`);
-      return data.data;
+      const response = await api.get(`/hr/employees?${params.toString()}`);
+      // La respuesta tiene estructura: { success, data: [...], pagination: {...} }
+      return {
+        data: response.data.data || [],
+        pagination: response.data.pagination || { total: 0, page: 1, limit: 20, pages: 0 }
+      };
     },
     keepPreviousData: true,
   });

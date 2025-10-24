@@ -271,10 +271,11 @@ class DepartmentReportsService {
    * @returns {Promise<Object>} Estadísticas generales
    */
   async getGeneralStats() {
-    // Total de departamentos
-    const totalDepartments = await prisma.department.count({
-      where: { isActive: true },
-    });
+    try {
+      // Total de departamentos
+      const totalDepartments = await prisma.department.count({
+        where: { isActive: true },
+      });
 
     // Total de empleados asignados
     const totalAssignments = await prisma.userDepartment.count();
@@ -328,11 +329,37 @@ class DepartmentReportsService {
       },
     });
 
+    // Top departamentos por número de empleados
+    const topDepartmentsByEmployees = await prisma.department.findMany({
+      where: { isActive: true },
+      include: {
+        _count: {
+          select: { users: true },
+        },
+      },
+      orderBy: {
+        users: {
+          _count: 'desc',
+        },
+      },
+      take: 10,
+    });
+
+    // Departamentos activos
+    const activeDepartments = await prisma.department.count({
+      where: { isActive: true },
+    });
+
     return {
       totalDepartments,
+      activeDepartments,
       totalAssignments,
       uniqueEmployees: usersWithDept,
       usersWithoutDepartment: usersWithoutDept,
+      byType: departmentsByType.reduce((acc, item) => {
+        acc[item.type] = item._count._all;
+        return acc;
+      }, {}),
       departmentsByType: departmentsByType.reduce((acc, item) => {
         acc[item.type] = item._count._all;
         return acc;
@@ -347,7 +374,17 @@ class DepartmentReportsService {
             employeeCount: deptWithMostEmployees._count.users,
           }
         : null,
+      topDepartmentsByEmployees: topDepartmentsByEmployees.map(dept => ({
+        id: dept.id,
+        code: dept.code,
+        name: dept.name,
+        employeeCount: dept._count.users,
+      })),
     };
+    } catch (error) {
+      console.error('Error getting general stats:', error);
+      throw new Error(`Error al obtener estadísticas generales: ${error.message}`);
+    }
   }
 
   /**
@@ -355,23 +392,28 @@ class DepartmentReportsService {
    * @returns {Promise<number>} Profundidad máxima
    */
   async getMaxHierarchyDepth() {
-    const result = await prisma.$queryRaw`
-      WITH RECURSIVE hierarchy AS (
-        SELECT id, parent_id, 1 as depth
-        FROM departments
-        WHERE parent_id IS NULL
-        
-        UNION ALL
-        
-        SELECT d.id, d.parent_id, h.depth + 1
-        FROM departments d
-        INNER JOIN hierarchy h ON d.parent_id = h.id
-      )
-      SELECT MAX(depth) as max_depth
-      FROM hierarchy;
-    `;
+    try {
+      const result = await prisma.$queryRaw`
+        WITH RECURSIVE hierarchy AS (
+          SELECT id, parent_id, 1 as depth
+          FROM departments
+          WHERE parent_id IS NULL
+          
+          UNION ALL
+          
+          SELECT d.id, d.parent_id, h.depth + 1
+          FROM departments d
+          INNER JOIN hierarchy h ON d.parent_id = h.id
+        )
+        SELECT MAX(depth) as max_depth
+        FROM hierarchy;
+      `;
 
-    return result[0]?.max_depth || 0;
+      return Number(result[0]?.max_depth) || 0;
+    } catch (error) {
+      console.error('Error calculating max hierarchy depth:', error);
+      return 0;
+    }
   }
 
   /**

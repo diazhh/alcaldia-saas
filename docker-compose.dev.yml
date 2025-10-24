@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:14-alpine
+    container_name: municipal-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-municipal_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-municipal_password}
+      POSTGRES_DB: ${POSTGRES_DB:-municipal_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - municipal-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-municipal_user} -d ${POSTGRES_DB:-municipal_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+# Volúmenes persistentes
+volumes:
+  postgres_data:
+    driver: local
+    name: municipal_postgres_data_dev
+
+# Red personalizada
+networks:
+  municipal-network:
+    driver: bridge
+    name: municipal-network-dev

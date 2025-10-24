@@ -19,7 +19,7 @@ class PaymentController {
     try {
       const { taxId } = req.params;
       const debts = await paymentService.getDebtsByTaxId(taxId);
-      return res.json(successResponse(debts));
+      return successResponse(res, debts);
     } catch (error) {
       return res.status(404).json(errorResponse(error.message));
     }
@@ -33,7 +33,7 @@ class PaymentController {
   async generatePaymentSlip(req, res) {
     try {
       const slip = await paymentService.generatePaymentSlip(req.body);
-      return res.json(successResponse(slip, 'Planilla de pago generada exitosamente'));
+      return successResponse(res, slip, 'Planilla de pago generada exitosamente');
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -47,7 +47,7 @@ class PaymentController {
   async registerPayment(req, res) {
     try {
       const payment = await paymentService.registerPayment(req.body);
-      return res.status(201).json(successResponse(payment, 'Pago registrado exitosamente'));
+      return successResponse(res, payment, 'Pago registrado exitosamente', 201);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -62,7 +62,7 @@ class PaymentController {
     try {
       const { receiptNumber } = req.params;
       const receipt = await paymentService.getReceipt(receiptNumber);
-      return res.json(successResponse(receipt));
+      return successResponse(res, receipt);
     } catch (error) {
       return res.status(404).json(errorResponse(error.message));
     }
@@ -77,7 +77,7 @@ class PaymentController {
     try {
       const { taxpayerId } = req.params;
       const history = await paymentService.getPaymentHistory(taxpayerId, req.query);
-      return res.json(successResponse(history));
+      return successResponse(res, history);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -92,7 +92,7 @@ class PaymentController {
     try {
       const { paymentCode } = req.params;
       const verification = await paymentService.verifyPaymentCode(paymentCode);
-      return res.json(successResponse(verification));
+      return successResponse(res, verification);
     } catch (error) {
       return res.status(404).json(errorResponse(error.message));
     }

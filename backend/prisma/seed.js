@@ -1,5 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { seedEnhancedProjects } from './seeds/enhanced-projects-seed.js';
+import { seedOrganization } from './seeds/organization-seed.js';
+import { seedFinance } from './seeds/finance-seed.js';
+import { seedTaxModule } from './seeds/tax-seed-simple.js';
+import { seedCatastro } from './seeds/catastro/index.js';
+import seedHR from './seeds/hr-seed.js';
 
 const prisma = new PrismaClient();
 
@@ -12,6 +18,54 @@ async function main() {
   // Limpiar datos existentes (solo en desarrollo)
   if (process.env.NODE_ENV === 'development') {
     console.log('🧹 Limpiando datos existentes...');
+
+    // Limpiar catastro primero (en orden de dependencias)
+    await prisma.urbanInspection.deleteMany();
+    await prisma.permitInspection.deleteMany();
+    await prisma.constructionPermit.deleteMany();
+    await prisma.propertyPhoto.deleteMany();
+    await prisma.propertyOwner.deleteMany();
+    await prisma.urbanVariable.deleteMany();
+
+    // Limpiar tributario (en orden de dependencias)
+    await prisma.collectionAction.deleteMany();
+    await prisma.debtCollection.deleteMany();
+    await prisma.solvency.deleteMany();
+    await prisma.taxPayment.deleteMany();
+    await prisma.taxBill.deleteMany();
+    await prisma.inspection.deleteMany();
+    await prisma.vehicle.deleteMany();
+    await prisma.property.deleteMany();
+    await prisma.business.deleteMany();
+    await prisma.taxpayer.deleteMany();
+
+    // Limpiar finanzas primero (en orden de dependencias)
+    await prisma.reconciliationItem.deleteMany();
+    await prisma.bankReconciliation.deleteMany();
+    await prisma.paymentSchedule.deleteMany();
+    await prisma.accountingEntryDetail.deleteMany();
+    await prisma.accountingEntry.deleteMany();
+    await prisma.income.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.transaction.deleteMany();
+    await prisma.budgetModification.deleteMany();
+    await prisma.budgetItem.deleteMany();
+    await prisma.budget.deleteMany();
+    await prisma.bankAccount.deleteMany();
+
+    // Limpiar proyectos y relaciones
+    await prisma.progressReport.deleteMany();
+    await prisma.changeOrder.deleteMany();
+    await prisma.projectInspection.deleteMany();
+    await prisma.projectDocument.deleteMany();
+    await prisma.projectContract.deleteMany();
+    await prisma.contractor.deleteMany();
+    await prisma.projectPhoto.deleteMany();
+    await prisma.projectExpense.deleteMany();
+    await prisma.milestone.deleteMany();
+    await prisma.project.deleteMany();
+
+    // Limpiar estructura organizacional
     await prisma.departmentPermission.deleteMany();
     await prisma.userDepartment.deleteMany();
     await prisma.department.deleteMany();
@@ -112,8 +166,14 @@ async function main() {
   console.log('✅ Ciudadano creado:', ciudadano.email);
 
   // ============================================
-  // ESTRUCTURA ORGANIZACIONAL
+  // ESTRUCTURA ORGANIZACIONAL COMPLETA
   // ============================================
+  console.log('\n🏢 Ejecutando seed de estructura organizacional completa...');
+  await seedOrganization();
+  console.log('✅ Estructura organizacional completa creada');
+
+  // Comentar la estructura básica antigua
+  /*
   console.log('\n🏢 Creando estructura organizacional...');
 
   // Crear Direcciones principales
@@ -362,25 +422,41 @@ async function main() {
   }
 
   console.log('✅ Permisos de departamentos creados');
+  */
 
-  console.log('\n🎉 Seed completado exitosamente!');
-  console.log('\n📋 Usuarios creados:');
+  // Seed de proyectos mejorados
+  console.log('\n📦 Ejecutando seed de proyectos mejorados...');
+  await seedEnhancedProjects();
+
+  // Seed de finanzas
+  console.log('\n💰 Ejecutando seed de finanzas...');
+  await seedFinance();
+
+  // Seed de módulo tributario
+  console.log('\n🏛️  Ejecutando seed de módulo tributario...');
+  await seedTaxModule();
+
+  // Seed de módulo de catastro
+  console.log('\n🏛️  Ejecutando seed de módulo de catastro...');
+  await seedCatastro();
+
+  // Seed de módulo de RRHH
+  console.log('\n👥 Ejecutando seed de módulo de RRHH...');
+  await seedHR();
+
+  console.log('\n🎉 ¡Seed completado exitosamente!');
+  console.log('\n📋 Credenciales de acceso (todos con password: Admin123!):');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('Email                              | Rol          | Password');
+  console.log('Email                              | Rol           | Cargo');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('superadmin@municipal.gob.ve        | SUPER_ADMIN  | Admin123!');
-  console.log('admin@municipal.gob.ve             | ADMIN        | Admin123!');
-  console.log('director@municipal.gob.ve          | DIRECTOR     | Admin123!');
-  console.log('coordinador@municipal.gob.ve       | COORDINADOR  | Admin123!');
-  console.log('empleado@municipal.gob.ve          | EMPLEADO     | Admin123!');
-  console.log('ciudadano@example.com              | CIUDADANO    | Admin123!');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('\n🏢 Estructura Organizacional:');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('- 4 Direcciones principales');
-  console.log('- 5 Coordinaciones');
-  console.log('- 2 Departamentos');
-  console.log('- Usuarios asignados con roles específicos');
+  console.log('alcalde@municipal.gob.ve           | SUPER_ADMIN   | Alcalde');
+  console.log('sindico@municipal.gob.ve           | ADMIN         | Síndico Municipal');
+  console.log('secretario@municipal.gob.ve        | ADMIN         | Secretario General');
+  console.log('dir.finanzas@municipal.gob.ve      | DIRECTOR      | Dir. Finanzas');
+  console.log('dir.obras@municipal.gob.ve         | DIRECTOR      | Dir. Obras Públicas');
+  console.log('coordinador1@municipal.gob.ve      | COORDINADOR   | Coord. Contabilidad');
+  console.log('empleado1@municipal.gob.ve         | EMPLEADO      | Empleado');
+  console.log('... (50+ usuarios más)');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }
 

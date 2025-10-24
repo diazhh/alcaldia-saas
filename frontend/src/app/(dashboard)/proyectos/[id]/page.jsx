@@ -10,6 +10,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import MilestoneList from '@/components/modules/projects/MilestoneList';
 import ExpenseList from '@/components/modules/projects/ExpenseList';
+import ContractList from '@/components/modules/projects/ContractList';
+import InspectionList from '@/components/modules/projects/InspectionList';
+import ChangeOrderList from '@/components/modules/projects/ChangeOrderList';
+import ProgressReportList from '@/components/modules/projects/ProgressReportList';
+import DocumentList from '@/components/modules/projects/DocumentList';
 import {
   ArrowLeft,
   Edit,
@@ -21,6 +26,11 @@ import {
   Tag,
   AlertCircle,
   Image as ImageIcon,
+  FileText,
+  CheckSquare,
+  GitPullRequest,
+  TrendingUp,
+  Briefcase,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -280,67 +290,163 @@ export default function ProjectDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Tabs con Hitos, Gastos y Fotos */}
+      {/* Tabs con toda la información del proyecto */}
       <Tabs defaultValue="milestones" className="space-y-4">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-8 lg:w-auto">
           <TabsTrigger value="milestones">
-            Hitos ({milestones?.length || 0})
+            <CheckSquare className="h-4 w-4 mr-2" />
+            Hitos
           </TabsTrigger>
           <TabsTrigger value="expenses">
-            Gastos ({expenses?.length || 0})
+            <DollarSign className="h-4 w-4 mr-2" />
+            Gastos
+          </TabsTrigger>
+          <TabsTrigger value="contracts">
+            <Briefcase className="h-4 w-4 mr-2" />
+            Contratos
+          </TabsTrigger>
+          <TabsTrigger value="inspections">
+            <CheckSquare className="h-4 w-4 mr-2" />
+            Inspecciones
+          </TabsTrigger>
+          <TabsTrigger value="changeOrders">
+            <GitPullRequest className="h-4 w-4 mr-2" />
+            Cambios
+          </TabsTrigger>
+          <TabsTrigger value="progress">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Avances
+          </TabsTrigger>
+          <TabsTrigger value="documents">
+            <FileText className="h-4 w-4 mr-2" />
+            Documentos
           </TabsTrigger>
           <TabsTrigger value="photos">
             <ImageIcon className="h-4 w-4 mr-2" />
-            Fotos ({photos?.length || 0})
+            Fotos
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="milestones">
-          {milestonesLoading ? (
-            <Skeleton className="h-64 w-full" />
-          ) : (
-            <MilestoneList milestones={milestones} />
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Hitos del Proyecto</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {milestonesLoading ? (
+                <Skeleton className="h-64 w-full" />
+              ) : (
+                <MilestoneList milestones={milestones} />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="expenses">
-          {expensesLoading ? (
-            <Skeleton className="h-64 w-full" />
-          ) : (
-            <ExpenseList expenses={expenses} stats={expenseStats} />
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Gastos del Proyecto</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {expensesLoading ? (
+                <Skeleton className="h-64 w-full" />
+              ) : (
+                <ExpenseList expenses={expenses} stats={expenseStats} />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="contracts">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contratos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ContractList projectId={projectId} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="inspections">
+          <Card>
+            <CardHeader>
+              <CardTitle>Inspecciones de Calidad</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InspectionList projectId={projectId} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="changeOrders">
+          <Card>
+            <CardHeader>
+              <CardTitle>Órdenes de Cambio</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChangeOrderList projectId={projectId} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="progress">
+          <Card>
+            <CardHeader>
+              <CardTitle>Reportes de Avance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProgressReportList projectId={projectId} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <Card>
+            <CardHeader>
+              <CardTitle>Documentos Técnicos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DocumentList projectId={projectId} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="photos">
-          {photosLoading ? (
-            <Skeleton className="h-64 w-full" />
-          ) : photos && photos.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {photos.map((photo) => (
-                <Card key={photo.id}>
-                  <CardContent className="p-4">
-                    <img
-                      src={photo.url}
-                      alt={photo.caption || 'Foto del proyecto'}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                    {photo.caption && (
-                      <p className="text-sm text-gray-600 mt-2">{photo.caption}</p>
-                    )}
-                    <Badge variant="outline" className="mt-2">
-                      {photo.type}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-6 text-center text-gray-500">
-                No hay fotos registradas para este proyecto
-              </CardContent>
-            </Card>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Fotos del Proyecto</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {photosLoading ? (
+                <Skeleton className="h-64 w-full" />
+              ) : photos && photos.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {photos.map((photo) => (
+                    <Card key={photo.id}>
+                      <CardContent className="p-4">
+                        <img
+                          src={photo.url}
+                          alt={photo.caption || 'Foto del proyecto'}
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                        {photo.caption && (
+                          <p className="text-sm text-gray-600 mt-2">{photo.caption}</p>
+                        )}
+                        <Badge variant="outline" className="mt-2">
+                          {photo.type}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  No hay fotos registradas para este proyecto
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

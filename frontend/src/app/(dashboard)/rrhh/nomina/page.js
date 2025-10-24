@@ -188,9 +188,9 @@ export default function NominaPage() {
                       {new Date(payroll.paymentDate).toLocaleDateString()}
                     </TableCell>
                     <TableCell>{payroll._count?.details || 0}</TableCell>
-                    <TableCell>${payroll.totalGross?.toFixed(2) || '0.00'}</TableCell>
+                    <TableCell>${parseFloat(payroll.totalGross || 0).toFixed(2)}</TableCell>
                     <TableCell className="font-semibold">
-                      ${payroll.totalNet?.toFixed(2) || '0.00'}
+                      ${parseFloat(payroll.totalNet || 0).toFixed(2)}
                     </TableCell>
                     <TableCell>{getStatusBadge(payroll.status)}</TableCell>
                     <TableCell className="text-right">

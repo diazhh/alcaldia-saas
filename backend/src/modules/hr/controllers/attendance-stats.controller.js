@@ -50,12 +50,8 @@ export async function getAttendanceStats(req, res) {
             firstName: true,
             lastName: true,
             employeeNumber: true,
+            departmentId: true,
             position: {
-              select: {
-                name: true
-              }
-            },
-            department: {
               select: {
                 name: true
               }
@@ -125,7 +121,9 @@ export async function getAttendanceStats(req, res) {
           gte: today,
           lt: tomorrow
         },
-        isLate: true
+        lateMinutes: {
+          gt: 0
+        }
       }
     });
 
@@ -135,10 +133,10 @@ export async function getAttendanceStats(req, res) {
     const periodStats = await prisma.attendance.aggregate({
       where,
       _avg: {
-        hoursWorked: true
+        workedHours: true
       },
       _sum: {
-        hoursWorked: true
+        workedHours: true
       },
       _count: true
     });
@@ -152,14 +150,14 @@ export async function getAttendanceStats(req, res) {
         lastName: record.employee.lastName,
         employeeNumber: record.employee.employeeNumber,
         position: record.employee.position?.name,
-        department: record.employee.department?.name
+        departmentId: record.employee.departmentId
       },
       date: record.date,
       checkIn: record.checkIn,
       checkOut: record.checkOut,
-      hoursWorked: Number(record.hoursWorked || 0),
+      hoursWorked: Number(record.workedHours || 0),
       status: record.status,
-      isLate: record.isLate,
+      isLate: record.lateMinutes > 0,
       lateMinutes: record.lateMinutes || 0,
       notes: record.notes
     }));
@@ -177,8 +175,8 @@ export async function getAttendanceStats(req, res) {
       },
       periodStats: {
         totalRecords: periodStats._count,
-        averageHoursWorked: Number(periodStats._avg.hoursWorked || 0).toFixed(2),
-        totalHoursWorked: Number(periodStats._sum.hoursWorked || 0).toFixed(2)
+        averageHoursWorked: Number(periodStats._avg.workedHours || 0).toFixed(2),
+        totalHoursWorked: Number(periodStats._sum.workedHours || 0).toFixed(2)
       },
       records: formattedRecords,
       filters: {
@@ -225,19 +223,17 @@ export async function recordAttendance(req, res) {
     }
 
     // Calcular horas trabajadas si hay entrada y salida
-    let hoursWorked = 0;
-    let isLate = false;
+    let workedHours = 0;
     let lateMinutes = 0;
 
     if (checkIn && checkOut) {
       const checkInTime = new Date(`${date}T${checkIn}`);
       const checkOutTime = new Date(`${date}T${checkOut}`);
-      hoursWorked = (checkOutTime - checkInTime) / (1000 * 60 * 60); // Horas
+      workedHours = (checkOutTime - checkInTime) / (1000 * 60 * 60); // Horas
 
       // Verificar si llegó tarde (después de las 8:00)
       const scheduledStart = new Date(`${date}T08:00:00`);
       if (checkInTime > scheduledStart) {
-        isLate = true;
         lateMinutes = Math.round((checkInTime - scheduledStart) / (1000 * 60));
       }
     }
@@ -249,9 +245,8 @@ export async function recordAttendance(req, res) {
         date: new Date(date),
         checkIn,
         checkOut,
-        hoursWorked,
+        workedHours,
         status: status || 'PRESENT',
-        isLate,
         lateMinutes,
         notes
       },

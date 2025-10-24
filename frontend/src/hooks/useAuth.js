@@ -9,14 +9,14 @@ import { useRouter } from 'next/navigation';
  */
 export function useAuth() {
   const router = useRouter();
-  const { user, token, isAuthenticated, login, logout, updateUser, setLoading } = useAuthStore();
+  const { user, token, isAuthenticated, login, logout, updateUser } = useAuthStore();
 
   /**
    * Mutación de login
    */
   const loginMutation = useMutation({
-    mutationFn: async ({ email, password }) => {
-      const response = await api.post('/auth/login', { email, password });
+    mutationFn: async ({ email, password, rememberMe }) => {
+      const response = await api.post('/auth/login', { email, password, rememberMe });
       return response.data;
     },
     onSuccess: (data) => {
@@ -111,12 +111,12 @@ export function useAuth() {
     isAuthenticated,
     currentUser,
 
-    // Funciones
-    login: loginMutation.mutate,
-    register: registerMutation.mutate,
+    // Funciones - usar mutateAsync para poder hacer try/catch
+    login: loginMutation.mutateAsync,
+    register: registerMutation.mutateAsync,
     logout: handleLogout,
-    changePassword: changePasswordMutation.mutate,
-    updateProfile: updateProfileMutation.mutate,
+    changePassword: changePasswordMutation.mutateAsync,
+    updateProfile: updateProfileMutation.mutateAsync,
     refetchUser,
 
     // Estados de carga

@@ -8,11 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import axios from 'axios';
-import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
 
 export default function PropertyTable({ onEdit }) {
-  const { token } = useAuth();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,11 +22,9 @@ export default function PropertyTable({ onEdit }) {
 
   const fetchProperties = async () => {
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/properties`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setProperties(response.data);
+      setLoading(true);
+      const response = await api.get('/tax/properties');
+      setProperties(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching properties:', error);
     } finally {
@@ -38,10 +34,7 @@ export default function PropertyTable({ onEdit }) {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/properties/${deleteId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.delete(`/tax/properties/${deleteId}`);
       setProperties(properties.filter(p => p.id !== deleteId));
       setDeleteId(null);
     } catch (error) {

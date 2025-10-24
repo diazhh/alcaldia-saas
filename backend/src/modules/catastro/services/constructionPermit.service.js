@@ -104,7 +104,9 @@ export const getPermitById = async (id) => {
           taxpayer: {
             select: {
               id: true,
-              name: true,
+              firstName: true,
+              lastName: true,
+              businessName: true,
               taxId: true,
               email: true,
               phone: true,
@@ -429,4 +431,53 @@ export const getPermitStats = async () => {
     inConstruction,
     completed,
   };
+};
+
+/**
+ * Obtener inspecciones de un permiso
+ * @param {string} permitId - ID del permiso
+ * @returns {Promise<Array>}
+ */
+export const getInspectionsByPermit = async (permitId) => {
+  // Verificar que el permiso exista
+  const permit = await prisma.constructionPermit.findUnique({
+    where: { id: permitId },
+  });
+
+  if (!permit) {
+    throw new NotFoundError('Permiso no encontrado');
+  }
+
+  const inspections = await prisma.permitInspection.findMany({
+    where: { permitId },
+    orderBy: { inspectionDate: 'desc' },
+  });
+
+  return inspections;
+};
+
+/**
+ * Crear inspección para un permiso
+ * @param {string} permitId - ID del permiso
+ * @param {Object} data - Datos de la inspección
+ * @returns {Promise<Object>}
+ */
+export const createInspection = async (permitId, data) => {
+  // Verificar que el permiso exista
+  const permit = await prisma.constructionPermit.findUnique({
+    where: { id: permitId },
+  });
+
+  if (!permit) {
+    throw new NotFoundError('Permiso no encontrado');
+  }
+
+  const inspection = await prisma.permitInspection.create({
+    data: {
+      ...data,
+      permitId,
+    },
+  });
+
+  return inspection;
 };

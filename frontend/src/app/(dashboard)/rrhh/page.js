@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, Calendar, DollarSign, Clock, Award, FileText } from 'lucide-react';
+import { Users, Calendar, DollarSign, Clock, Award, FileText, PiggyBank, Baby, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -49,6 +49,30 @@ export default function RRHHPage() {
       href: '/rrhh/evaluaciones',
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
+    },
+    {
+      title: 'Caja de Ahorro',
+      description: 'Gestión de ahorros y préstamos del personal',
+      icon: PiggyBank,
+      href: '/rrhh/caja-ahorro',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+    },
+    {
+      title: 'Dependientes',
+      description: 'Gestión de dependientes y beneficiarios',
+      icon: Baby,
+      href: '/rrhh/dependientes',
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-50',
+    },
+    {
+      title: 'Disciplina',
+      description: 'Acciones disciplinarias y sanciones',
+      icon: AlertTriangle,
+      href: '/rrhh/disciplina',
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
     },
     {
       title: 'Reportes',

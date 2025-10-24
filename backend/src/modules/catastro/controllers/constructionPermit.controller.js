@@ -15,7 +15,7 @@ import {
 export const getAllPermits = async (req, res, next) => {
   try {
     const result = await permitService.getAllPermits(req.query);
-    res.json(successResponse(result, 'Permisos obtenidos exitosamente'));
+    return successResponse(res, result, 'Permisos obtenidos exitosamente');
   } catch (error) {
     next(error);
   }
@@ -27,7 +27,7 @@ export const getAllPermits = async (req, res, next) => {
 export const getPermitById = async (req, res, next) => {
   try {
     const permit = await permitService.getPermitById(req.params.id);
-    res.json(successResponse(permit, 'Permiso obtenido exitosamente'));
+    return successResponse(res, permit, 'Permiso obtenido exitosamente');
   } catch (error) {
     next(error);
   }
@@ -39,7 +39,7 @@ export const getPermitById = async (req, res, next) => {
 export const getPermitByNumber = async (req, res, next) => {
   try {
     const permit = await permitService.getPermitByNumber(req.params.permitNumber);
-    res.json(successResponse(permit, 'Permiso obtenido exitosamente'));
+    return successResponse(res, permit, 'Permiso obtenido exitosamente');
   } catch (error) {
     next(error);
   }
@@ -52,7 +52,7 @@ export const createPermit = async (req, res, next) => {
   try {
     const validatedData = createConstructionPermitSchema.parse(req.body);
     const permit = await permitService.createPermit(validatedData);
-    res.status(201).json(successResponse(permit, 'Permiso creado exitosamente'));
+    return successResponse(res, permit, 'Permiso creado exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -65,7 +65,7 @@ export const updatePermit = async (req, res, next) => {
   try {
     const validatedData = updateConstructionPermitSchema.parse(req.body);
     const permit = await permitService.updatePermit(req.params.id, validatedData);
-    res.json(successResponse(permit, 'Permiso actualizado exitosamente'));
+    return successResponse(res, permit, 'Permiso actualizado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -77,7 +77,7 @@ export const updatePermit = async (req, res, next) => {
 export const reviewPermit = async (req, res, next) => {
   try {
     const permit = await permitService.reviewPermit(req.params.id, req.body);
-    res.json(successResponse(permit, 'Revisión registrada exitosamente'));
+    return successResponse(res, permit, 'Revisión registrada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -106,7 +106,7 @@ export const approveOrRejectPermit = async (req, res, next) => {
 export const registerPayment = async (req, res, next) => {
   try {
     const permit = await permitService.registerPayment(req.params.id, req.body);
-    res.json(successResponse(permit, 'Pago registrado exitosamente'));
+    return successResponse(res, permit, 'Pago registrado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -118,7 +118,7 @@ export const registerPayment = async (req, res, next) => {
 export const startConstruction = async (req, res, next) => {
   try {
     const permit = await permitService.startConstruction(req.params.id);
-    res.json(successResponse(permit, 'Construcción iniciada exitosamente'));
+    return successResponse(res, permit, 'Construcción iniciada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -130,7 +130,7 @@ export const startConstruction = async (req, res, next) => {
 export const completeConstruction = async (req, res, next) => {
   try {
     const permit = await permitService.completeConstruction(req.params.id);
-    res.json(successResponse(permit, 'Construcción completada exitosamente'));
+    return successResponse(res, permit, 'Construcción completada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -143,7 +143,7 @@ export const cancelPermit = async (req, res, next) => {
   try {
     const { reason } = req.body;
     const permit = await permitService.cancelPermit(req.params.id, reason);
-    res.json(successResponse(permit, 'Permiso cancelado exitosamente'));
+    return successResponse(res, permit, 'Permiso cancelado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -155,7 +155,31 @@ export const cancelPermit = async (req, res, next) => {
 export const getPermitStats = async (req, res, next) => {
   try {
     const stats = await permitService.getPermitStats();
-    res.json(successResponse(stats, 'Estadísticas obtenidas exitosamente'));
+    return successResponse(res, stats, 'Estadísticas obtenidas exitosamente');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Obtener inspecciones de un permiso
+ */
+export const getInspectionsByPermit = async (req, res, next) => {
+  try {
+    const inspections = await permitService.getInspectionsByPermit(req.params.id);
+    return successResponse(res, inspections, 'Inspecciones obtenidas exitosamente');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Crear inspección para un permiso
+ */
+export const createInspection = async (req, res, next) => {
+  try {
+    const inspection = await permitService.createInspection(req.params.id, req.body);
+    return successResponse(res, inspection, 'Inspección creada exitosamente', 201);
   } catch (error) {
     next(error);
   }

@@ -11,7 +11,7 @@ async function getAll(req, res, next) {
       },
       orderBy: { startDate: 'desc' },
     });
-    res.json(successResponse(trainings, 'Capacitaciones obtenidas exitosamente'));
+    return successResponse(res, trainings, 'Capacitaciones obtenidas exitosamente');
   } catch (error) {
     next(error);
   }
@@ -31,7 +31,7 @@ async function getById(req, res, next) {
         },
       },
     });
-    res.json(successResponse(training, 'Capacitación obtenida exitosamente'));
+    return successResponse(res, training, 'Capacitación obtenida exitosamente');
   } catch (error) {
     next(error);
   }
@@ -46,7 +46,7 @@ async function create(req, res, next) {
         endDate: new Date(req.body.endDate),
       },
     });
-    res.status(201).json(successResponse(training, 'Capacitación creada exitosamente'));
+    return successResponse(res, training, 'Capacitación creada exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -60,7 +60,7 @@ async function enroll(req, res, next) {
         employeeId: req.body.employeeId,
       },
     });
-    res.status(201).json(successResponse(enrollment, 'Empleado inscrito exitosamente'));
+    return successResponse(res, enrollment, 'Empleado inscrito exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -73,7 +73,7 @@ async function getByEmployee(req, res, next) {
       include: { training: true },
       orderBy: { createdAt: 'desc' },
     });
-    res.json(successResponse(trainings, 'Capacitaciones obtenidas exitosamente'));
+    return successResponse(res, trainings, 'Capacitaciones obtenidas exitosamente');
   } catch (error) {
     next(error);
   }

@@ -169,7 +169,9 @@ export default function UrbanVariablesPage() {
                       </TableCell>
                       <TableCell>
                         <div className="max-w-xs truncate">
-                          {variable.allowedUses?.join(', ') || 'N/A'}
+                          {Array.isArray(variable.allowedUses) 
+                            ? variable.allowedUses.join(', ') 
+                            : variable.allowedUses || 'N/A'}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">

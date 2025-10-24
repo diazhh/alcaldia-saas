@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
+import { API_BASE_URL } from '@/constants';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function VehicleDialog({ open, onClose, vehicle }) {
@@ -53,7 +54,7 @@ export default function VehicleDialog({ open, onClose, vehicle }) {
 
   const fetchTaxpayers = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/taxpayers`, {
+      const response = await axios.get(`${API_BASE_URL}/api/tax/taxpayers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTaxpayers(response.data);
@@ -73,11 +74,11 @@ export default function VehicleDialog({ open, onClose, vehicle }) {
       };
 
       if (vehicle) {
-        await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/vehicles/${vehicle.id}`, payload, {
+        await axios.put(`${API_BASE_URL}/api/tax/vehicles/${vehicle.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/vehicles`, payload, {
+        await axios.post(`${API_BASE_URL}/api/tax/vehicles`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }

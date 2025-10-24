@@ -2,6 +2,19 @@
 
 Sistema completo de gestión para alcaldías venezolanas, desarrollado con tecnologías modernas y arquitectura escalable.
 
+## 🚀 Deploy Rápido
+
+```bash
+# Desplegar cambios a producción (puertos 3002-3003)
+./deploy.sh
+```
+
+**URLs:**
+- **Frontend Producción**: http://147.93.184.19:3002
+- **Backend Producción**: http://147.93.184.19:3003
+- **Frontend Desarrollo**: http://localhost:3000
+- **Backend Desarrollo**: http://localhost:3001
+
 ## 📋 Descripción
 
 Sistema web integral que permite a las alcaldías gestionar de manera eficiente todos los aspectos de la administración municipal, incluyendo:

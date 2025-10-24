@@ -18,7 +18,7 @@ class FeeController {
   async createFeeBill(req, res) {
     try {
       const bill = await feeService.createFeeBill(req.body);
-      return res.status(201).json(successResponse(bill, 'Factura de tasa creada exitosamente'));
+      return successResponse(res, bill, 'Factura de tasa creada exitosamente', 201);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -32,7 +32,7 @@ class FeeController {
   async getFeeBills(req, res) {
     try {
       const result = await feeService.getFeeBills(req.query);
-      return res.json(successResponse(result));
+      return successResponse(res, result);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -46,7 +46,7 @@ class FeeController {
   async getFeeBillById(req, res) {
     try {
       const bill = await feeService.getFeeBillById(req.params.id);
-      return res.json(successResponse(bill));
+      return successResponse(res, bill);
     } catch (error) {
       return res.status(404).json(errorResponse(error.message));
     }
@@ -60,7 +60,7 @@ class FeeController {
   async getFeeBillByNumber(req, res) {
     try {
       const bill = await feeService.getFeeBillByNumber(req.params.billNumber);
-      return res.json(successResponse(bill));
+      return successResponse(res, bill);
     } catch (error) {
       return res.status(404).json(errorResponse(error.message));
     }
@@ -74,7 +74,7 @@ class FeeController {
   async updateFeeBill(req, res) {
     try {
       const bill = await feeService.updateFeeBill(req.params.id, req.body);
-      return res.json(successResponse(bill, 'Factura actualizada exitosamente'));
+      return successResponse(res, bill, 'Factura actualizada exitosamente');
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -93,7 +93,7 @@ class FeeController {
       }
 
       const bill = await feeService.cancelFeeBill(req.params.id, reason);
-      return res.json(successResponse(bill, 'Factura anulada exitosamente'));
+      return successResponse(res, bill, 'Factura anulada exitosamente');
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -125,7 +125,7 @@ class FeeController {
   async getFeeStatistics(req, res) {
     try {
       const stats = await feeService.getFeeStatistics(req.query);
-      return res.json(successResponse(stats));
+      return successResponse(res, stats);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }

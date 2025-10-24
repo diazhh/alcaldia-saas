@@ -47,10 +47,19 @@ class DepartmentController {
       // Obtener departamentos
       const result = await departmentService.listDepartments(filters);
 
-      res.json({
-        success: true,
-        ...result,
-      });
+      // Si es un array (hierarchical=true), retornar como data
+      if (Array.isArray(result)) {
+        res.json({
+          success: true,
+          data: result,
+        });
+      } else {
+        // Si es objeto con paginación, usar spread
+        res.json({
+          success: true,
+          ...result,
+        });
+      }
     } catch (error) {
       next(error);
     }
@@ -212,6 +221,69 @@ class DepartmentController {
       res.json({
         success: true,
         data: stats,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Obtener hijos directos de un departamento
+   * @param {Request} req - Request de Express
+   * @param {Response} res - Response de Express
+   * @param {Function} next - Next middleware
+   */
+  async getChildren(req, res, next) {
+    try {
+      const { id } = req.params;
+      const children = await departmentService.getChildren(id);
+
+      res.json({
+        success: true,
+        data: children,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Obtener personal de un departamento
+   * @param {Request} req - Request de Express
+   * @param {Response} res - Response de Express
+   * @param {Function} next - Next middleware
+   */
+  async getStaff(req, res, next) {
+    try {
+      const { id } = req.params;
+      const staff = await departmentService.getStaff(id);
+
+      res.json({
+        success: true,
+        data: staff,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Mover un departamento en la jerarquía
+   * @param {Request} req - Request de Express
+   * @param {Response} res - Response de Express
+   * @param {Function} next - Next middleware
+   */
+  async move(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { newParentId } = req.body;
+
+      const department = await departmentService.moveDepartment(id, newParentId);
+
+      res.json({
+        success: true,
+        message: 'Departamento movido exitosamente',
+        data: department,
       });
     } catch (error) {
       next(error);

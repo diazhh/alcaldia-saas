@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
+import { API_BASE_URL } from '@/constants';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
@@ -88,7 +89,7 @@ export default function ReportesPage() {
     try {
       // Aquí se implementaría la llamada al backend para generar el reporte
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/reports/${reportType}`,
+        `${API_BASE_URL}/api/tax/reports/${reportType}`,
         {
           params: { period, format },
           headers: { Authorization: `Bearer ${token}` },

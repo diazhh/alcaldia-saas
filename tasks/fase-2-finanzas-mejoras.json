@@ -1,0 +1,70 @@
+{
+  "fase": "FASE 2 - MEJORAS MÓDULO FINANZAS",
+  "descripcion": "Implementación de funcionalidades faltantes del módulo de finanzas según PRD",
+  "prioridad": "ALTA",
+  "estimacion_total": "6-8 semanas",
+  "estado": "PLANIFICADO",
+  "fecha_creacion": "2025-10-21",
+  
+  "resumen_tareas": {
+    "total": 40,
+    "criticas": 10,
+    "altas": 15,
+    "medias": 12,
+    "bajas": 3
+  },
+  
+  "sprints": [
+    {
+      "id": "sprint-1",
+      "nombre": "Modificaciones Presupuestarias y Seeds",
+      "duracion": "1 semana",
+      "prioridad": "CRÍTICA",
+      "tareas_ids": ["f2-m1", "f2-m2", "f2-m3", "f2-m4"]
+    },
+    {
+      "id": "sprint-2",
+      "nombre": "Conciliación Bancaria",
+      "duracion": "1 semana",
+      "prioridad": "CRÍTICA",
+      "tareas_ids": ["f2-m5", "f2-m6", "f2-m7", "f2-m8", "f2-m9", "f2-m10"]
+    },
+    {
+      "id": "sprint-3",
+      "nombre": "Programación de Pagos",
+      "duracion": "1 semana",
+      "prioridad": "ALTA",
+      "tareas_ids": ["f2-m11", "f2-m12", "f2-m13", "f2-m14", "f2-m15"]
+    },
+    {
+      "id": "sprint-4",
+      "nombre": "Proyección de Flujo de Caja",
+      "duracion": "1 semana",
+      "prioridad": "ALTA",
+      "tareas_ids": ["f2-m16", "f2-m17", "f2-m18", "f2-m19", "f2-m20"]
+    },
+    {
+      "id": "sprint-5",
+      "nombre": "Fondos Especiales",
+      "duracion": "1 semana",
+      "prioridad": "MEDIA",
+      "tareas_ids": ["f2-m21", "f2-m22", "f2-m23", "f2-m24", "f2-m25"]
+    },
+    {
+      "id": "sprint-6",
+      "nombre": "Estados Financieros y Cierre",
+      "duracion": "1 semana",
+      "prioridad": "MEDIA",
+      "tareas_ids": ["f2-m26", "f2-m27", "f2-m28", "f2-m29", "f2-m30"]
+    },
+    {
+      "id": "sprint-7",
+      "nombre": "Exportación y Auditoría",
+      "duracion": "1 semana",
+      "prioridad": "MEDIA-BAJA",
+      "tareas_ids": ["f2-m31", "f2-m32", "f2-m33", "f2-m34", "f2-m35"]
+    }
+  ],
+  
+  "tareas_detalladas": "Ver archivo ANALISIS_MODULO_FINANZAS.md para detalles completos de cada tarea"
+}

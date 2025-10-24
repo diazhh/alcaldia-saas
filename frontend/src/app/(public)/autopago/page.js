@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import axios from 'axios';
+import { API_BASE_URL } from '@/constants';
 
 /**
  * Portal Público de Autopago
@@ -29,7 +30,7 @@ export default function AutopagoPage() {
 
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/payments/debts/${taxId}`
+        `${API_BASE_URL}/api/tax/payments/debts/${taxId}`
       );
       setDebts(response.data);
       setStep('debts');
@@ -44,7 +45,7 @@ export default function AutopagoPage() {
     setLoading(true);
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/payments/generate-slip`,
+        `${API_BASE_URL}/api/tax/payments/generate-slip`,
         { billIds: selectedBills }
       );
       // Aquí se podría descargar la planilla o mostrar el código de pago

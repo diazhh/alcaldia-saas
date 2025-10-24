@@ -11,11 +11,13 @@ export const jwtConfig = {
 /**
  * Generar un token JWT
  * @param {Object} payload - Datos a incluir en el token
+ * @param {boolean} rememberMe - Si es true, el token dura 30 días, sino 7 días
  * @returns {string} Token JWT
  */
-export const generateToken = (payload) => {
+export const generateToken = (payload, rememberMe = false) => {
+  const expiresIn = rememberMe ? '30d' : jwtConfig.expiresIn;
   return jwt.sign(payload, jwtConfig.secret, {
-    expiresIn: jwtConfig.expiresIn,
+    expiresIn,
   });
 };
 

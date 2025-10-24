@@ -19,6 +19,10 @@ import * as evaluationController from './controllers/evaluation.controller.js';
 import * as trainingController from './controllers/training.controller.js';
 import * as severanceController from './controllers/severance.controller.js';
 import * as attendanceStatsController from './controllers/attendance-stats.controller.js';
+import * as savingsBankController from './controllers/savings-bank.controller.js';
+import * as dependentController from './controllers/dependent.controller.js';
+import * as disciplinaryController from './controllers/disciplinary.controller.js';
+import * as hrReportsController from './controllers/hr-reports.controller.js';
 
 // Validations
 import {
@@ -557,8 +561,6 @@ router.post('/severance/calculate', authenticate, severanceController.calculateM
  */
 router.post('/severance/liquidate/:employeeId', authenticate, severanceController.liquidate);
 
-export default router;
-
 // ============================================
 // RUTAS DEL PORTAL DEL EMPLEADO
 // ============================================
@@ -578,3 +580,308 @@ router.get('/portal/my-data', authenticate, portalController.getMyPortalData);
  * @access  Private (Empleado)
  */
 router.get('/portal/payroll/:id/download', authenticate, portalController.downloadPayrollReceipt);
+
+// ============================================
+// RUTAS DE CAJA DE AHORRO
+// ============================================
+
+/**
+ * @route   GET /api/hr/savings-bank
+ * @desc    Listar cuentas de caja de ahorro
+ * @access  Private
+ */
+router.get('/savings-bank', authenticate, savingsBankController.listSavingsAccounts);
+
+/**
+ * @route   GET /api/hr/savings-bank/stats
+ * @desc    Estadísticas de caja de ahorro
+ * @access  Private
+ */
+router.get('/savings-bank/stats', authenticate, savingsBankController.getStatistics);
+
+/**
+ * @route   GET /api/hr/savings-bank/employee/:employeeId
+ * @desc    Obtener cuenta de caja de ahorro de un empleado
+ * @access  Private
+ */
+router.get('/savings-bank/employee/:employeeId', authenticate, savingsBankController.getSavingsAccountByEmployee);
+
+/**
+ * @route   POST /api/hr/savings-bank
+ * @desc    Crear cuenta de caja de ahorro
+ * @access  Private (Admin/Director RRHH)
+ */
+router.post('/savings-bank', authenticate, savingsBankController.createSavingsAccount);
+
+/**
+ * @route   PATCH /api/hr/savings-bank/employee/:employeeId/rates
+ * @desc    Actualizar tasas de aporte
+ * @access  Private (Admin/Director RRHH)
+ */
+router.patch('/savings-bank/employee/:employeeId/rates', authenticate, savingsBankController.updateRates);
+
+/**
+ * @route   POST /api/hr/savings-bank/contributions
+ * @desc    Registrar aporte mensual
+ * @access  Private (Admin/Director RRHH)
+ */
+router.post('/savings-bank/contributions', authenticate, savingsBankController.recordContribution);
+
+/**
+ * @route   GET /api/hr/savings-bank/loans/employee/:employeeId
+ * @desc    Obtener préstamos activos de un empleado
+ * @access  Private
+ */
+router.get('/savings-bank/loans/employee/:employeeId', authenticate, savingsBankController.getActiveLoans);
+
+/**
+ * @route   POST /api/hr/savings-bank/loans
+ * @desc    Solicitar préstamo
+ * @access  Private
+ */
+router.post('/savings-bank/loans', authenticate, savingsBankController.requestLoan);
+
+/**
+ * @route   PATCH /api/hr/savings-bank/loans/:loanId/approve
+ * @desc    Aprobar préstamo
+ * @access  Private (Admin/Director RRHH)
+ */
+router.patch('/savings-bank/loans/:loanId/approve', authenticate, savingsBankController.approveLoan);
+
+/**
+ * @route   PATCH /api/hr/savings-bank/loans/:loanId/reject
+ * @desc    Rechazar préstamo
+ * @access  Private (Admin/Director RRHH)
+ */
+router.patch('/savings-bank/loans/:loanId/reject', authenticate, savingsBankController.rejectLoan);
+
+/**
+ * @route   POST /api/hr/savings-bank/loans/:loanId/payment
+ * @desc    Registrar pago de cuota
+ * @access  Private (Admin/Director RRHH)
+ */
+router.post('/savings-bank/loans/:loanId/payment', authenticate, savingsBankController.recordLoanPayment);
+
+// ============================================
+// RUTAS DE DEPENDIENTES
+// ============================================
+
+/**
+ * @route   GET /api/hr/dependents
+ * @desc    Listar dependientes
+ * @access  Private
+ */
+router.get('/dependents', authenticate, dependentController.listDependents);
+
+/**
+ * @route   GET /api/hr/dependents/stats
+ * @desc    Estadísticas de dependientes
+ * @access  Private
+ */
+router.get('/dependents/stats', authenticate, dependentController.getStatistics);
+
+/**
+ * @route   GET /api/hr/dependents/:id
+ * @desc    Obtener dependiente por ID
+ * @access  Private
+ */
+router.get('/dependents/:id', authenticate, dependentController.getDependentById);
+
+/**
+ * @route   GET /api/hr/dependents/employee/:employeeId
+ * @desc    Obtener dependientes de un empleado
+ * @access  Private
+ */
+router.get('/dependents/employee/:employeeId', authenticate, dependentController.getDependentsByEmployee);
+
+/**
+ * @route   GET /api/hr/dependents/employee/:employeeId/children
+ * @desc    Obtener hijos menores de edad
+ * @access  Private
+ */
+router.get('/dependents/employee/:employeeId/children', authenticate, dependentController.getMinorChildren);
+
+/**
+ * @route   GET /api/hr/dependents/employee/:employeeId/child-bonus
+ * @desc    Calcular prima por hijos
+ * @access  Private
+ */
+router.get('/dependents/employee/:employeeId/child-bonus', authenticate, dependentController.calculateChildBonus);
+
+/**
+ * @route   POST /api/hr/dependents
+ * @desc    Crear dependiente
+ * @access  Private
+ */
+router.post('/dependents', authenticate, dependentController.createDependent);
+
+/**
+ * @route   PUT /api/hr/dependents/:id
+ * @desc    Actualizar dependiente
+ * @access  Private
+ */
+router.put('/dependents/:id', authenticate, dependentController.updateDependent);
+
+/**
+ * @route   DELETE /api/hr/dependents/:id
+ * @desc    Eliminar dependiente
+ * @access  Private
+ */
+router.delete('/dependents/:id', authenticate, dependentController.deleteDependent);
+
+// ============================================
+// RUTAS DE ACCIONES DISCIPLINARIAS
+// ============================================
+
+/**
+ * @route   GET /api/hr/disciplinary
+ * @desc    Listar acciones disciplinarias
+ * @access  Private
+ */
+router.get('/disciplinary', authenticate, disciplinaryController.listActions);
+
+/**
+ * @route   GET /api/hr/disciplinary/stats
+ * @desc    Estadísticas de acciones disciplinarias
+ * @access  Private
+ */
+router.get('/disciplinary/stats', authenticate, disciplinaryController.getStatistics);
+
+/**
+ * @route   GET /api/hr/disciplinary/:actionId
+ * @desc    Obtener acción disciplinaria por ID
+ * @access  Private
+ */
+router.get('/disciplinary/:actionId', authenticate, disciplinaryController.getActionById);
+
+/**
+ * @route   GET /api/hr/disciplinary/employee/:employeeId
+ * @desc    Obtener acciones disciplinarias de un empleado
+ * @access  Private
+ */
+router.get('/disciplinary/employee/:employeeId', authenticate, disciplinaryController.getActionsByEmployee);
+
+/**
+ * @route   GET /api/hr/disciplinary/employee/:employeeId/history
+ * @desc    Obtener historial disciplinario de un empleado
+ * @access  Private
+ */
+router.get('/disciplinary/employee/:employeeId/history', authenticate, disciplinaryController.getEmployeeDisciplinaryHistory);
+
+/**
+ * @route   POST /api/hr/disciplinary
+ * @desc    Crear acción disciplinaria
+ * @access  Private (Admin/Director RRHH)
+ */
+router.post('/disciplinary', authenticate, disciplinaryController.createAction);
+
+/**
+ * @route   PATCH /api/hr/disciplinary/:actionId/notify
+ * @desc    Notificar al empleado
+ * @access  Private (Admin/Director RRHH)
+ */
+router.patch('/disciplinary/:actionId/notify', authenticate, disciplinaryController.notifyEmployee);
+
+/**
+ * @route   PATCH /api/hr/disciplinary/:actionId/response
+ * @desc    Registrar respuesta del empleado
+ * @access  Private
+ */
+router.patch('/disciplinary/:actionId/response', authenticate, disciplinaryController.recordEmployeeResponse);
+
+/**
+ * @route   PATCH /api/hr/disciplinary/:actionId/decision
+ * @desc    Tomar decisión
+ * @access  Private (Admin/Director RRHH)
+ */
+router.patch('/disciplinary/:actionId/decision', authenticate, disciplinaryController.makeDecision);
+
+/**
+ * @route   PATCH /api/hr/disciplinary/:actionId/appeal
+ * @desc    Registrar apelación
+ * @access  Private
+ */
+router.patch('/disciplinary/:actionId/appeal', authenticate, disciplinaryController.recordAppeal);
+
+/**
+ * @route   PATCH /api/hr/disciplinary/:actionId/resolve-appeal
+ * @desc    Resolver apelación
+ * @access  Private (Admin/Director RRHH)
+ */
+router.patch('/disciplinary/:actionId/resolve-appeal', authenticate, disciplinaryController.resolveAppeal);
+
+/**
+ * @route   PATCH /api/hr/disciplinary/:actionId/close
+ * @desc    Cerrar acción disciplinaria
+ * @access  Private (Admin/Director RRHH)
+ */
+router.patch('/disciplinary/:actionId/close', authenticate, disciplinaryController.closeAction);
+
+/**
+ * @route   PATCH /api/hr/disciplinary/:actionId/cancel
+ * @desc    Cancelar acción disciplinaria
+ * @access  Private (Admin/Director RRHH)
+ */
+router.patch('/disciplinary/:actionId/cancel', authenticate, disciplinaryController.cancelAction);
+
+// ============================================
+// RUTAS DE REPORTES
+// ============================================
+
+/**
+ * @route   GET /api/hr/reports/birthdays
+ * @desc    Reporte de cumpleaños del mes
+ * @access  Private
+ */
+router.get('/reports/birthdays', authenticate, hrReportsController.getBirthdaysReport);
+
+/**
+ * @route   GET /api/hr/reports/seniority
+ * @desc    Reporte de antigüedad
+ * @access  Private
+ */
+router.get('/reports/seniority', authenticate, hrReportsController.getSeniorityReport);
+
+/**
+ * @route   GET /api/hr/reports/turnover
+ * @desc    Reporte de rotación de personal
+ * @access  Private
+ */
+router.get('/reports/turnover', authenticate, hrReportsController.getTurnoverReport);
+
+/**
+ * @route   GET /api/hr/reports/absenteeism
+ * @desc    Reporte de ausentismo
+ * @access  Private
+ */
+router.get('/reports/absenteeism', authenticate, hrReportsController.getAbsenteeismReport);
+
+/**
+ * @route   GET /api/hr/reports/payroll-cost
+ * @desc    Reporte de costo de personal
+ * @access  Private
+ */
+router.get('/reports/payroll-cost', authenticate, hrReportsController.getPayrollCostReport);
+
+/**
+ * @route   GET /api/hr/reports/retirement-projection
+ * @desc    Proyección de jubilaciones
+ * @access  Private
+ */
+router.get('/reports/retirement-projection', authenticate, hrReportsController.getRetirementProjection);
+
+/**
+ * @route   GET /api/hr/reports/work-certificate/:employeeId
+ * @desc    Generar certificado de trabajo
+ * @access  Private
+ */
+router.get('/reports/work-certificate/:employeeId', authenticate, hrReportsController.generateWorkCertificate);
+
+/**
+ * @route   GET /api/hr/reports/income-statement/:employeeId
+ * @desc    Generar constancia de ingresos
+ * @access  Private
+ */
+router.get('/reports/income-statement/:employeeId', authenticate, hrReportsController.generateIncomeStatement);
+
+export default router;

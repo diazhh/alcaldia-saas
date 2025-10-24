@@ -142,7 +142,9 @@ export const getPropertiesByOwner = async (ownerIdNumber) => {
           taxpayer: {
             select: {
               id: true,
-              name: true,
+              firstName: true,
+              lastName: true,
+              businessName: true,
               taxId: true,
             },
           },

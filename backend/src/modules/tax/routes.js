@@ -12,6 +12,8 @@ import feeController from './controllers/fee.controller.js';
 import paymentController from './controllers/payment.controller.js';
 import collectionController from './controllers/collection.controller.js';
 import solvencyController from './controllers/solvency.controller.js';
+import * as statisticsController from './controllers/statistics.controller.js';
+import * as reportsController from './controllers/reports.controller.js';
 
 const router = express.Router();
 
@@ -789,6 +791,136 @@ router.post(
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
   solvencyController.revokeSolvency
+);
+
+// ============================================
+// RUTAS DE ESTADÍSTICAS Y DASHBOARD
+// ============================================
+
+/**
+ * @route   GET /api/tax/statistics/dashboard
+ * @desc    Obtener todas las estadísticas del dashboard (optimizado)
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/statistics/dashboard',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  statisticsController.getDashboardData
+);
+
+/**
+ * @route   GET /api/tax/statistics/general
+ * @desc    Obtener estadísticas generales
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/statistics/general',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  statisticsController.getGeneralStatistics
+);
+
+/**
+ * @route   GET /api/tax/statistics/monthly-collection
+ * @desc    Obtener recaudación mensual
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/statistics/monthly-collection',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  statisticsController.getMonthlyCollection
+);
+
+/**
+ * @route   GET /api/tax/statistics/tax-type-distribution
+ * @desc    Obtener distribución por tipo de impuesto
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/statistics/tax-type-distribution',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  statisticsController.getTaxTypeDistribution
+);
+
+/**
+ * @route   GET /api/tax/statistics/top-contributors
+ * @desc    Obtener top contribuyentes
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/statistics/top-contributors',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  statisticsController.getTopContributors
+);
+
+/**
+ * @route   GET /api/tax/statistics/alerts
+ * @desc    Obtener alertas importantes
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/statistics/alerts',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  statisticsController.getAlerts
+);
+
+// ============================================
+// RUTAS DE REPORTES Y EXPORTACIÓN
+// ============================================
+
+/**
+ * @route   GET /api/tax/reports/types
+ * @desc    Obtener tipos de reportes disponibles
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/reports/types',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  reportsController.getReportTypes
+);
+
+/**
+ * @route   GET /api/tax/reports/stats
+ * @desc    Obtener estadísticas de reportes
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/reports/stats',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  reportsController.getReportStats
+);
+
+/**
+ * @route   GET /api/tax/reports/:reportType/preview
+ * @desc    Vista previa de datos del reporte (JSON)
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/reports/:reportType/preview',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  reportsController.previewReportData
+);
+
+/**
+ * @route   GET /api/tax/reports/:reportType
+ * @desc    Generar y descargar reporte
+ * @query   period - Período del reporte (YYYY, YYYY-MM, YYYY-QN)
+ * @query   format - Formato del reporte (pdf, excel, csv)
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.get(
+  '/reports/:reportType',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  reportsController.generateReport
 );
 
 export default router;

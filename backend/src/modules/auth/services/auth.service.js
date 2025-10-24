@@ -66,12 +66,16 @@ class AuthService {
    * @returns {Promise<Object>} Usuario y token
    */
   async login(credentials) {
-    const { email, password } = credentials;
+    const { email, password, rememberMe = false } = credentials;
+
+    console.log('[AUTH] Iniciando login para:', email, '- Remember me:', rememberMe);
 
     // Buscar usuario
     const user = await prisma.user.findUnique({
       where: { email },
     });
+
+    console.log('[AUTH] Usuario encontrado:', user ? 'SI' : 'NO');
 
     if (!user) {
       throw new AuthenticationError('Credenciales inválidas');
@@ -82,26 +86,61 @@ class AuthService {
       throw new AuthenticationError('Usuario inactivo. Contacte al administrador');
     }
 
+    console.log('[AUTH] Verificando contraseña...');
+
     // Verificar contraseña
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    let isPasswordValid;
+    try {
+      isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log('[AUTH] bcrypt.compare completado');
+    } catch (error) {
+      console.error('[AUTH] Error en bcrypt.compare:', error);
+      throw error;
+    }
+
+    console.log('[AUTH] Contraseña válida:', isPasswordValid);
 
     if (!isPasswordValid) {
       throw new AuthenticationError('Credenciales inválidas');
     }
 
-    // Generar token
+    console.log('[AUTH] Generando token...');
+
+    // Generar token con duración según rememberMe
     const token = generateToken({
       userId: user.id,
       email: user.email,
       role: user.role,
+    }, rememberMe);
+
+    console.log('[AUTH] Token generado');
+
+    // Obtener roles personalizados del usuario
+    const customRoles = await prisma.userCustomRole.findMany({
+      where: { userId: user.id },
+      include: {
+        role: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+      },
     });
 
     // Sanitizar usuario
-    const sanitizedUser = sanitizeObject(user);
+    const sanitizedUser = {
+      ...sanitizeObject(user),
+      customRoles: customRoles.map(ucr => ucr.role),
+    };
+
+    console.log('[AUTH] Login exitoso');
 
     return {
       user: sanitizedUser,
       token,
+      expiresIn: rememberMe ? '30d' : '7d',
     };
   }
 
@@ -199,6 +238,32 @@ class AuthService {
     }
 
     return sanitizeObject(user);
+  }
+
+  /**
+   * Obtener todos los usuarios
+   * @returns {Promise<Array>} Lista de usuarios
+   */
+  async getAllUsers() {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        phone: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: [
+        { role: 'asc' },
+        { firstName: 'asc' },
+      ],
+    });
+
+    return users;
   }
 }
 

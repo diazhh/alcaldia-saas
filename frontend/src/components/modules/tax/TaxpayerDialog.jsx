@@ -20,14 +20,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import axios from 'axios';
-import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
 
 /**
  * Diálogo para crear/editar contribuyentes
  */
 export default function TaxpayerDialog({ open, onClose, taxpayer }) {
-  const { token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     taxId: '',
@@ -67,7 +65,7 @@ export default function TaxpayerDialog({ open, onClose, taxpayer }) {
     try {
       if (taxpayer) {
         await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/tax/taxpayers/${taxpayer.id}`,
+          `${API_BASE_URL}/api/tax/taxpayers/${taxpayer.id}`,
           formData,
           {
             headers: { Authorization: `Bearer ${token}` }
@@ -75,7 +73,7 @@ export default function TaxpayerDialog({ open, onClose, taxpayer }) {
         );
       } else {
         await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/tax/taxpayers`,
+          `${API_BASE_URL}/api/tax/taxpayers`,
           formData,
           {
             headers: { Authorization: `Bearer ${token}` }

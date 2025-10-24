@@ -24,14 +24,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import axios from 'axios';
-import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
 
 /**
  * Tabla de contribuyentes con búsqueda y acciones
  */
 export default function TaxpayerTable({ onEdit }) {
-  const { token } = useAuth();
   const [taxpayers, setTaxpayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,13 +41,9 @@ export default function TaxpayerTable({ onEdit }) {
 
   const fetchTaxpayers = async () => {
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/taxpayers`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      setTaxpayers(response.data);
+      setLoading(true);
+      const response = await api.get('/tax/taxpayers');
+      setTaxpayers(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching taxpayers:', error);
     } finally {
@@ -59,12 +53,7 @@ export default function TaxpayerTable({ onEdit }) {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tax/taxpayers/${deleteId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      await api.delete(`/tax/taxpayers/${deleteId}`);
       setTaxpayers(taxpayers.filter(t => t.id !== deleteId));
       setDeleteId(null);
     } catch (error) {

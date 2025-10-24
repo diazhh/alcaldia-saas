@@ -11,6 +11,8 @@ import { successResponse, errorResponse } from '../../../shared/utils/response.j
  */
 export async function getDashboardStats(req, res) {
   try {
+    console.log('📊 Fetching dashboard stats...');
+    
     // Contar proyectos activos
     const activeProjects = await prisma.project.count({
       where: {
@@ -19,22 +21,36 @@ export async function getDashboardStats(req, res) {
         }
       }
     });
+    console.log('✅ Active projects:', activeProjects);
 
     // Calcular presupuesto ejecutado (del año actual)
     const currentYear = new Date().getFullYear();
-    const budgets = await prisma.budget.findMany({
+    console.log('📅 Current year:', currentYear);
+    
+    const budget = await prisma.budget.findUnique({
       where: {
         year: currentYear
       },
-      select: {
-        totalAmount: true,
-        executedAmount: true
+      include: {
+        items: {
+          select: {
+            allocatedAmount: true,
+            paidAmount: true
+          }
+        }
       }
     });
+    console.log('💰 Budget found:', budget ? 'Yes' : 'No');
 
-    const totalBudget = budgets.reduce((sum, b) => sum + Number(b.totalAmount), 0);
-    const executedBudget = budgets.reduce((sum, b) => sum + Number(b.executedAmount || 0), 0);
-    const budgetPercentage = totalBudget > 0 ? Math.round((executedBudget / totalBudget) * 100) : 0;
+    let totalBudget = 0;
+    let executedBudget = 0;
+    let budgetPercentage = 0;
+
+    if (budget) {
+      totalBudget = budget.items.reduce((sum, item) => sum + Number(item.allocatedAmount), 0);
+      executedBudget = budget.items.reduce((sum, item) => sum + Number(item.paidAmount), 0);
+      budgetPercentage = totalBudget > 0 ? Math.round((executedBudget / totalBudget) * 100) : 0;
+    }
 
     // Contar empleados activos
     const activeEmployees = await prisma.employee.count({
@@ -69,17 +85,28 @@ export async function getDashboardStats(req, res) {
         name: true,
         status: true,
         budget: true,
-        executedBudget: true
+        expenses: {
+          select: {
+            amount: true
+          }
+        }
       }
     });
 
     // Calcular porcentaje de cada proyecto
-    const projectsWithPercentage = recentProjects.map(project => ({
-      ...project,
-      percentage: project.budget > 0
-        ? Math.round((Number(project.executedBudget || 0) / Number(project.budget)) * 100)
-        : 0
-    }));
+    const projectsWithPercentage = recentProjects.map(project => {
+      const executedBudget = project.expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+      return {
+        id: project.id,
+        name: project.name,
+        status: project.status,
+        budget: Number(project.budget),
+        executedBudget,
+        percentage: Number(project.budget) > 0
+          ? Math.round((executedBudget / Number(project.budget)) * 100)
+          : 0
+      };
+    });
 
     // Actividad reciente (últimas acciones del sistema)
     // Por ahora, últimos proyectos creados como actividad
@@ -115,7 +142,11 @@ export async function getDashboardStats(req, res) {
 
   } catch (error) {
     console.error('Error al obtener stats del dashboard:', error);
-    return errorResponse(res, 'Error al obtener estadísticas', 500);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al obtener estadísticas',
+      error: error.message
+    });
   }
 }
 

@@ -142,11 +142,13 @@ export const getPhotoCountByType = async (projectId) => {
   const photosByType = await prisma.projectPhoto.groupBy({
     by: ['type'],
     where: { projectId },
-    _count: true,
+    _count: {
+      _all: true,
+    },
   });
   
   return photosByType.reduce((acc, item) => {
-    acc[item.type] = item._count;
+    acc[item.type] = item._count._all;
     return acc;
   }, {});
 };

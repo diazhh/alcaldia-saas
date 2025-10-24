@@ -4,7 +4,7 @@ import { successResponse } from '../../../shared/utils/response.js';
 async function getAll(req, res, next) {
   try {
     const positions = await positionService.getAllPositions(req.query);
-    res.json(successResponse(positions, 'Cargos obtenidos exitosamente'));
+    return successResponse(res, positions, 'Cargos obtenidos exitosamente');
   } catch (error) {
     next(error);
   }
@@ -13,7 +13,7 @@ async function getAll(req, res, next) {
 async function getById(req, res, next) {
   try {
     const position = await positionService.getPositionById(req.params.id);
-    res.json(successResponse(position, 'Cargo obtenido exitosamente'));
+    return successResponse(res, position, 'Cargo obtenido exitosamente');
   } catch (error) {
     next(error);
   }
@@ -22,7 +22,7 @@ async function getById(req, res, next) {
 async function create(req, res, next) {
   try {
     const position = await positionService.createPosition(req.body);
-    res.status(201).json(successResponse(position, 'Cargo creado exitosamente'));
+    return successResponse(res, position, 'Cargo creado exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -31,7 +31,7 @@ async function create(req, res, next) {
 async function update(req, res, next) {
   try {
     const position = await positionService.updatePosition(req.params.id, req.body);
-    res.json(successResponse(position, 'Cargo actualizado exitosamente'));
+    return successResponse(res, position, 'Cargo actualizado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -40,7 +40,7 @@ async function update(req, res, next) {
 async function deletePosition(req, res, next) {
   try {
     const result = await positionService.deletePosition(req.params.id);
-    res.json(successResponse(result, 'Cargo eliminado exitosamente'));
+    return successResponse(res, result, 'Cargo eliminado exitosamente');
   } catch (error) {
     next(error);
   }

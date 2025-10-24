@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
+import { API_BASE_URL } from '@/constants';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function PaymentDialog({ open, onClose }) {
@@ -39,7 +40,7 @@ export default function PaymentDialog({ open, onClose }) {
         amount: parseFloat(formData.amount) || 0,
       };
 
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/payments`, payload, {
+      await axios.post(`${API_BASE_URL}/api/tax/payments`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Pago registrado exitosamente');

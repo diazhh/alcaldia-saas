@@ -18,11 +18,10 @@ class CollectionController {
   async identifyDefaulters(req, res) {
     try {
       const result = await collectionService.identifyDefaulters();
-      return successResponse(
-        res,
+      return res.json(successResponse(
         result,
         `Identificados ${result.identified} casos de cobranza`
-      );
+      ));
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -36,7 +35,7 @@ class CollectionController {
   async getCollections(req, res) {
     try {
       const result = await collectionService.getCollections(req.query);
-      return res.json(successResponse(result));
+      return successResponse(res, result);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -50,7 +49,7 @@ class CollectionController {
   async getCollectionById(req, res) {
     try {
       const collection = await collectionService.getCollectionById(req.params.id);
-      return res.json(successResponse(collection));
+      return successResponse(res, collection);
     } catch (error) {
       return res.status(404).json(errorResponse(error.message));
     }
@@ -65,7 +64,7 @@ class CollectionController {
     try {
       const { id } = req.params;
       const action = await collectionService.registerAction(id, req.body);
-      return res.status(201).json(successResponse(action, 'Acción registrada exitosamente'));
+      return successResponse(res, action, 'Acción registrada exitosamente', 201);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -79,11 +78,10 @@ class CollectionController {
   async sendNotifications(req, res) {
     try {
       const result = await collectionService.sendNotifications(req.body);
-      return successResponse(
-        res,
+      return res.json(successResponse(
         result,
         `${result.sent} notificaciones enviadas exitosamente`
-      );
+      ));
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -98,7 +96,7 @@ class CollectionController {
     try {
       const { id } = req.params;
       const plan = await collectionService.createPaymentPlan(id, req.body);
-      return res.json(successResponse(plan, 'Convenio de pago creado exitosamente'));
+      return successResponse(res, plan, 'Convenio de pago creado exitosamente');
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -113,7 +111,7 @@ class CollectionController {
     try {
       const { billId } = req.params;
       const calculation = await collectionService.calculateLateInterest(billId);
-      return res.json(successResponse(calculation));
+      return successResponse(res, calculation);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -127,7 +125,7 @@ class CollectionController {
   async getCollectionStatistics(req, res) {
     try {
       const stats = await collectionService.getCollectionStatistics();
-      return res.json(successResponse(stats));
+      return successResponse(res, stats);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -148,7 +146,7 @@ class CollectionController {
       }
 
       const closed = await collectionService.closeCollection(id, reason);
-      return res.json(successResponse(closed, 'Caso de cobranza cerrado exitosamente'));
+      return successResponse(res, closed, 'Caso de cobranza cerrado exitosamente');
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }

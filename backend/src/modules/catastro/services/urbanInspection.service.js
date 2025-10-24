@@ -69,7 +69,9 @@ export const getAllUrbanInspections = async (filters = {}) => {
             address: true,
             taxpayer: {
               select: {
-                name: true,
+                firstName: true,
+                lastName: true,
+                businessName: true,
                 taxId: true,
               },
             },

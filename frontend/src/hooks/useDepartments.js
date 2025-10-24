@@ -8,8 +8,8 @@ export function useDepartmentTree() {
   return useQuery({
     queryKey: ['departments', 'tree'],
     queryFn: async () => {
-      const { data } = await api.get('/departments?hierarchical=true');
-      return data;
+      const response = await api.get('/departments?hierarchical=true');
+      return response.data.data;
     },
   });
 }
@@ -27,8 +27,8 @@ export function useDepartments(filters = {}) {
           params.append(key, value);
         }
       });
-      const { data } = await api.get(`/departments?${params.toString()}`);
-      return data;
+      const response = await api.get(`/departments?${params.toString()}`);
+      return response.data.data;
     },
   });
 }
@@ -40,8 +40,8 @@ export function useDepartment(id) {
   return useQuery({
     queryKey: ['departments', id],
     queryFn: async () => {
-      const { data } = await api.get(`/departments/${id}`);
-      return data;
+      const response = await api.get(`/departments/${id}`);
+      return response.data.data;
     },
     enabled: !!id,
   });
@@ -54,8 +54,8 @@ export function useDepartmentAncestors(id) {
   return useQuery({
     queryKey: ['departments', id, 'ancestors'],
     queryFn: async () => {
-      const { data } = await api.get(`/departments/${id}/ancestors`);
-      return data;
+      const response = await api.get(`/departments/${id}/ancestors`);
+      return response.data.data;
     },
     enabled: !!id,
   });
@@ -68,8 +68,8 @@ export function useDepartmentDescendants(id) {
   return useQuery({
     queryKey: ['departments', id, 'descendants'],
     queryFn: async () => {
-      const { data } = await api.get(`/departments/${id}/descendants`);
-      return data;
+      const response = await api.get(`/departments/${id}/descendants`);
+      return response.data.data;
     },
     enabled: !!id,
   });
@@ -82,8 +82,8 @@ export function useDepartmentHierarchyStats(id) {
   return useQuery({
     queryKey: ['departments', id, 'hierarchy-stats'],
     queryFn: async () => {
-      const { data } = await api.get(`/departments/${id}/hierarchy-stats`);
-      return data;
+      const response = await api.get(`/departments/${id}/hierarchy-stats`);
+      return response.data.data;
     },
     enabled: !!id,
   });
@@ -96,8 +96,8 @@ export function useDepartmentReports() {
   return useQuery({
     queryKey: ['departments', 'reports'],
     queryFn: async () => {
-      const { data } = await api.get('/departments/reports/stats');
-      return data;
+      const response = await api.get('/departments/reports/stats');
+      return response.data.data;
     },
   });
 }
@@ -110,8 +110,8 @@ export function useCreateDepartment() {
 
   return useMutation({
     mutationFn: async (departmentData) => {
-      const { data } = await api.post('/departments', departmentData);
-      return data;
+      const response = await api.post('/departments', departmentData);
+      return response.data.data;
     },
     onSuccess: () => {
       // Invalidar queries relacionadas
@@ -128,8 +128,8 @@ export function useUpdateDepartment() {
 
   return useMutation({
     mutationFn: async ({ id, data: departmentData }) => {
-      const { data } = await api.put(`/departments/${id}`, departmentData);
-      return data;
+      const response = await api.put(`/departments/${id}`, departmentData);
+      return response.data.data;
     },
     onSuccess: (_, variables) => {
       // Invalidar queries relacionadas
@@ -164,12 +164,12 @@ export function useAssignUserToDepartment() {
 
   return useMutation({
     mutationFn: async ({ departmentId, userId, role, isPrimary = false }) => {
-      const { data } = await api.post(`/departments/${departmentId}/users`, {
+      const response = await api.post(`/departments/${departmentId}/users`, {
         userId,
         role,
         isPrimary,
       });
-      return data;
+      return response.data.data;
     },
     onSuccess: (_, variables) => {
       // Invalidar queries relacionadas
@@ -205,10 +205,10 @@ export function useUpdateUserRole() {
 
   return useMutation({
     mutationFn: async ({ departmentId, userId, role }) => {
-      const { data } = await api.patch(`/departments/${departmentId}/users/${userId}/role`, {
+      const response = await api.patch(`/departments/${departmentId}/users/${userId}/role`, {
         role,
       });
-      return data;
+      return response.data.data;
     },
     onSuccess: (_, variables) => {
       // Invalidar queries relacionadas

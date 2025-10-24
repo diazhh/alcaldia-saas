@@ -13,7 +13,7 @@ async function getAll(req, res, next) {
       },
       orderBy: { year: 'desc' },
     });
-    res.json(successResponse(evaluations, 'Evaluaciones obtenidas exitosamente'));
+    return successResponse(res, evaluations, 'Evaluaciones obtenidas exitosamente');
   } catch (error) {
     next(error);
   }
@@ -25,7 +25,7 @@ async function getByEmployee(req, res, next) {
       where: { employeeId: req.params.employeeId },
       orderBy: { year: 'desc' },
     });
-    res.json(successResponse(evaluations, 'Evaluaciones obtenidas exitosamente'));
+    return successResponse(res, evaluations, 'Evaluaciones obtenidas exitosamente');
   } catch (error) {
     next(error);
   }
@@ -54,7 +54,7 @@ async function create(req, res, next) {
         rating,
       },
     });
-    res.status(201).json(successResponse(evaluation, 'Evaluación creada exitosamente'));
+    return successResponse(res, evaluation, 'Evaluación creada exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -66,7 +66,7 @@ async function update(req, res, next) {
       where: { id: req.params.id },
       data: req.body,
     });
-    res.json(successResponse(evaluation, 'Evaluación actualizada exitosamente'));
+    return successResponse(res, evaluation, 'Evaluación actualizada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -82,7 +82,7 @@ async function acknowledge(req, res, next) {
         employeeComments: req.body.comments,
       },
     });
-    res.json(successResponse(evaluation, 'Evaluación reconocida exitosamente'));
+    return successResponse(res, evaluation, 'Evaluación reconocida exitosamente');
   } catch (error) {
     next(error);
   }

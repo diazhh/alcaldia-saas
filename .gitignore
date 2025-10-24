@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,6 +7,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 dev-debug.log
+backend/logs/
+frontend/logs/
 
 # Dependency directories
 node_modules/
@@ -18,6 +20,9 @@ jspm_packages/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+backend/.env.production
+frontend/.env.production
 
 # Testing
 coverage/
@@ -29,6 +34,8 @@ dist/
 build/
 .next/
 out/
+backend-prod/
+frontend-prod/
 
 # Cache directories
 .cache/

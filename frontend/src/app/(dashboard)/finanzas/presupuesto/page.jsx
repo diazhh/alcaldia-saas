@@ -27,11 +27,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plus, Search, FileText, CheckCircle, XCircle, Clock, FileEdit } from 'lucide-react';
 import { useBudgetByYear, useBudgetItems } from '@/hooks/useFinance';
 import { formatCurrency } from '@/lib/utils';
 import { CreateBudgetDialog } from '@/components/modules/finance/CreateBudgetDialog';
 import { CreateBudgetItemDialog } from '@/components/modules/finance/CreateBudgetItemDialog';
+import { BudgetModificationDialog } from '@/components/modules/finance/BudgetModificationDialog';
+import Link from 'next/link';
 
 const STATUS_CONFIG = {
   DRAFT: { label: 'Borrador', color: 'bg-gray-500' },
@@ -65,6 +67,22 @@ export default function PresupuestoPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {budget && (
+            <>
+              <Link href="/finanzas/modificaciones">
+                <Button variant="outline">
+                  <FileEdit className="mr-2 h-4 w-4" />
+                  Modificaciones
+                </Button>
+              </Link>
+              <BudgetModificationDialog budgetId={budget.id}>
+                <Button variant="outline">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nueva Modificación
+                </Button>
+              </BudgetModificationDialog>
+            </>
+          )}
           <CreateBudgetDialog>
             <Button>
               <Plus className="mr-2 h-4 w-4" />

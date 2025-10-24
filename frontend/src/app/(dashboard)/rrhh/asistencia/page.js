@@ -45,6 +45,8 @@ export default function AsistenciaPage() {
   const fetchAttendanceData = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const params = new URLSearchParams();
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
@@ -52,11 +54,35 @@ export default function AsistenciaPage() {
       if (filters.search) params.append('search', filters.search);
 
       const response = await api.get(`/hr/attendance/stats?${params.toString()}`);
-      setAttendanceData(response.data.data);
-      setError(null);
+      console.log('Attendance API Response:', response);
+      
+      // Handle both response.data and response.data.data structures
+      const data = response.data.data || response.data;
+      
+      // Validate data structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Formato de respuesta inválido');
+      }
+      
+      setAttendanceData(data);
     } catch (err) {
-      console.error('Error al cargar datos de asistencia:', err);
-      setError('No se pudieron cargar los datos de asistencia');
+      console.error('Error completo:', err);
+      console.error('Error response:', err.response);
+      
+      let errorMessage = 'No se pudieron cargar los datos de asistencia';
+      
+      if (err.response) {
+        // Error de respuesta del servidor
+        errorMessage = err.response.data?.message || `Error del servidor: ${err.response.status}`;
+      } else if (err.request) {
+        // No se recibió respuesta
+        errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión.';
+      } else {
+        // Error en la configuración de la petición
+        errorMessage = err.message || errorMessage;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -156,7 +182,17 @@ export default function AsistenciaPage() {
     );
   }
 
-  const { stats, periodStats, records } = attendanceData;
+  // Safely extract data with defaults
+  const stats = attendanceData?.stats || {
+    totalEmployees: 0,
+    present: 0,
+    absent: 0,
+    late: 0,
+    justified: 0,
+    attendanceRate: 0
+  };
+  const periodStats = attendanceData?.periodStats || null;
+  const records = attendanceData?.records || [];
 
   return (
     <div className="space-y-6">

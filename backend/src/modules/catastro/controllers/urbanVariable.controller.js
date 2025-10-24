@@ -15,7 +15,7 @@ import {
 export const getAllUrbanVariables = async (req, res, next) => {
   try {
     const variables = await urbanVariableService.getAllUrbanVariables(req.query);
-    res.json(successResponse(variables, 'Variables urbanas obtenidas exitosamente'));
+    return successResponse(res, variables, 'Variables urbanas obtenidas exitosamente');
   } catch (error) {
     next(error);
   }
@@ -27,7 +27,7 @@ export const getAllUrbanVariables = async (req, res, next) => {
 export const getUrbanVariableById = async (req, res, next) => {
   try {
     const variable = await urbanVariableService.getUrbanVariableById(req.params.id);
-    res.json(successResponse(variable, 'Variable urbana obtenida exitosamente'));
+    return successResponse(res, variable, 'Variable urbana obtenida exitosamente');
   } catch (error) {
     next(error);
   }
@@ -41,7 +41,7 @@ export const getUrbanVariableByZoneCode = async (req, res, next) => {
     const variable = await urbanVariableService.getUrbanVariableByZoneCode(
       req.params.zoneCode
     );
-    res.json(successResponse(variable, 'Variable urbana obtenida exitosamente'));
+    return successResponse(res, variable, 'Variable urbana obtenida exitosamente');
   } catch (error) {
     next(error);
   }
@@ -72,7 +72,7 @@ export const updateUrbanVariable = async (req, res, next) => {
       req.params.id,
       validatedData
     );
-    res.json(successResponse(variable, 'Variable urbana actualizada exitosamente'));
+    return successResponse(res, variable, 'Variable urbana actualizada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -84,7 +84,7 @@ export const updateUrbanVariable = async (req, res, next) => {
 export const deleteUrbanVariable = async (req, res, next) => {
   try {
     await urbanVariableService.deleteUrbanVariable(req.params.id);
-    res.json(successResponse(null, 'Variable urbana eliminada exitosamente'));
+    return successResponse(res, null, 'Variable urbana eliminada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -98,7 +98,7 @@ export const checkCompliance = async (req, res, next) => {
     const { zoneCode } = req.params;
     const projectData = req.body;
     const result = await urbanVariableService.checkCompliance(zoneCode, projectData);
-    res.json(successResponse(result, 'Verificación completada'));
+    return successResponse(res, result, 'Verificación completada');
   } catch (error) {
     next(error);
   }
@@ -110,7 +110,7 @@ export const checkCompliance = async (req, res, next) => {
 export const getZoneStats = async (req, res, next) => {
   try {
     const stats = await urbanVariableService.getZoneStats();
-    res.json(successResponse(stats, 'Estadísticas obtenidas exitosamente'));
+    return successResponse(res, stats, 'Estadísticas obtenidas exitosamente');
   } catch (error) {
     next(error);
   }

@@ -15,8 +15,10 @@ import {
   CheckCircle2,
   XCircle
 } from 'lucide-react';
-import { useDepartment } from '@/hooks/useDepartments';
+import { useDepartment, useDeleteDepartment } from '@/hooks/useDepartments';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
+import EditDepartmentModal from './EditDepartmentModal';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,9 +32,36 @@ import { format } from 'date-fns';
  */
 export default function DepartmentDetails({ department: initialDepartment }) {
   const [activeTab, setActiveTab] = useState('general');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { toast } = useToast();
   
   // Obtener datos completos del departamento
   const { data: department, isLoading } = useDepartment(initialDepartment.id);
+  const deleteDepartment = useDeleteDepartment();
+
+  const handleEdit = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`¿Estás seguro de eliminar el departamento "${department.name}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      await deleteDepartment.mutateAsync(department.id);
+      toast({
+        title: 'Departamento eliminado',
+        description: 'El departamento ha sido eliminado exitosamente',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Error al eliminar el departamento',
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -113,13 +142,18 @@ export default function DepartmentDetails({ department: initialDepartment }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleEdit}>
             <Edit className="h-4 w-4 mr-2" />
             Editar
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleDelete}
+            disabled={deleteDepartment.isPending}
+          >
             <Trash2 className="h-4 w-4 mr-2" />
-            Eliminar
+            {deleteDepartment.isPending ? 'Eliminando...' : 'Eliminar'}
           </Button>
         </div>
       </div>
@@ -379,6 +413,13 @@ export default function DepartmentDetails({ department: initialDepartment }) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de edición */}
+      <EditDepartmentModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        department={department}
+      />
     </div>
   );
 }

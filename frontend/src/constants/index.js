@@ -56,8 +56,12 @@ export const PRIORITY_LABELS = {
   [PRIORITY.CRITICAL]: 'Crítica',
 };
 
-// API URL
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// API Base URL - URL base del backend sin /api (para componentes que construyen la URL completa)
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+// API URL - URL completa con /api para el cliente api.js que usa esto como baseURL
+// Los hooks modernos usan rutas relativas como /projects, /tax, etc.
+export const API_URL = `${API_BASE_URL}/api`;
 
 // Configuración de paginación
 export const PAGINATION = {

@@ -181,7 +181,9 @@ export const getExpenseStatsByProject = async (projectId) => {
       _sum: {
         amount: true,
       },
-      _count: true,
+      _count: {
+        _all: true,
+      },
     }),
     
     // Gastos por categoría
@@ -191,17 +193,19 @@ export const getExpenseStatsByProject = async (projectId) => {
       _sum: {
         amount: true,
       },
-      _count: true,
+      _count: {
+        _all: true,
+      },
     }),
   ]);
   
   return {
     total: parseFloat(expenses._sum.amount || 0),
-    count: expenses._count,
+    count: expenses._count._all,
     byCategory: byCategory.map(item => ({
       category: item.category,
       total: parseFloat(item._sum.amount || 0),
-      count: item._count,
+      count: item._count._all,
     })),
   };
 };

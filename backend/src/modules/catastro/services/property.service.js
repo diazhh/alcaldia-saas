@@ -48,7 +48,9 @@ export const getAllProperties = async (filters = {}) => {
           select: {
             id: true,
             taxId: true,
-            name: true,
+            firstName: true,
+            lastName: true,
+            businessName: true,
             taxpayerType: true,
           },
         },
@@ -99,7 +101,9 @@ export const getPropertyById = async (id) => {
         select: {
           id: true,
           taxId: true,
-          name: true,
+          firstName: true,
+          lastName: true,
+          businessName: true,
           taxpayerType: true,
           email: true,
           phone: true,
@@ -280,7 +284,9 @@ export const searchPropertiesByLocation = async (latitude, longitude, radius = 1
       taxpayer: {
         select: {
           id: true,
-          name: true,
+          firstName: true,
+          lastName: true,
+          businessName: true,
           taxId: true,
         },
       },

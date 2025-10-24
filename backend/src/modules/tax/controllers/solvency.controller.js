@@ -20,7 +20,7 @@ class SolvencyController {
       const { taxpayerId } = req.params;
       const { solvencyType } = req.query;
       const check = await solvencyService.checkSolvency(taxpayerId, solvencyType);
-      return res.json(successResponse(check));
+      return successResponse(res, check);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -34,7 +34,7 @@ class SolvencyController {
   async generateSolvency(req, res) {
     try {
       const solvency = await solvencyService.generateSolvency(req.body);
-      return res.status(201).json(successResponse(solvency, 'Solvencia generada exitosamente'));
+      return successResponse(res, solvency, 'Solvencia generada exitosamente', 201);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -48,7 +48,7 @@ class SolvencyController {
   async getSolvencies(req, res) {
     try {
       const result = await solvencyService.getSolvencies(req.query);
-      return res.json(successResponse(result));
+      return successResponse(res, result);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -62,7 +62,7 @@ class SolvencyController {
   async getSolvencyById(req, res) {
     try {
       const solvency = await solvencyService.getSolvencyById(req.params.id);
-      return res.json(successResponse(solvency));
+      return successResponse(res, solvency);
     } catch (error) {
       return res.status(404).json(errorResponse(error.message));
     }
@@ -77,7 +77,7 @@ class SolvencyController {
     try {
       const { solvencyNumber } = req.params;
       const solvency = await solvencyService.getSolvencyByNumber(solvencyNumber);
-      return res.json(successResponse(solvency));
+      return successResponse(res, solvency);
     } catch (error) {
       return res.status(404).json(errorResponse(error.message));
     }
@@ -92,7 +92,7 @@ class SolvencyController {
     try {
       const { qrCode } = req.params;
       const verification = await solvencyService.verifySolvencyByQR(qrCode);
-      return res.json(successResponse(verification));
+      return successResponse(res, verification);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -113,7 +113,7 @@ class SolvencyController {
       }
 
       const revoked = await solvencyService.revokeSolvency(id, reason);
-      return res.json(successResponse(revoked, 'Solvencia revocada exitosamente'));
+      return successResponse(res, revoked, 'Solvencia revocada exitosamente');
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -127,7 +127,7 @@ class SolvencyController {
   async getSolvencyStatistics(req, res) {
     try {
       const stats = await solvencyService.getSolvencyStatistics(req.query);
-      return res.json(successResponse(stats));
+      return successResponse(res, stats);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }
@@ -144,7 +144,7 @@ class SolvencyController {
       const solvencies = await solvencyService.getExpiringsSolvencies(
         days ? parseInt(days) : 30
       );
-      return res.json(successResponse(solvencies));
+      return successResponse(res, solvencies);
     } catch (error) {
       return res.status(500).json(errorResponse(error.message));
     }

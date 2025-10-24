@@ -4,7 +4,7 @@ import { successResponse } from '../../../shared/utils/response.js';
 async function getAll(req, res, next) {
   try {
     const result = await payrollService.getAllPayrolls(req.query);
-    res.json(successResponse(result.data, 'Nóminas obtenidas exitosamente', result.pagination));
+    return successResponse(res, result.data, 'Nóminas obtenidas exitosamente', 200, result.pagination);
   } catch (error) {
     next(error);
   }
@@ -13,7 +13,7 @@ async function getAll(req, res, next) {
 async function getById(req, res, next) {
   try {
     const payroll = await payrollService.getPayrollById(req.params.id);
-    res.json(successResponse(payroll, 'Nómina obtenida exitosamente'));
+    return successResponse(res, payroll, 'Nómina obtenida exitosamente');
   } catch (error) {
     next(error);
   }
@@ -22,7 +22,7 @@ async function getById(req, res, next) {
 async function create(req, res, next) {
   try {
     const payroll = await payrollService.createPayroll(req.body);
-    res.status(201).json(successResponse(payroll, 'Nómina creada exitosamente'));
+    return successResponse(res, payroll, 'Nómina creada exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -31,7 +31,7 @@ async function create(req, res, next) {
 async function calculate(req, res, next) {
   try {
     const payroll = await payrollService.calculatePayroll(req.params.id);
-    res.json(successResponse(payroll, 'Nómina calculada exitosamente'));
+    return successResponse(res, payroll, 'Nómina calculada exitosamente');
   } catch (error) {
     next(error);
   }
@@ -40,7 +40,7 @@ async function calculate(req, res, next) {
 async function approve(req, res, next) {
   try {
     const payroll = await payrollService.approvePayroll(req.params.id, req.user.id);
-    res.json(successResponse(payroll, 'Nómina aprobada exitosamente'));
+    return successResponse(res, payroll, 'Nómina aprobada exitosamente');
   } catch (error) {
     next(error);
   }

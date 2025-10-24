@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import axios from 'axios';
+import { API_BASE_URL } from '@/constants';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function PropertyDialog({ open, onClose, property }) {
@@ -54,7 +55,7 @@ export default function PropertyDialog({ open, onClose, property }) {
 
   const fetchTaxpayers = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/taxpayers`, {
+      const response = await axios.get(`${API_BASE_URL}/api/tax/taxpayers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTaxpayers(response.data);
@@ -75,11 +76,11 @@ export default function PropertyDialog({ open, onClose, property }) {
       };
 
       if (property) {
-        await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/properties/${property.id}`, payload, {
+        await axios.put(`${API_BASE_URL}/api/tax/properties/${property.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/properties`, payload, {
+        await axios.post(`${API_BASE_URL}/api/tax/properties`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }

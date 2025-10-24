@@ -104,6 +104,19 @@ class AuthController {
       next(error);
     }
   }
+
+  /**
+   * Listar todos los usuarios
+   * GET /api/users
+   */
+  async getAllUsers(req, res, next) {
+    try {
+      const users = await authService.getAllUsers();
+      return successResponse(res, users, 'Usuarios obtenidos exitosamente');
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new AuthController();

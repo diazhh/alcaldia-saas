@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
+import { API_BASE_URL } from '@/constants';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function SolvencyDialog({ open, onClose, solvency }) {
@@ -22,7 +23,7 @@ export default function SolvencyDialog({ open, onClose, solvency }) {
 
   const fetchTaxpayers = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/taxpayers`, {
+      const response = await axios.get(`${API_BASE_URL}/api/tax/taxpayers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTaxpayers(response.data);
@@ -35,7 +36,7 @@ export default function SolvencyDialog({ open, onClose, solvency }) {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/solvencies`, formData, {
+      await axios.post(`${API_BASE_URL}/api/tax/solvencies`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Solvencia generada exitosamente');

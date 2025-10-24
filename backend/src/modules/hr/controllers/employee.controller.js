@@ -21,7 +21,7 @@ async function getAll(req, res, next) {
     
     const result = await employeeService.getAllEmployees(filters);
     
-    res.json(successResponse(result.data, 'Empleados obtenidos exitosamente', result.pagination));
+    return successResponse(res, result.data, 'Empleados obtenidos exitosamente', 200, result.pagination);
   } catch (error) {
     next(error);
   }
@@ -33,7 +33,7 @@ async function getAll(req, res, next) {
 async function getById(req, res, next) {
   try {
     const employee = await employeeService.getEmployeeById(req.params.id);
-    res.json(successResponse(employee, 'Empleado obtenido exitosamente'));
+    return successResponse(res, employee, 'Empleado obtenido exitosamente');
   } catch (error) {
     next(error);
   }
@@ -45,7 +45,7 @@ async function getById(req, res, next) {
 async function getFullProfile(req, res, next) {
   try {
     const profile = await employeeService.getFullProfile(req.params.id);
-    res.json(successResponse(profile, 'Expediente obtenido exitosamente'));
+    return successResponse(res, profile, 'Expediente obtenido exitosamente');
   } catch (error) {
     next(error);
   }
@@ -57,7 +57,7 @@ async function getFullProfile(req, res, next) {
 async function create(req, res, next) {
   try {
     const employee = await employeeService.createEmployee(req.body);
-    res.status(201).json(successResponse(employee, 'Empleado creado exitosamente'));
+    return successResponse(res, employee, 'Empleado creado exitosamente', 201);
   } catch (error) {
     next(error);
   }
@@ -69,7 +69,7 @@ async function create(req, res, next) {
 async function update(req, res, next) {
   try {
     const employee = await employeeService.updateEmployee(req.params.id, req.body);
-    res.json(successResponse(employee, 'Empleado actualizado exitosamente'));
+    return successResponse(res, employee, 'Empleado actualizado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -82,7 +82,7 @@ async function updateStatus(req, res, next) {
   try {
     const { status, reason } = req.body;
     const employee = await employeeService.updateEmployeeStatus(req.params.id, status, reason);
-    res.json(successResponse(employee, 'Estado actualizado exitosamente'));
+    return successResponse(res, employee, 'Estado actualizado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -94,7 +94,7 @@ async function updateStatus(req, res, next) {
 async function deleteEmployee(req, res, next) {
   try {
     const employee = await employeeService.deleteEmployee(req.params.id);
-    res.json(successResponse(employee, 'Empleado eliminado exitosamente'));
+    return successResponse(res, employee, 'Empleado eliminado exitosamente');
   } catch (error) {
     next(error);
   }
@@ -106,7 +106,7 @@ async function deleteEmployee(req, res, next) {
 async function getStats(req, res, next) {
   try {
     const stats = await employeeService.getEmployeeStats();
-    res.json(successResponse(stats, 'Estadísticas obtenidas exitosamente'));
+    return successResponse(res, stats, 'Estadísticas obtenidas exitosamente');
   } catch (error) {
     next(error);
   }

@@ -237,7 +237,7 @@ export default function ProyectosPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.projects?.map((project) => (
+                  {Array.isArray(data?.projects) && data.projects.map((project) => (
                     <TableRow key={project.id}>
                       <TableCell className="font-mono text-sm">
                         {project.code}

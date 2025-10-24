@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import axios from 'axios';
+import { API_BASE_URL } from '@/constants';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function FeeDialog({ open, onClose, fee }) {
@@ -45,7 +46,7 @@ export default function FeeDialog({ open, onClose, fee }) {
 
   const fetchTaxpayers = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/taxpayers`, {
+      const response = await axios.get(`${API_BASE_URL}/api/tax/taxpayers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTaxpayers(response.data);
@@ -63,7 +64,7 @@ export default function FeeDialog({ open, onClose, fee }) {
         amount: parseFloat(formData.amount) || 0,
       };
 
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/tax/fees`, payload, {
+      await axios.post(`${API_BASE_URL}/api/tax/fees`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       onClose(true);

@@ -1,0 +1,36 @@
+{
+  "name": "alcaldia-saas",
+  "version": "1.0.0",
+  "description": "Sistema Integral de Gestión Municipal",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:backend": "cd backend && npm ci --only=production",
+    "build:frontend": "cd frontend && npm ci && npm run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "prod:deploy": "./scripts/deploy-production.sh",
+    "prod:start": "pm2 start ecosystem.config.js --env production",
+    "prod:stop": "./scripts/stop-production.sh",
+    "prod:restart": "./scripts/restart-production.sh",
+    "prod:status": "./scripts/status.sh",
+    "prod:logs": "pm2 logs",
+    "prod:setup-db": "./scripts/setup-prod-db.sh",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "municipal",
+    "government",
+    "management",
+    "saas"
+  ],
+  "author": "Sistema Municipal",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "joi": "^18.0.1"
+  }
+}

@@ -9,23 +9,19 @@ import { Loader2 } from 'lucide-react';
 import { Toaster } from 'sonner';
 
 export default function DashboardLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
     // Verificar autenticación al montar el componente
-    const checkAuth = () => {
-      if (!isAuthenticated || !user) {
-        router.push('/login');
-      } else {
-        setIsChecking(false);
-      }
-    };
-
-    checkAuth();
-  }, [isAuthenticated, user, router]);
+    if (!isAuthenticated || !user) {
+      router.push('/login');
+    } else {
+      setIsChecking(false);
+    }
+  }, []); // Solo ejecutar una vez al montar
 
   // Mostrar loader mientras verifica autenticación
   if (isChecking) {
@@ -42,15 +38,18 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
+      />
 
       {/* Main Content */}
       <div className="lg:pl-64 transition-all duration-300">
         {/* Navbar */}
-        <Navbar user={user} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+        <Navbar user={user} onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
 
         {/* Page Content */}
-        <main className="p-6">{children}</main>
+        <main className="p-4 sm:p-6">{children}</main>
       </div>
 
       {/* Toast Notifications */}

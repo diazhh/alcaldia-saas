@@ -5,9 +5,11 @@
 import express from 'express';
 import { authenticate, authorize } from '../../shared/middlewares/auth.middleware.js';
 import * as propertyController from './controllers/property.controller.js';
+import * as propertyOwnerController from './controllers/propertyOwner.controller.js';
 import * as urbanVariableController from './controllers/urbanVariable.controller.js';
 import * as constructionPermitController from './controllers/constructionPermit.controller.js';
 import * as urbanInspectionController from './controllers/urbanInspection.controller.js';
+import * as zoneLayerController from './controllers/zoneLayer.controller.js';
 
 const router = express.Router();
 
@@ -40,12 +42,12 @@ router.get(
 );
 
 /**
- * @route   GET /api/catastro/properties/search-location
+ * @route   GET /api/catastro/properties/search/location
  * @desc    Buscar propiedades por ubicación
  * @access  Private
  */
 router.get(
-  '/properties/search-location',
+  '/properties/search/location',
   authenticate,
   propertyController.searchPropertiesByLocation
 );
@@ -106,6 +108,55 @@ router.delete(
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN'),
   propertyController.deleteProperty
+);
+
+// ============================================
+// RUTAS DE PROPIETARIOS
+// ============================================
+
+/**
+ * @route   GET /api/catastro/properties/:propertyId/owners
+ * @desc    Obtener propietarios de una propiedad
+ * @access  Private
+ */
+router.get(
+  '/properties/:propertyId/owners',
+  authenticate,
+  propertyOwnerController.getPropertyOwners
+);
+
+/**
+ * @route   GET /api/catastro/properties/:propertyId/owners/current
+ * @desc    Obtener propietario actual
+ * @access  Private
+ */
+router.get(
+  '/properties/:propertyId/owners/current',
+  authenticate,
+  propertyOwnerController.getCurrentOwner
+);
+
+/**
+ * @route   POST /api/catastro/properties/:propertyId/owners
+ * @desc    Crear nuevo propietario
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.post(
+  '/properties/:propertyId/owners',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  propertyOwnerController.createPropertyOwner
+);
+
+/**
+ * @route   GET /api/catastro/property-owners/taxpayer/:taxpayerId
+ * @desc    Obtener propiedades de un contribuyente
+ * @access  Private
+ */
+router.get(
+  '/property-owners/taxpayer/:taxpayerId',
+  authenticate,
+  propertyOwnerController.getPropertiesByOwner
 );
 
 // ============================================
@@ -209,144 +260,167 @@ router.delete(
 // ============================================
 
 /**
- * @route   GET /api/catastro/permits
- * @desc    Obtener todos los permisos
- * @access  Private
- */
-router.get(
-  '/permits',
-  authenticate,
-  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR', 'EMPLEADO'),
-  constructionPermitController.getAllPermits
-);
-
-/**
- * @route   GET /api/catastro/permits/stats
+ * @route   GET /api/catastro/construction-permits/stats
  * @desc    Obtener estadísticas de permisos
  * @access  Private
  */
 router.get(
-  '/permits/stats',
+  '/construction-permits/stats',
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
   constructionPermitController.getPermitStats
 );
 
 /**
- * @route   GET /api/catastro/permits/number/:permitNumber
+ * @route   GET /api/catastro/construction-permits/number/:permitNumber
  * @desc    Obtener permiso por número
  * @access  Private
  */
 router.get(
-  '/permits/number/:permitNumber',
+  '/construction-permits/number/:permitNumber',
   authenticate,
   constructionPermitController.getPermitByNumber
 );
 
 /**
- * @route   GET /api/catastro/permits/:id
+ * @route   GET /api/catastro/construction-permits
+ * @desc    Obtener todos los permisos
+ * @access  Private
+ */
+router.get(
+  '/construction-permits',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR', 'EMPLEADO'),
+  constructionPermitController.getAllPermits
+);
+
+/**
+ * @route   GET /api/catastro/construction-permits/:id
  * @desc    Obtener permiso por ID
  * @access  Private
  */
 router.get(
-  '/permits/:id',
+  '/construction-permits/:id',
   authenticate,
   constructionPermitController.getPermitById
 );
 
 /**
- * @route   POST /api/catastro/permits
+ * @route   POST /api/catastro/construction-permits
  * @desc    Crear nuevo permiso
  * @access  Private
  */
 router.post(
-  '/permits',
+  '/construction-permits',
   authenticate,
   constructionPermitController.createPermit
 );
 
 /**
- * @route   PUT /api/catastro/permits/:id
+ * @route   PUT /api/catastro/construction-permits/:id
  * @desc    Actualizar permiso
  * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
  */
 router.put(
-  '/permits/:id',
+  '/construction-permits/:id',
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
   constructionPermitController.updatePermit
 );
 
 /**
- * @route   POST /api/catastro/permits/:id/review
+ * @route   POST /api/catastro/construction-permits/:id/review
  * @desc    Revisar permiso (revisión técnica)
  * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
  */
 router.post(
-  '/permits/:id/review',
+  '/construction-permits/:id/review',
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
   constructionPermitController.reviewPermit
 );
 
 /**
- * @route   POST /api/catastro/permits/:id/approve-reject
+ * @route   POST /api/catastro/construction-permits/:id/approve-reject
  * @desc    Aprobar o rechazar permiso
  * @access  Private (ADMIN, DIRECTOR)
  */
 router.post(
-  '/permits/:id/approve-reject',
+  '/construction-permits/:id/approve-reject',
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
   constructionPermitController.approveOrRejectPermit
 );
 
 /**
- * @route   POST /api/catastro/permits/:id/payment
+ * @route   POST /api/catastro/construction-permits/:id/payment
  * @desc    Registrar pago de permiso
  * @access  Private
  */
 router.post(
-  '/permits/:id/payment',
+  '/construction-permits/:id/payment',
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR', 'EMPLEADO'),
   constructionPermitController.registerPayment
 );
 
 /**
- * @route   POST /api/catastro/permits/:id/start-construction
+ * @route   POST /api/catastro/construction-permits/:id/start
  * @desc    Iniciar construcción
  * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
  */
 router.post(
-  '/permits/:id/start-construction',
+  '/construction-permits/:id/start',
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
   constructionPermitController.startConstruction
 );
 
 /**
- * @route   POST /api/catastro/permits/:id/complete-construction
+ * @route   POST /api/catastro/construction-permits/:id/complete
  * @desc    Finalizar construcción
  * @access  Private (ADMIN, DIRECTOR)
  */
 router.post(
-  '/permits/:id/complete-construction',
+  '/construction-permits/:id/complete',
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
   constructionPermitController.completeConstruction
 );
 
 /**
- * @route   POST /api/catastro/permits/:id/cancel
+ * @route   POST /api/catastro/construction-permits/:id/cancel
  * @desc    Cancelar permiso
  * @access  Private (ADMIN, DIRECTOR)
  */
 router.post(
-  '/permits/:id/cancel',
+  '/construction-permits/:id/cancel',
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
   constructionPermitController.cancelPermit
+);
+
+/**
+ * @route   GET /api/catastro/construction-permits/:id/inspections
+ * @desc    Obtener inspecciones de un permiso
+ * @access  Private
+ */
+router.get(
+  '/construction-permits/:id/inspections',
+  authenticate,
+  constructionPermitController.getInspectionsByPermit
+);
+
+/**
+ * @route   POST /api/catastro/construction-permits/:id/inspections
+ * @desc    Crear inspección para un permiso
+ * @access  Private (ADMIN, DIRECTOR, COORDINADOR)
+ */
+router.post(
+  '/construction-permits/:id/inspections',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR', 'COORDINADOR'),
+  constructionPermitController.createInspection
 );
 
 // ============================================
@@ -480,6 +554,123 @@ router.post(
   authenticate,
   authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
   urbanInspectionController.resolveInspection
+);
+
+// ============================================
+// RUTAS DE CAPAS SIG (ZONE LAYERS)
+// ============================================
+
+/**
+ * @route   GET /api/catastro/zone-layers/stats
+ * @desc    Obtener estadísticas de capas
+ * @access  Private
+ */
+router.get(
+  '/zone-layers/stats',
+  authenticate,
+  zoneLayerController.getStats
+);
+
+/**
+ * @route   GET /api/catastro/zone-layers/visible
+ * @desc    Obtener capas visibles
+ * @access  Public
+ */
+router.get(
+  '/zone-layers/visible',
+  zoneLayerController.getVisibleLayers
+);
+
+/**
+ * @route   GET /api/catastro/zone-layers/type/:layerType
+ * @desc    Obtener capas por tipo
+ * @access  Public
+ */
+router.get(
+  '/zone-layers/type/:layerType',
+  zoneLayerController.getLayersByType
+);
+
+/**
+ * @route   GET /api/catastro/zone-layers
+ * @desc    Obtener todas las capas
+ * @access  Private
+ */
+router.get(
+  '/zone-layers',
+  authenticate,
+  zoneLayerController.getAllLayers
+);
+
+/**
+ * @route   GET /api/catastro/zone-layers/:id
+ * @desc    Obtener capa por ID
+ * @access  Private
+ */
+router.get(
+  '/zone-layers/:id',
+  authenticate,
+  zoneLayerController.getLayerById
+);
+
+/**
+ * @route   POST /api/catastro/zone-layers
+ * @desc    Crear nueva capa
+ * @access  Private (ADMIN, DIRECTOR)
+ */
+router.post(
+  '/zone-layers',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
+  zoneLayerController.createLayer
+);
+
+/**
+ * @route   PUT /api/catastro/zone-layers/:id
+ * @desc    Actualizar capa
+ * @access  Private (ADMIN, DIRECTOR)
+ */
+router.put(
+  '/zone-layers/:id',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
+  zoneLayerController.updateLayer
+);
+
+/**
+ * @route   DELETE /api/catastro/zone-layers/:id
+ * @desc    Eliminar capa
+ * @access  Private (ADMIN, DIRECTOR)
+ */
+router.delete(
+  '/zone-layers/:id',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
+  zoneLayerController.deleteLayer
+);
+
+/**
+ * @route   PATCH /api/catastro/zone-layers/:id/toggle-visibility
+ * @desc    Alternar visibilidad de capa
+ * @access  Private (ADMIN, DIRECTOR)
+ */
+router.patch(
+  '/zone-layers/:id/toggle-visibility',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
+  zoneLayerController.toggleVisibility
+);
+
+/**
+ * @route   PATCH /api/catastro/zone-layers/:id/display-order
+ * @desc    Actualizar orden de visualización
+ * @access  Private (ADMIN, DIRECTOR)
+ */
+router.patch(
+  '/zone-layers/:id/display-order',
+  authenticate,
+  authorize('SUPER_ADMIN', 'ADMIN', 'DIRECTOR'),
+  zoneLayerController.updateDisplayOrder
 );
 
 export default router;
